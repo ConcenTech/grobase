@@ -428,3 +428,14 @@ entrypoint = "./functions/ingest_snapshot/index.ts"
 # Specifies static files to be bundled with the function. Supports glob patterns.
 # For example, if you want to serve static HTML pages in your function:
 # static_files = [ "./functions/ingest_snapshot/*.html" ]
+
+[functions.create_invite_link]
+enabled = true
+verify_jwt = false
+import_map = "./functions/create_invite_link/deno.json"
+# Uncomment to specify a custom file path to the entrypoint.
+# Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
+entrypoint = "./functions/create_invite_link/index.ts"
+# Specifies static files to be bundled with the function. Supports glob patterns.
+# For example, if you want to serve static HTML pages in your function:
+# static_files = [ "./functions/create_invite_link/*.html" ]
