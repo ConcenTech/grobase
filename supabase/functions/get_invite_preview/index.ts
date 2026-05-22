@@ -50,10 +50,10 @@ export default {
       return jsonError(404, "not_found", "Invite not found");
     }
 
-    let status: "pending" | "expired" | "accepted" | "revoked" = "pending";
+    let status: "pending" | "expired" | "used" | "revoked" = "pending";
 
     if (tokenReq.data.accepted_at) {
-      status = "accepted";
+      status = "used";
     } else if (tokenReq.data.revoked_at) {
       status = "revoked";
     } else if (new Date(tokenReq.data.expires_at) < new Date()) {
@@ -66,7 +66,7 @@ export default {
       .eq("id", tokenReq.data.inverter_id)
       .maybeSingle()).data?.display_name ?? null;
     
-    const invitedByName = (await supabaseAdminAuth
+    const invitedByEmail = (await supabaseAdminAuth
       .schema("auth")
       .from("users")
       .select("email")
@@ -75,7 +75,7 @@ export default {
 
     return Response.json({
       status: status,
-      invited_by_name: invitedByName,
+      invited_by_email: invitedByEmail,
       inverter_display_name: inverterName,
       expires_at: tokenReq.data.expires_at,
     });
