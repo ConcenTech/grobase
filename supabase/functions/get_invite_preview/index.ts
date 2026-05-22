@@ -12,7 +12,7 @@ type RequestPayload = {
 
 // A function to preview an invite token, showing the associated
 // inverter's display name, the invite's expiration date, and the
-// invite's status (pending, accepted, expired, or revoked).
+// invite's status (pending, used, expired, or revoked).
 export default {
   fetch: withSupabase({ auth: "none" }, async (req, ctx) => {
     const supabaseAdmin = ctx.supabaseAdmin as SupabaseClient<Database>;

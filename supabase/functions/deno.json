@@ -1,5 +1,7 @@
 {
   "imports": {
-    "@std/assert": "jsr:@std/assert@0.203.0"
+    "@std/assert": "jsr:@std/assert@0.203.0",
+    "@supabase/supabase-js": "npm:@supabase/supabase-js@^2",
+    "bcryptjs": "npm:bcryptjs@3"
   }
 }
