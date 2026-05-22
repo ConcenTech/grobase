@@ -1,8 +1,8 @@
 import { SupabaseClient } from "@supabase/supabase-js";
-import bcrypt from "bcryptjs";
+import { sha256Hex, timingSafeEqualHex } from "./crypto.ts";
 
 import { Database } from "../../database.types.ts";
-import { jsonError } from "./http.ts";
+import { jsonError, toTrimmedString } from "./http.ts";
 
 type Gateway = {
   created_at: string;
@@ -29,8 +29,8 @@ export async function deviceAuth(
   request: Request,
   database: SupabaseClient<Database>,
 ) {
-  const gatewayId = request.headers.get("x-gateway-id");
-  const deviceSecret = request.headers.get("x-device-secret");
+  const gatewayId = toTrimmedString(request.headers.get("x-gateway-id"));
+  const deviceSecret = toTrimmedString(request.headers.get("x-device-secret"));
 
   if (!gatewayId || !deviceSecret) {
     return jsonError(
@@ -66,14 +66,10 @@ export async function deviceAuth(
     );
   }
 
-  const {device_secret_hash, ...gateway} = gatewayReq.data;
+  const { device_secret_hash, ...gateway } = gatewayReq.data;
 
-  const isMatch = await bcrypt.compare(
-    deviceSecret,
-    device_secret_hash,
-  );
-
-  if (!isMatch) {
+  const incomingSecretHash = await sha256Hex(deviceSecret);
+  if (!timingSafeEqualHex(incomingSecretHash, device_secret_hash)) {
     return jsonError(401, "invalid_credentials", "Invalid device secret");
   }
 

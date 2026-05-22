@@ -81,35 +81,37 @@ function snapshotInsertFromBody(body: SnapshotPayload, gatewayId: string) {
 
 export default {
   fetch: withSupabase({ auth: "none" }, async (req, ctx) => {
-    const supabase = ctx.supabase as SupabaseClient<Database>;
     const supabaseAdmin = ctx.supabaseAdmin as SupabaseClient<Database>;
+
     const gatewayId = toTrimmedString(req.headers.get("x-gateway-id"));
-    const deviceSecret = req.headers.get("x-device-secret")?.trim() ?? "";
+    const deviceSecret = toTrimmedString(req.headers.get("x-device-secret"));
 
     if (!gatewayId || !deviceSecret) {
       return jsonError(401, "invalid_credentials", "Invalid credentials.");
     }
 
-    const { data: gateway, error } = await supabase
+    const gateway = await supabaseAdmin
       .from("gateways")
       .select("id, inverter_id, status, device_secret_hash")
       .eq("id", gatewayId)
       .maybeSingle();
 
-    if (error) {
-      return jsonError(500, "database_error", error.message);
+    if (gateway.error) {
+      return jsonError(500, "database_error", gateway.error.message);
     }
 
-    if (!gateway || !gateway.device_secret_hash) {
+    if (!gateway.data || !gateway.data.device_secret_hash) {
       return jsonError(401, "invalid_credentials", "Invalid credentials.");
     }
 
-    if (gateway.status !== "active") {
+    if (gateway.data.status !== "active") {
       return jsonError(403, "gateway_inactive", "Gateway is not active.");
     }
 
     const incomingSecretHash = await sha256Hex(deviceSecret);
-    if (!timingSafeEqualHex(incomingSecretHash, gateway.device_secret_hash)) {
+    if (
+      !timingSafeEqualHex(incomingSecretHash, gateway.data.device_secret_hash)
+    ) {
       return jsonError(401, "invalid_credentials", "Invalid credentials.");
     }
 
@@ -133,7 +135,7 @@ export default {
       );
     }
 
-    if (gateway.inverter_id !== inverterId) {
+    if (gateway.data.inverter_id !== inverterId) {
       return jsonError(
         400,
         "inverter_mismatch",
@@ -148,37 +150,13 @@ export default {
           ...body,
           inverter_id: inverterId,
           recorded_at: recordedAt,
-        }, gateway.id),
+        }, gateway.data.id),
       )
       .select("id")
       .single();
 
     if (snapshotInsert.error) {
       return jsonError(500, "database_error", snapshotInsert.error.message);
-    }
-
-    const lastSeenAt = new Date().toISOString();
-
-    const updateGateway = await supabase
-      .from("gateways")
-      .update({ last_seen_at: lastSeenAt })
-      .eq("id", gateway.id)
-      .select("id")
-      .single();
-
-    if (updateGateway.error) {
-      return jsonError(500, "database_error", updateGateway.error.message);
-    }
-
-    const updateInverter = await supabase
-      .from("inverters")
-      .update({ last_seen_at: lastSeenAt })
-      .eq("id", inverterId)
-      .select("id")
-      .single();
-
-    if (updateInverter.error) {
-      return jsonError(500, "database_error", updateInverter.error.message);
     }
 
     if (!snapshotInsert.data) {
@@ -189,8 +167,35 @@ export default {
       );
     }
 
-    return Response.json({ ok: true, snapshot_id: snapshotInsert.data.id }, {
-      status: 201,
+    const lastSeenAt = new Date().toISOString();
+
+    const updateGateway = await supabaseAdmin
+      .from("gateways")
+      .update({ last_seen_at: lastSeenAt })
+      .eq("id", gateway.data.id);
+
+    if (updateGateway.error) {
+      console.error(
+        "Failed to update gateway last_seen_at:",
+        updateGateway.error.message,
+      );
+    }
+
+    const updateInverter = await supabaseAdmin
+      .from("inverters")
+      .update({ last_seen_at: lastSeenAt })
+      .eq("id", inverterId);
+
+    if (updateInverter.error) {
+      console.error(
+        "Failed to update inverter last_seen_at:",
+        updateInverter.error.message,
+      );
+    }
+
+    return Response.json({
+      ok: true,
+      snapshot_id: snapshotInsert.data.id,
     });
   }),
 };
