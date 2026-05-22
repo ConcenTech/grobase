@@ -7,7 +7,7 @@ import { Database as Auth} from "../../auth.types.ts";
 import { jsonError, parseJsonBody, toTrimmedString } from "../_shared/http.ts";
 
 type RequestPayload = {
-  invite_token: string;
+  token: string;
 };
 
 // A function to preview an invite token, showing the associated
@@ -27,12 +27,12 @@ export default {
       );
     }
 
-    const token = toTrimmedString(body.invite_token);
+    const token = toTrimmedString(body.token);
     if (!token) {
       return jsonError(
         400,
         "invalid_request",
-        "Missing invite_token in request body",
+        "Missing token in request body",
       );
     }
 
@@ -89,6 +89,6 @@ export default {
 
   curl -i --location --request POST 'http://127.0.0.1:54321/functions/v1/get_invite_preview' \
     --header 'apiKey: sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH' \
-    --data '{"invite_token":"your_invite_token"}'
+    --data '{"token":"your_invite_token"}'
 
 */
