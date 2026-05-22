@@ -71,7 +71,7 @@ export default {
       .from("users")
       .select("email")
       .eq("id", tokenReq.data.invited_by)
-      .maybeSingle()).data ?? null;
+      .maybeSingle()).data?.email ?? null;
 
     return Response.json({
       status: status,
