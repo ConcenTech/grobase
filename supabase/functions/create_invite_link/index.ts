@@ -81,7 +81,16 @@ export default {
       return jsonError(500, "database_error", inviteReq.error.message);
     }
 
-    const baseUrl = toTrimmedString(Deno.env.get("PUBLIC_BASE_URL"));
+    const baseUrl = toTrimmedString(Deno.env.get("INVITE_BASE_URL"));
+
+    if (!baseUrl) {
+      return jsonError(
+        500,
+        "server_configuration_error",
+        "INVITE_BASE_URL environment variable is not set",
+      );
+    }
+    
     // https://<base_url>/invite/?token=...
     const shareLink = `${baseUrl}/invite?token=${invite_token}`;
 
