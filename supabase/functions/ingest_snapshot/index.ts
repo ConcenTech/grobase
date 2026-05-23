@@ -2,8 +2,7 @@ import { withSupabase } from "@supabase/server";
 import { SupabaseClient } from "@supabase/supabase-js";
 
 import { Database } from "../../database.types.ts";
-
-import { sha256Hex, timingSafeEqualHex } from "../_shared/crypto.ts";
+import { deviceAuth } from "../_shared/device_auth.ts";
 import { jsonError, parseJsonBody, toTrimmedString } from "../_shared/http.ts";
 
 type SnapshotPayload = {
@@ -82,38 +81,13 @@ function snapshotInsertFromBody(body: SnapshotPayload, gatewayId: string) {
 export default {
   fetch: withSupabase({ auth: "none" }, async (req, ctx) => {
     const supabaseAdmin = ctx.supabaseAdmin as SupabaseClient<Database>;
+    const deviceAuthResponse = await deviceAuth(req, supabaseAdmin);
 
-    const gatewayId = toTrimmedString(req.headers.get("x-gateway-id"));
-    const deviceSecret = toTrimmedString(req.headers.get("x-device-secret"));
-
-    if (!gatewayId || !deviceSecret) {
-      return jsonError(401, "invalid_credentials", "Invalid credentials.");
+    if (deviceAuthResponse.error) {
+      return deviceAuthResponse.error;
     }
 
-    const gateway = await supabaseAdmin
-      .from("gateways")
-      .select("id, inverter_id, status, device_secret_hash")
-      .eq("id", gatewayId)
-      .maybeSingle();
-
-    if (gateway.error) {
-      return jsonError(500, "database_error", gateway.error.message);
-    }
-
-    if (!gateway.data || !gateway.data.device_secret_hash) {
-      return jsonError(401, "invalid_credentials", "Invalid credentials.");
-    }
-
-    if (gateway.data.status !== "active") {
-      return jsonError(403, "gateway_inactive", "Gateway is not active.");
-    }
-
-    const incomingSecretHash = await sha256Hex(deviceSecret);
-    if (
-      !timingSafeEqualHex(incomingSecretHash, gateway.data.device_secret_hash)
-    ) {
-      return jsonError(401, "invalid_credentials", "Invalid credentials.");
-    }
+    const gateway = deviceAuthResponse.gateway!;
 
     const body = await parseJsonBody<SnapshotPayload>(req);
     if (!body) {
@@ -135,7 +109,7 @@ export default {
       );
     }
 
-    if (gateway.data.inverter_id !== inverterId) {
+    if (gateway.inverter_id !== inverterId) {
       return jsonError(
         400,
         "inverter_mismatch",
@@ -150,7 +124,7 @@ export default {
           ...body,
           inverter_id: inverterId,
           recorded_at: recordedAt,
-        }, gateway.data.id),
+        }, gateway.id),
       )
       .select("id")
       .single();
@@ -172,7 +146,7 @@ export default {
     const updateGateway = await supabaseAdmin
       .from("gateways")
       .update({ last_seen_at: lastSeenAt })
-      .eq("id", gateway.data.id);
+      .eq("id", gateway.id);
 
     if (updateGateway.error) {
       console.error(
