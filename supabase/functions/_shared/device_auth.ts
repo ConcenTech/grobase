@@ -28,16 +28,19 @@ type Gateway = {
 export async function deviceAuth(
   request: Request,
   database: SupabaseClient<Database>,
-) {
+): Promise<{ gateway: Gateway | null; error: Response | null }> {
   const gatewayId = toTrimmedString(request.headers.get("x-gateway-id"));
   const deviceSecret = toTrimmedString(request.headers.get("x-device-secret"));
 
   if (!gatewayId || !deviceSecret) {
-    return jsonError(
-      401,
-      "invalid_credentials",
-      "Missing authentication headers",
-    );
+    return {
+      gateway: null,
+      error: jsonError(
+        401,
+        "invalid_credentials",
+        "Missing authentication headers",
+      ),
+    };
   }
 
   const gatewayReq = await database
@@ -47,31 +50,46 @@ export async function deviceAuth(
     .maybeSingle();
 
   if (gatewayReq.error) {
-    return jsonError(500, "database_error", gatewayReq.error.message);
+    return {
+      gateway: null,
+      error: jsonError(500, "database_error", gatewayReq.error.message),
+    };
   }
 
   if (!gatewayReq.data) {
-    return jsonError(401, "invalid_credentials", "Gateway not found");
+    return {
+      gateway: null,
+      error: jsonError(401, "invalid_credentials", "Gateway not found"),
+    };
   }
 
   if (gatewayReq.data.status !== "active") {
-    return jsonError(401, "invalid_credentials", "Gateway is not active");
+    return {
+      gateway: null,
+      error: jsonError(401, "invalid_credentials", "Gateway is not active"),
+    };
   }
 
   if (!gatewayReq.data.device_secret_hash) {
-    return jsonError(
-      500,
-      "internal_server_error",
-      "Gateway is not properly configured",
-    );
+    return {
+      gateway: null,
+      error: jsonError(
+        500,
+        "internal_server_error",
+        "Gateway is not properly configured",
+      ),
+    };
   }
 
   const { device_secret_hash, ...gateway } = gatewayReq.data;
 
   const incomingSecretHash = await sha256Hex(deviceSecret);
   if (!timingSafeEqualHex(incomingSecretHash, device_secret_hash)) {
-    return jsonError(401, "invalid_credentials", "Invalid device secret");
+    return {
+      gateway: null,
+      error: jsonError(401, "invalid_credentials", "Invalid device secret"),
+    };
   }
 
-  return gateway as Gateway;
+  return { gateway: gateway as Gateway, error: null };
 }
