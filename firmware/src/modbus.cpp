@@ -1,0 +1,157 @@
+
+// Modbus helpers: request framing, CRC, chunked reads and
+// reading the application register groups. This file contains
+// the implementation extracted from the prototype `main.cpp`.
+
+#include "modbus.h"
+
+// Configuration local to Modbus module.
+static const uint8_t MODBUS_SLAVE_ID = 1;
+static const uint32_t MODBUS_BAUD = 9600;
+static const uint32_t DEBUG_BAUD = 115200;
+
+static const int PIN_RX2 = 16;  // ESP32 RX (to MAX3232 TX)
+static const int PIN_TX2 = 17;  // ESP32 TX (to MAX3232 RX)
+
+static const uint32_t MODBUS_TIMEOUT_MS = 1500;
+static const uint8_t READ_FUNC = 0x04;
+static const uint16_t MAX_CHUNK_REGS = 40;
+
+static const bool DEBUG_HEX = false;
+
+HardwareSerial InverterSerial(2);
+
+// Delegate CRC and parsing to modbus_core so those functions can be
+// unit-tested on the host.
+#include "modbus_core.h"
+
+void printHexBytes(const uint8_t *buf, size_t len) {
+	for (size_t i = 0; i < len; i++) {
+		if (buf[i] < 16) Serial.print('0');
+		Serial.print(buf[i], HEX);
+		if (i + 1 < len) Serial.print(' ');
+	}
+	Serial.println();
+}
+
+void modbusInit() {
+	InverterSerial.begin(MODBUS_BAUD, SERIAL_8N1, PIN_RX2, PIN_TX2);
+	if (DEBUG_HEX) {
+		Serial.printf("Modbus UART initialized RX=%d TX=%d @ %lu\n", PIN_RX2, PIN_TX2, MODBUS_BAUD);
+	}
+}
+
+bool readRegisters04(uint8_t slave, uint16_t startReg, uint16_t count, uint16_t *outRegs) {
+	uint8_t req[8];
+	req[0] = slave;
+	req[1] = READ_FUNC;
+	req[2] = (uint8_t)(startReg >> 8);
+	req[3] = (uint8_t)(startReg & 0xFF);
+	req[4] = (uint8_t)(count >> 8);
+	req[5] = (uint8_t)(count & 0xFF);
+
+	uint16_t crc = crc16_modbus(req, 6);
+	req[6] = (uint8_t)(crc & 0xFF);
+	req[7] = (uint8_t)((crc >> 8) & 0xFF);
+
+	while (InverterSerial.available()) {
+		InverterSerial.read();
+	}
+
+	if (DEBUG_HEX) {
+		Serial.printf("TX f=0x%02X start=%u count=%u frame=", READ_FUNC, startReg, count);
+		printHexBytes(req, sizeof(req));
+	}
+
+	InverterSerial.write(req, sizeof(req));
+	InverterSerial.flush();
+
+	const uint8_t expectedByteCount = count * 2;
+	const size_t expectedLen = 3 + expectedByteCount + 2;
+
+	uint8_t resp[3 + 2 * MAX_CHUNK_REGS + 2];
+	if (expectedLen > sizeof(resp)) return false;
+
+	size_t got = 0;
+	uint32_t t0 = millis();
+	while ((millis() - t0) < MODBUS_TIMEOUT_MS && got < expectedLen) {
+		if (InverterSerial.available()) {
+			resp[got++] = (uint8_t)InverterSerial.read();
+		} else {
+			delay(1);
+		}
+	}
+
+	if (got != expectedLen) {
+		Serial.printf("RX short/timeout start=%u count=%u got=%u expected=%u\n",
+									startReg, count, (unsigned)got, (unsigned)expectedLen);
+		return false;
+	}
+
+	if (DEBUG_HEX) {
+		Serial.print("RX full=");
+		printHexBytes(resp, expectedLen);
+	}
+
+	if (resp[0] != slave) return false;
+	if (resp[1] == (READ_FUNC | 0x80)) {
+		Serial.printf("Modbus exception start=%u code=0x%02X\n", startReg, resp[2]);
+		return false;
+	}
+	if (resp[1] != READ_FUNC) return false;
+	if (resp[2] != expectedByteCount) return false;
+
+	// Validate CRC using modbus_core
+	uint16_t rxCrc = ((uint16_t)resp[expectedLen - 1] << 8) | resp[expectedLen - 2];
+	uint16_t calcCrc = crc16_modbus(resp, expectedLen - 2);
+	if (rxCrc != calcCrc) return false;
+
+	for (uint16_t i = 0; i < count; i++) {
+		uint8_t hi = resp[3 + (i * 2)];
+		uint8_t lo = resp[3 + (i * 2) + 1];
+		outRegs[i] = ((uint16_t)hi << 8) | lo;
+	}
+
+	return true;
+}
+
+bool readRange04Chunked(uint16_t pduStartReg, uint16_t count, uint16_t *outRegs) {
+	uint16_t done = 0;
+	while (done < count) {
+		uint16_t remaining = count - done;
+		uint16_t chunk = (remaining > MAX_CHUNK_REGS) ? MAX_CHUNK_REGS : remaining;
+		if (!readRegisters04(MODBUS_SLAVE_ID, pduStartReg + done, chunk, outRegs + done)) {
+			return false;
+		}
+		done += chunk;
+	}
+	return true;
+}
+
+static const uint16_t R1009_START = 1009;
+static const uint16_t R1009_COUNT = 51;
+static const uint16_t R1086_START = 1086;
+static const uint16_t R1086_COUNT = 3;
+static const uint16_t R1124_START = 1124;
+static const uint16_t R1124_COUNT = 27;
+static const uint16_t R2035_START = 2035;
+static const uint16_t R2035_COUNT = 20;
+static const uint16_t R2097_START = 2097;
+static const uint16_t R2097_COUNT = 1;
+static const uint16_t R2112_START = 2112;
+static const uint16_t R2112_COUNT = 6;
+
+bool readAppRegisters(uint16_t *r1009,
+											uint16_t *r1086,
+											uint16_t *r1124,
+											uint16_t *r2035,
+											uint16_t *r2097,
+											uint16_t *r2112) {
+	if (!readRange04Chunked(R1009_START, R1009_COUNT, r1009)) return false;
+	if (!readRange04Chunked(R1086_START, R1086_COUNT, r1086)) return false;
+	if (!readRange04Chunked(R1124_START, R1124_COUNT, r1124)) return false;
+	if (!readRange04Chunked(R2035_START, R2035_COUNT, r2035)) return false;
+	if (!readRange04Chunked(R2097_START, R2097_COUNT, r2097)) return false;
+	if (!readRange04Chunked(R2112_START, R2112_COUNT, r2112)) return false;
+	return true;
+}
