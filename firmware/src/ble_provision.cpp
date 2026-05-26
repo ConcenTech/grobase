@@ -3,7 +3,6 @@
 #include "nvs_storage.h"
 
 #include <ArduinoJson.h>
-#include <NimBLE2902.h>
 #include <NimBLEDevice.h>
 #include <WiFi.h>
 
@@ -243,7 +242,8 @@ class ProvisionWriteCallback : public NimBLECharacteristicCallbacks {
 
   explicit ProvisionWriteCallback(Kind kind) : kind_(kind) {}
 
-  void onWrite(NimBLECharacteristic *characteristic) override {
+  void onWrite(NimBLECharacteristic *characteristic, NimBLEConnInfo &connInfo) override {
+    (void)connInfo;
     String payload = characteristic->getValue().c_str();
     String error;
     bool ok = false;
@@ -311,7 +311,6 @@ void bleProvisionBegin() {
   g_hardwareIdChar->setValue(g_hardwareId.c_str());
 
   g_inverterSnChar = service->createCharacteristic(kInverterSnUuid, NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::NOTIFY);
-  g_inverterSnChar->addDescriptor(new NimBLE2902());
   g_inverterSnChar->setValue(g_inverterSn.c_str());
 
   g_wifiConfigChar = service->createCharacteristic(kWifiConfigUuid, NIMBLE_PROPERTY::WRITE);
@@ -324,18 +323,16 @@ void bleProvisionBegin() {
   g_deviceConfigChar->setCallbacks(new ProvisionWriteCallback(ProvisionWriteCallback::Kind::Device));
 
   g_wifiStatusChar = service->createCharacteristic(kWifiStatusUuid, NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::NOTIFY);
-  g_wifiStatusChar->addDescriptor(new NimBLE2902());
   g_wifiStatusChar->setValue(g_wifiStatus.c_str());
 
   g_statusChar = service->createCharacteristic(kStatusUuid, NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::NOTIFY);
-  g_statusChar->addDescriptor(new NimBLE2902());
   g_statusChar->setValue(g_status.c_str());
 
   service->start();
 
   NimBLEAdvertising *advertising = NimBLEDevice::getAdvertising();
   advertising->addServiceUUID(kServiceUuid);
-  advertising->setScanResponse(true);
+  advertising->enableScanResponse(true);
   advertising->start();
 
   g_started = true;
