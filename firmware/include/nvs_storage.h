@@ -15,3 +15,12 @@ bool nvsSetDeviceSecret(const String &secret);
 
 bool nvsGetGatewayId(String &outId);
 bool nvsSetGatewayId(const String &id);
+
+bool nvsGetSupabaseUrl(String &outUrl);
+bool nvsSetSupabaseUrl(const String &url);
+
+bool nvsGetInverterId(String &outId);
+bool nvsSetInverterId(const String &id);
+
+bool nvsGetExpectedInverterSn(String &outSn);
+bool nvsSetExpectedInverterSn(const String &sn);

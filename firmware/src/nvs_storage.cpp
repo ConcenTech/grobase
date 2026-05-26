@@ -10,6 +10,9 @@ static const char *KEY_WIFI_SSID = "wifi_ssid";
 static const char *KEY_WIFI_PASSWORD = "wifi_pass";
 static const char *KEY_DEVICE_SECRET = "device_secret";
 static const char *KEY_GATEWAY_ID = "gateway_id";
+static const char *KEY_SUPABASE_URL = "supabase_url";
+static const char *KEY_INVERTER_ID = "inverter_id";
+static const char *KEY_EXPECTED_INVERTER_SN = "expected_sn";
 
 bool nvsBegin() {
   return g_prefs.begin(NVS_NAMESPACE, false);
@@ -62,5 +65,53 @@ bool nvsSetGatewayId(const String &id) {
     return false;
   }
   g_prefs.putString(KEY_GATEWAY_ID, id);
+  return true;
+}
+
+bool nvsGetSupabaseUrl(String &outUrl) {
+  if (!g_prefs.isKey(KEY_SUPABASE_URL)) {
+    return false;
+  }
+  outUrl = g_prefs.getString(KEY_SUPABASE_URL, "");
+  return outUrl.length() > 0;
+}
+
+bool nvsSetSupabaseUrl(const String &url) {
+  if (url.length() == 0) {
+    return false;
+  }
+  g_prefs.putString(KEY_SUPABASE_URL, url);
+  return true;
+}
+
+bool nvsGetInverterId(String &outId) {
+  if (!g_prefs.isKey(KEY_INVERTER_ID)) {
+    return false;
+  }
+  outId = g_prefs.getString(KEY_INVERTER_ID, "");
+  return outId.length() > 0;
+}
+
+bool nvsSetInverterId(const String &id) {
+  if (id.length() == 0) {
+    return false;
+  }
+  g_prefs.putString(KEY_INVERTER_ID, id);
+  return true;
+}
+
+bool nvsGetExpectedInverterSn(String &outSn) {
+  if (!g_prefs.isKey(KEY_EXPECTED_INVERTER_SN)) {
+    return false;
+  }
+  outSn = g_prefs.getString(KEY_EXPECTED_INVERTER_SN, "");
+  return outSn.length() > 0;
+}
+
+bool nvsSetExpectedInverterSn(const String &sn) {
+  if (sn.length() == 0) {
+    return false;
+  }
+  g_prefs.putString(KEY_EXPECTED_INVERTER_SN, sn);
   return true;
 }
