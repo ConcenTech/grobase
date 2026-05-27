@@ -13,6 +13,7 @@
 #include "supabase_root_ca.h"
 #else
 #error "Please provide your Supabase root CA certificate"
+#endif
 
 // Supabase URL and anon key are provided by the app during provisioning and
 // stored in NVS; do not rely on a local `secrets.h` file.
@@ -103,12 +104,7 @@ bool supabaseEnsureAuth() {
   return true;
 }
 
-static String buildSnapshotJson(const InverterSnapshot *s) {
-  String deviceId;
-  if (!nvsGetGatewayId(deviceId) || deviceId.length() == 0) {
-    deviceId = String(DEVICE_ID);
-  }
-
+static String buildSnapshotJson(const InverterSnapshot *s, const String &deviceId) {
   String j;
   j.reserve(900);
   j += "{";
@@ -175,15 +171,15 @@ bool supabaseInsertSnapshot(const InverterSnapshot *snapshot) {
     Serial.println("Supabase insert: supabase URL not provisioned");
     return false;
   }
-  String url = baseUrl + "/functions/v1/ingest_snapshot";
-  String body = buildSnapshotJson(snapshot);
-
   String gwId;
   String devSecret;
   if (!nvsGetGatewayId(gwId) || !nvsGetDeviceSecret(devSecret)) {
     Serial.println("Supabase insert: missing gateway credentials");
     return false;
   }
+
+  String url = baseUrl + "/functions/v1/ingest_snapshot";
+  String body = buildSnapshotJson(snapshot, gwId);
 
   String anonKey;
   if (!nvsGetSupabaseAnonKey(anonKey)) {
