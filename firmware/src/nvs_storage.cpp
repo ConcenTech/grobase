@@ -11,6 +11,7 @@ static const char *KEY_WIFI_PASSWORD = "wifi_pass";
 static const char *KEY_DEVICE_SECRET = "device_secret";
 static const char *KEY_GATEWAY_ID = "gateway_id";
 static const char *KEY_SUPABASE_URL = "supabase_url";
+static const char *KEY_SUPABASE_ANON_KEY = "supabase_anon";
 static const char *KEY_INVERTER_ID = "inverter_id";
 static const char *KEY_EXPECTED_INVERTER_SN = "expected_sn";
 
@@ -81,6 +82,21 @@ bool nvsSetSupabaseUrl(const String &url) {
     return false;
   }
   g_prefs.putString(KEY_SUPABASE_URL, url);
+  return true;
+}
+
+bool nvsGetSupabaseAnonKey(String &outKey) {
+  if (!g_prefs.isKey(KEY_SUPABASE_ANON_KEY)) return false;
+  outKey = g_prefs.getString(KEY_SUPABASE_ANON_KEY, "");
+  return outKey.length() > 0;
+}
+
+bool nvsSetSupabaseAnonKey(const String &key) {
+  if (key.length() == 0) {
+    if (g_prefs.isKey(KEY_SUPABASE_ANON_KEY)) g_prefs.remove(KEY_SUPABASE_ANON_KEY);
+    return false;
+  }
+  g_prefs.putString(KEY_SUPABASE_ANON_KEY, key);
   return true;
 }
 
