@@ -21,7 +21,7 @@ void test_status_led_status_pattern_repeats() {
   status_led_set_status(2);
 
   advance(0);
-  TEST_ASSERT_EQUAL(StatusLedMode::Status, status_led_test_mode());
+  TEST_ASSERT_EQUAL((int)StatusLedMode::Status, (int)status_led_test_mode());
   TEST_ASSERT_EQUAL_UINT8(2, status_led_test_count());
   TEST_ASSERT_TRUE(status_led_test_is_on());
 
@@ -53,12 +53,12 @@ void test_status_led_status_pattern_repeats() {
 void test_status_led_fault_overrides_status_and_restores_status_on_clear() {
   status_led_set_status(3);
   advance(0);
-  TEST_ASSERT_EQUAL(StatusLedMode::Status, status_led_test_mode());
+  TEST_ASSERT_EQUAL((int)StatusLedMode::Status, (int)status_led_test_mode());
   TEST_ASSERT_TRUE(status_led_test_is_on());
 
   status_led_set_fault(4);
   advance(0);
-  TEST_ASSERT_EQUAL(StatusLedMode::Fault, status_led_test_mode());
+  TEST_ASSERT_EQUAL((int)StatusLedMode::Fault, (int)status_led_test_mode());
   TEST_ASSERT_EQUAL_UINT8(4, status_led_test_count());
   TEST_ASSERT_TRUE(status_led_test_is_on());
 
@@ -70,7 +70,7 @@ void test_status_led_fault_overrides_status_and_restores_status_on_clear() {
 
   status_led_set_fault(0);
   advance(300);
-  TEST_ASSERT_EQUAL(StatusLedMode::Status, status_led_test_mode());
+  TEST_ASSERT_EQUAL((int)StatusLedMode::Status, (int)status_led_test_mode());
   TEST_ASSERT_TRUE(status_led_test_is_on());
 }
 
