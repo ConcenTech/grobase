@@ -1,6 +1,7 @@
 #include "ble_provision.h"
 
 #include "nvs_storage.h"
+#include "status_led.h"
 
 #include <ArduinoJson.h>
 #include <NimBLEDevice.h>
@@ -180,6 +181,12 @@ bool parseCloudConfig(const String &payload, String *outError) {
       *outError = "storage_failed";
     }
     return false;
+  }
+
+  // Optional: accept anon key from the app and persist to NVS
+  String anonKey;
+  if (readStringField(doc, "anon_key", anonKey) || readStringField(doc, "supabase_anon", anonKey) || readStringField(doc, "apikey", anonKey)) {
+    nvsSetSupabaseAnonKey(anonKey);
   }
 
   if (outError != nullptr) {
@@ -379,6 +386,7 @@ bool bleProvisionConnectWifiFromNvs(uint32_t timeoutMs) {
   if (!ensureNvs()) {
     setWifiStatusInternal("failed");
     setStatusInternal("nvs_failed");
+    status_led_set_fault(3);
     return false;
   }
 
@@ -387,6 +395,7 @@ bool bleProvisionConnectWifiFromNvs(uint32_t timeoutMs) {
   if (!nvsGetWifiCredentials(ssid, password)) {
     setWifiStatusInternal("failed");
     setStatusInternal("wifi_missing");
+    status_led_set_fault(3);
     return false;
   }
 
@@ -398,6 +407,7 @@ bool bleProvisionConnectWifiFromNvs(uint32_t timeoutMs) {
 
   setWifiStatusInternal("connecting");
   setStatusInternal("wifi_connecting");
+  status_led_set_status(3);
 
   WiFi.mode(WIFI_STA);
   WiFi.begin(ssid.c_str(), password.c_str());
@@ -411,11 +421,13 @@ bool bleProvisionConnectWifiFromNvs(uint32_t timeoutMs) {
     WiFi.disconnect(true, true);
     setWifiStatusInternal("failed");
     setStatusInternal("wifi_failed");
+    status_led_set_fault(3);
     return false;
   }
 
   setWifiStatusInternal("connected");
   setStatusInternal("wifi_connected");
+  status_led_clear();
   Serial.print("BLE provision WiFi OK, IP=");
   Serial.println(WiFi.localIP());
   return true;

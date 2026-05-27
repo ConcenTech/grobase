@@ -9,7 +9,6 @@ namespace {
 enum class LedMode { Off, Status, Fault };
 
 static int g_pin = LED_BUILTIN;
-static LedMode g_mode = LedMode::Off;
 static uint8_t g_statusCount = 0;
 static uint8_t g_faultCount = 0;
 static LedMode g_activeMode = LedMode::Off;
@@ -128,7 +127,6 @@ void status_led_init(int pin) {
   g_pin = pin;
   pinMode(g_pin, OUTPUT);
   writeLed(false);
-  g_mode = LedMode::Off;
   g_statusCount = 0;
   g_faultCount = 0;
   g_activeMode = LedMode::Off;
