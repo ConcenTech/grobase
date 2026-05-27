@@ -111,7 +111,7 @@ bool ensureNvs() {
 }
 
 bool parseWifiConfig(const String &payload, String *outError) {
-  StaticJsonDocument<256> doc;
+  JsonDocument doc;
   DeserializationError error = deserializeJson(doc, payload);
   if (error) {
     if (outError != nullptr) {
@@ -151,7 +151,7 @@ bool parseWifiConfig(const String &payload, String *outError) {
 }
 
 bool parseCloudConfig(const String &payload, String *outError) {
-  StaticJsonDocument<256> doc;
+  JsonDocument doc;
   DeserializationError error = deserializeJson(doc, payload);
   if (error) {
     if (outError != nullptr) {
@@ -189,7 +189,7 @@ bool parseCloudConfig(const String &payload, String *outError) {
 }
 
 bool parseDeviceConfig(const String &payload, String *outError) {
-  StaticJsonDocument<384> doc;
+  JsonDocument doc;
   DeserializationError error = deserializeJson(doc, payload);
   if (error) {
     if (outError != nullptr) {
