@@ -217,3 +217,95 @@ bool supabaseInsertSnapshot(const InverterSnapshot *snapshot) {
   }
   return false;
 }
+
+static String buildEventJson(const String &inverterId,
+                            const String &code,
+                            const String &level,
+                            const String &message,
+                            const String &metadata) {
+  String j;
+  j.reserve(256);
+  j += "{";
+  j += "\"inverter_id\":\"" + jsonEscape(inverterId.c_str()) + "\"";
+  if (code.length() > 0) {
+    j += ",\"code\":\"" + jsonEscape(code.c_str()) + "\"";
+  }
+  if (level.length() > 0) {
+    j += ",\"level\":\"" + jsonEscape(level.c_str()) + "\"";
+  }
+  if (message.length() > 0) {
+    j += ",\"message\":\"" + jsonEscape(message.c_str()) + "\"";
+  }
+  if (metadata.length() > 0) {
+    // If metadata appears to be a JSON object (starts with { or [), embed it raw, else JSON-escape string
+    char first = metadata.charAt(0);
+    if (first == '{' || first == '[') {
+      j += ",\"metadata\":" + metadata;
+    } else {
+      j += ",\"metadata\":\"" + jsonEscape(metadata.c_str()) + "\"";
+    }
+  }
+  j += "}";
+  return j;
+}
+
+bool supabaseInsertEvent(const String &inverterId,
+                         const String &code,
+                         const String &level,
+                         const String &message,
+                         const String &metadata) {
+  if (!supabaseEnsureAuth()) return false;
+
+  String baseUrl;
+  if (!nvsGetSupabaseUrl(baseUrl)) {
+    Serial.println("Supabase event: supabase URL not provisioned");
+    return false;
+  }
+
+  String gwId;
+  String devSecret;
+  if (!nvsGetGatewayId(gwId) || !nvsGetDeviceSecret(devSecret)) {
+    Serial.println("Supabase event: missing gateway credentials");
+    return false;
+  }
+
+  String url = baseUrl + "/functions/v1/ingest_event";
+  String body = buildEventJson(inverterId, code, level, message, metadata);
+
+  String anonKey;
+  if (!nvsGetSupabaseAnonKey(anonKey)) {
+    Serial.println("Supabase event: anon key not provisioned");
+    return false;
+  }
+
+  const int maxAttempts = 3;
+  for (int attempt = 1; attempt <= maxAttempts; ++attempt) {
+    int status = 0;
+    String response;
+    if (!httpPostJsonWithDeviceAuth(url, body, gwId, devSecret, anonKey, &status, &response)) {
+      Serial.printf("Supabase event: HTTP post failed (attempt %d)\n", attempt);
+      if (attempt == maxAttempts) return false;
+      delay(200 * attempt);
+      continue;
+    }
+
+    if (status >= 200 && status < 300) {
+      Serial.println("Supabase event OK");
+      return true;
+    }
+
+    if (status == 401) {
+      Serial.println("Supabase event: invalid device credentials");
+      return false;
+    }
+
+    Serial.printf("Supabase event failed HTTP %d: %s\n", status, response.c_str());
+    if (status >= 500 || status <= 0) {
+      if (attempt < maxAttempts) delay(500 * attempt);
+      continue;
+    }
+
+    return false;
+  }
+  return false;
+}

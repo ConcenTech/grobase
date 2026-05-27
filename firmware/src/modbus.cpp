@@ -115,6 +115,80 @@ bool readRegisters04(uint8_t slave, uint16_t startReg, uint16_t count, uint16_t 
 	return true;
 }
 
+// Similar to readRegisters04 but for Function 0x03 (holding registers)
+bool readRegisters03(uint8_t slave, uint16_t startReg, uint16_t count, uint16_t *outRegs) {
+	uint8_t req[8];
+	req[0] = slave;
+	req[1] = 0x03; // FC 03
+	req[2] = (uint8_t)(startReg >> 8);
+	req[3] = (uint8_t)(startReg & 0xFF);
+	req[4] = (uint8_t)(count >> 8);
+	req[5] = (uint8_t)(count & 0xFF);
+
+	uint16_t crc = crc16_modbus(req, 6);
+	req[6] = (uint8_t)(crc & 0xFF);
+	req[7] = (uint8_t)((crc >> 8) & 0xFF);
+
+	while (InverterSerial.available()) {
+		InverterSerial.read();
+	}
+
+	if (DEBUG_HEX) {
+		Serial.printf("TX f=0x%02X start=%u count=%u frame=", 0x03, startReg, count);
+		printHexBytes(req, sizeof(req));
+	}
+
+	InverterSerial.write(req, sizeof(req));
+	InverterSerial.flush();
+
+	const uint8_t expectedByteCount = count * 2;
+	const size_t expectedLen = 3 + expectedByteCount + 2;
+
+	uint8_t resp[3 + 2 * MAX_CHUNK_REGS + 2];
+	if (expectedLen > sizeof(resp)) return false;
+
+	size_t got = 0;
+	uint32_t t0 = millis();
+	while ((millis() - t0) < MODBUS_TIMEOUT_MS && got < expectedLen) {
+		if (InverterSerial.available()) {
+			resp[got++] = (uint8_t)InverterSerial.read();
+		} else {
+			delay(1);
+		}
+	}
+
+	if (got != expectedLen) {
+		Serial.printf("RX short/timeout start=%u count=%u got=%u expected=%u\n",
+									startReg, count, (unsigned)got, (unsigned)expectedLen);
+		return false;
+	}
+
+	if (DEBUG_HEX) {
+		Serial.print("RX full=");
+		printHexBytes(resp, expectedLen);
+	}
+
+	if (resp[0] != slave) return false;
+	if (resp[1] == (0x03 | 0x80)) {
+		Serial.printf("Modbus exception start=%u code=0x%02X\n", startReg, resp[2]);
+		return false;
+	}
+	if (resp[1] != 0x03) return false;
+	if (resp[2] != expectedByteCount) return false;
+
+	uint16_t rxCrc = ((uint16_t)resp[expectedLen - 1] << 8) | resp[expectedLen - 2];
+	uint16_t calcCrc = crc16_modbus(resp, expectedLen - 2);
+	if (rxCrc != calcCrc) return false;
+
+	for (uint16_t i = 0; i < count; i++) {
+		uint8_t hi = resp[3 + (i * 2)];
+		uint8_t lo = resp[3 + (i * 2) + 1];
+		outRegs[i] = ((uint16_t)hi << 8) | lo;
+	}
+
+	return true;
+}
+
 bool readRange04Chunked(uint16_t pduStartReg, uint16_t count, uint16_t *outRegs) {
 	uint16_t done = 0;
 	while (done < count) {
