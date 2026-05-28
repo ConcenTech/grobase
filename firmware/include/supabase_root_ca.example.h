@@ -1,5 +1,7 @@
 #pragma once
 
+#include <Arduino.h>
+
 // Copy this file to `supabase_root_ca.h` and paste the PEM for your Supabase
 // root CA certificate into SUPABASE_ROOT_CA_PEM.
 //
