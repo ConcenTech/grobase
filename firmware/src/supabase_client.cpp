@@ -9,7 +9,9 @@
 #include "wifi_manager.h"
 #include "nvs_storage.h"
 
-#if __has_include("supabase_root_ca.h")
+#if __has_include("../include/supabase_root_ca.h")
+#include "../include/supabase_root_ca.h"
+#elif __has_include("supabase_root_ca.h")
 #include "supabase_root_ca.h"
 #else
 #error "Please provide your Supabase root CA certificate"
@@ -51,7 +53,7 @@ static bool httpPostJsonWithDeviceAuth(const String &url,
                                       int *outStatus,
                                       String *outBody) {
   WiFiClientSecure client;
-    client.setCACert(SUPABASE_ROOT_CA_PEM);
+  client.setCACert(SUPABASE_ROOT_CA_PEM);
 
   HTTPClient http;
   http.setTimeout(HTTP_TIMEOUT_MS);
