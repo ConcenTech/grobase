@@ -3,7 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../services/cities_provider.dart';
+import '../../../services/cities_service.dart';
 
 class NewSystemInformationWidget extends StatelessWidget {
   const NewSystemInformationWidget({super.key, required this.onStart});

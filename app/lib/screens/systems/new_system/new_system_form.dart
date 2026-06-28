@@ -70,7 +70,7 @@ class _NewSystemFormState extends State<NewSystemForm> {
                 validator: Validators.required,
                 textInputAction: TextInputAction.done,
                 onSaved: (city) {
-                  _systemLocation = Location.fromCity(city!);
+                  _systemLocation = city!;
                 },
               ),
               const SizedBox(height: 16),
