@@ -1,0 +1,213 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../core/components/app_scaffold.dart';
+import '../../core/components/images/renewable_energy_site.dart';
+import '../../models/inverter.dart';
+import '../home/home_screen.dart';
+import 'new_system/new_system_wizard.dart';
+
+void _showNewSystemBottomSheet(BuildContext context) {
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    isDismissible: false,
+    builder: (context) {
+      return const NewSystemWizard();
+    },
+  );
+}
+
+class SystemsScreen extends StatelessWidget {
+  const SystemsScreen({super.key});
+
+  void _onSystemSelected(BuildContext context, Inverter system) {
+    // Handle system selection, e.g., navigate to system details
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AppScaffold(
+      title: 'Systems',
+      actions: const [NewSystemButton()],
+      body: Consumer(
+        builder: (context, ref, child) {
+          final invertersRef = ref.watch(invertersProvider);
+
+          return invertersRef.when(
+            data: (systems) {
+              if (systems.isEmpty) {
+                return const NoSystemsWidget();
+              } else {
+                return SystemsListWidget(
+                  systems: systems,
+                  onSystemSelected: (system) {
+                    _onSystemSelected(context, system);
+                  },
+                );
+              }
+            },
+            error: (e, s) {
+              return Center(child: Text('Error loading systems: $e'));
+            },
+            loading: () {
+              return const Center(child: CircularProgressIndicator());
+            },
+          );
+        },
+      ),
+    );
+  }
+}
+
+class NewSystemButton extends ConsumerWidget {
+  const NewSystemButton({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return IconButton(
+      icon: const Icon(Icons.add),
+      onPressed: () {
+        // GoRouter.of(context).go('/systems/new');
+        _showNewSystemBottomSheet(context);
+      },
+    );
+  }
+}
+
+class NoSystemsWidget extends StatelessWidget {
+  const NoSystemsWidget({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isPortrait = constraints.maxWidth < constraints.maxHeight;
+        return Center(
+          child: Wrap(
+            // mainAxisAlignment: MainAxisAlignment.center,
+            // mainAxisSize: MainAxisSize.min,
+            direction: isPortrait ? Axis.vertical : Axis.horizontal,
+            spacing: 16.0,
+            alignment: WrapAlignment.center,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              const RenewableEnergySiteImage(),
+              Column(
+                mainAxisSize: MainAxisSize.min,
+
+                children: [
+                  const Text(
+                    'No system added yet',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w300),
+                  ),
+                  const SizedBox(height: 16),
+                  FilledButton(
+                    onPressed: () {
+                      _showNewSystemBottomSheet(context);
+                    },
+                    child: const Text('Add System'),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+class SystemsListWidget extends StatelessWidget {
+  const SystemsListWidget({
+    super.key,
+    required this.systems,
+    required this.onSystemSelected,
+  });
+
+  final List<Inverter> systems;
+  final void Function(Inverter system) onSystemSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return ListView.builder(
+      shrinkWrap: true,
+      itemCount: systems.length,
+      itemBuilder: (context, index) {
+        final system = systems[index];
+        return Card(
+          child: ListTile(
+            title: Text(system.displayName, style: theme.textTheme.titleMedium),
+            subtitle: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              spacing: 8.0,
+              children: [
+                Text(system.location.name),
+                const Row(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  spacing: 12.0,
+                  children: [
+                    SystemDetailCard(
+                      icon: Icons.bolt, //
+                      value: null,
+                      unit: 'kW',
+                    ),
+                    SystemDetailCard(
+                      icon: Icons.solar_power,
+                      value: null,
+                      unit: 'kWh',
+                    ),
+                    SystemDetailCard(
+                      icon: Icons.battery_charging_full,
+                      value: null,
+                      unit: 'kWh',
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            isThreeLine: true,
+            trailing: system.isOnline
+                ? Icon(Icons.cloud_outlined, color: theme.colorScheme.primary)
+                : Icon(Icons.cloud_off, color: theme.colorScheme.error),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class SystemDetailCard extends StatelessWidget {
+  const SystemDetailCard({
+    super.key,
+    required this.icon,
+    required this.value,
+    required this.unit,
+  });
+
+  final IconData icon;
+  final String? value;
+  final String unit;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final textTheme = theme.textTheme.bodyMedium!;
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      spacing: 4.0,
+      children: [
+        Icon(icon, color: theme.colorScheme.outline),
+        Text(
+          value ?? '--',
+          style: textTheme.copyWith(fontWeight: FontWeight.bold),
+        ),
+        Text(unit, style: textTheme),
+      ],
+    );
+  }
+}

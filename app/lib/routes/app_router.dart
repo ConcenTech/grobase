@@ -5,9 +5,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../core/components/test/test_page.dart';
 import '../screens/auth/auth_screen.dart';
-import '../screens/home_screen.dart';
+import '../screens/home/home_screen.dart';
 import '../screens/splash_screen.dart';
+import '../screens/systems/systems_screen.dart';
 
 final appRouterProvider = Provider<AppRouter>((ref) {
   final router = AppRouter();
@@ -29,6 +31,18 @@ class AppRouter {
     router = GoRouter(navigatorKey: navigatorKey, routes: _routes);
     _listenToAuthChanges();
   }
+
+  String? _authRequiredRedirect(BuildContext context, GoRouterState state) {
+    final session = auth.currentSession;
+    if (session == null) {
+      return '/login';
+    }
+    return null;
+  }
+
+  List<RouteBase> get _testRoutes => [
+    GoRoute(path: '/', builder: (context, state) => const TestPage()),
+  ];
 
   List<RouteBase> get _routes => [
     GoRoute(
@@ -63,13 +77,12 @@ class AppRouter {
     GoRoute(
       path: '/home',
       builder: (context, state) => const HomeScreen(),
-      redirect: (context, state) {
-        final session = auth.currentSession;
-        if (session == null) {
-          return '/login';
-        }
-        return null;
-      },
+      redirect: _authRequiredRedirect,
+    ),
+    GoRoute(
+      path: '/systems',
+      builder: (context, state) => const SystemsScreen(),
+      redirect: _authRequiredRedirect,
     ),
   ];
 
