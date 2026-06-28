@@ -32,6 +32,8 @@ _GatewayRegistrationRequest _$GatewayRegistrationRequestFromJson(
   inverterSerialNumber: json['inverter_sn'] as String,
   profile: json['profile'] as String?,
   inverterId: json['inverter_id'] as String?,
+  displayName: json['display_name'] as String,
+  location: Location.fromJson(json['location'] as Map<String, dynamic>),
 );
 
 Map<String, dynamic> _$GatewayRegistrationRequestToJson(
@@ -42,6 +44,8 @@ Map<String, dynamic> _$GatewayRegistrationRequestToJson(
   'inverter_sn': instance.inverterSerialNumber,
   'profile': instance.profile,
   'inverter_id': instance.inverterId,
+  'display_name': instance.displayName,
+  'location': instance.location,
 };
 
 const _$GatewayRegistrationModeEnumMap = {

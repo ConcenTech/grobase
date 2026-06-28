@@ -2,6 +2,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
+import 'location.dart';
+
 part 'gateway_registration.freezed.dart';
 part 'gateway_registration.g.dart';
 
@@ -27,6 +29,8 @@ abstract class GatewayRegistrationRequest with _$GatewayRegistrationRequest {
     @JsonKey(name: 'inverter_sn') required String inverterSerialNumber,
     @JsonKey(name: 'profile') String? profile,
     @JsonKey(name: 'inverter_id') String? inverterId,
+    @JsonKey(name: 'display_name') required String displayName,
+    @JsonKey(name: 'location') required Location location,
   }) = _GatewayRegistrationRequest;
 
   factory GatewayRegistrationRequest.fromJson(Map<String, dynamic> json) =>

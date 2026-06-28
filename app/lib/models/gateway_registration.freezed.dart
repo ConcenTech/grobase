@@ -299,7 +299,7 @@ as String,
 /// @nodoc
 mixin _$GatewayRegistrationRequest implements DiagnosticableTreeMixin {
 
-@JsonKey(name: 'mode') GatewayRegistrationMode get mode;@JsonKey(name: 'hardware_id') String get hardwareId;@JsonKey(name: 'inverter_sn') String get inverterSerialNumber;@JsonKey(name: 'profile') String? get profile;@JsonKey(name: 'inverter_id') String? get inverterId;
+@JsonKey(name: 'mode') GatewayRegistrationMode get mode;@JsonKey(name: 'hardware_id') String get hardwareId;@JsonKey(name: 'inverter_sn') String get inverterSerialNumber;@JsonKey(name: 'profile') String? get profile;@JsonKey(name: 'inverter_id') String? get inverterId;@JsonKey(name: 'display_name') String get displayName;@JsonKey(name: 'location') Location get location;
 /// Create a copy of GatewayRegistrationRequest
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -313,21 +313,21 @@ $GatewayRegistrationRequestCopyWith<GatewayRegistrationRequest> get copyWith => 
 void debugFillProperties(DiagnosticPropertiesBuilder properties) {
   properties
     ..add(DiagnosticsProperty('type', 'GatewayRegistrationRequest'))
-    ..add(DiagnosticsProperty('mode', mode))..add(DiagnosticsProperty('hardwareId', hardwareId))..add(DiagnosticsProperty('inverterSerialNumber', inverterSerialNumber))..add(DiagnosticsProperty('profile', profile))..add(DiagnosticsProperty('inverterId', inverterId));
+    ..add(DiagnosticsProperty('mode', mode))..add(DiagnosticsProperty('hardwareId', hardwareId))..add(DiagnosticsProperty('inverterSerialNumber', inverterSerialNumber))..add(DiagnosticsProperty('profile', profile))..add(DiagnosticsProperty('inverterId', inverterId))..add(DiagnosticsProperty('displayName', displayName))..add(DiagnosticsProperty('location', location));
 }
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is GatewayRegistrationRequest&&(identical(other.mode, mode) || other.mode == mode)&&(identical(other.hardwareId, hardwareId) || other.hardwareId == hardwareId)&&(identical(other.inverterSerialNumber, inverterSerialNumber) || other.inverterSerialNumber == inverterSerialNumber)&&(identical(other.profile, profile) || other.profile == profile)&&(identical(other.inverterId, inverterId) || other.inverterId == inverterId));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is GatewayRegistrationRequest&&(identical(other.mode, mode) || other.mode == mode)&&(identical(other.hardwareId, hardwareId) || other.hardwareId == hardwareId)&&(identical(other.inverterSerialNumber, inverterSerialNumber) || other.inverterSerialNumber == inverterSerialNumber)&&(identical(other.profile, profile) || other.profile == profile)&&(identical(other.inverterId, inverterId) || other.inverterId == inverterId)&&(identical(other.displayName, displayName) || other.displayName == displayName)&&(identical(other.location, location) || other.location == location));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,mode,hardwareId,inverterSerialNumber,profile,inverterId);
+int get hashCode => Object.hash(runtimeType,mode,hardwareId,inverterSerialNumber,profile,inverterId,displayName,location);
 
 @override
 String toString({ DiagnosticLevel minLevel = DiagnosticLevel.info }) {
-  return 'GatewayRegistrationRequest(mode: $mode, hardwareId: $hardwareId, inverterSerialNumber: $inverterSerialNumber, profile: $profile, inverterId: $inverterId)';
+  return 'GatewayRegistrationRequest(mode: $mode, hardwareId: $hardwareId, inverterSerialNumber: $inverterSerialNumber, profile: $profile, inverterId: $inverterId, displayName: $displayName, location: $location)';
 }
 
 
@@ -338,11 +338,11 @@ abstract mixin class $GatewayRegistrationRequestCopyWith<$Res>  {
   factory $GatewayRegistrationRequestCopyWith(GatewayRegistrationRequest value, $Res Function(GatewayRegistrationRequest) _then) = _$GatewayRegistrationRequestCopyWithImpl;
 @useResult
 $Res call({
-@JsonKey(name: 'mode') GatewayRegistrationMode mode,@JsonKey(name: 'hardware_id') String hardwareId,@JsonKey(name: 'inverter_sn') String inverterSerialNumber,@JsonKey(name: 'profile') String? profile,@JsonKey(name: 'inverter_id') String? inverterId
+@JsonKey(name: 'mode') GatewayRegistrationMode mode,@JsonKey(name: 'hardware_id') String hardwareId,@JsonKey(name: 'inverter_sn') String inverterSerialNumber,@JsonKey(name: 'profile') String? profile,@JsonKey(name: 'inverter_id') String? inverterId,@JsonKey(name: 'display_name') String displayName,@JsonKey(name: 'location') Location location
 });
 
 
-
+$LocationCopyWith<$Res> get location;
 
 }
 /// @nodoc
@@ -355,17 +355,28 @@ class _$GatewayRegistrationRequestCopyWithImpl<$Res>
 
 /// Create a copy of GatewayRegistrationRequest
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? mode = null,Object? hardwareId = null,Object? inverterSerialNumber = null,Object? profile = freezed,Object? inverterId = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? mode = null,Object? hardwareId = null,Object? inverterSerialNumber = null,Object? profile = freezed,Object? inverterId = freezed,Object? displayName = null,Object? location = null,}) {
   return _then(_self.copyWith(
 mode: null == mode ? _self.mode : mode // ignore: cast_nullable_to_non_nullable
 as GatewayRegistrationMode,hardwareId: null == hardwareId ? _self.hardwareId : hardwareId // ignore: cast_nullable_to_non_nullable
 as String,inverterSerialNumber: null == inverterSerialNumber ? _self.inverterSerialNumber : inverterSerialNumber // ignore: cast_nullable_to_non_nullable
 as String,profile: freezed == profile ? _self.profile : profile // ignore: cast_nullable_to_non_nullable
 as String?,inverterId: freezed == inverterId ? _self.inverterId : inverterId // ignore: cast_nullable_to_non_nullable
-as String?,
+as String?,displayName: null == displayName ? _self.displayName : displayName // ignore: cast_nullable_to_non_nullable
+as String,location: null == location ? _self.location : location // ignore: cast_nullable_to_non_nullable
+as Location,
   ));
 }
-
+/// Create a copy of GatewayRegistrationRequest
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$LocationCopyWith<$Res> get location {
+  
+  return $LocationCopyWith<$Res>(_self.location, (value) {
+    return _then(_self.copyWith(location: value));
+  });
+}
 }
 
 
@@ -447,10 +458,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function(@JsonKey(name: 'mode')  GatewayRegistrationMode mode, @JsonKey(name: 'hardware_id')  String hardwareId, @JsonKey(name: 'inverter_sn')  String inverterSerialNumber, @JsonKey(name: 'profile')  String? profile, @JsonKey(name: 'inverter_id')  String? inverterId)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function(@JsonKey(name: 'mode')  GatewayRegistrationMode mode, @JsonKey(name: 'hardware_id')  String hardwareId, @JsonKey(name: 'inverter_sn')  String inverterSerialNumber, @JsonKey(name: 'profile')  String? profile, @JsonKey(name: 'inverter_id')  String? inverterId, @JsonKey(name: 'display_name')  String displayName, @JsonKey(name: 'location')  Location location)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _GatewayRegistrationRequest() when $default != null:
-return $default(_that.mode,_that.hardwareId,_that.inverterSerialNumber,_that.profile,_that.inverterId);case _:
+return $default(_that.mode,_that.hardwareId,_that.inverterSerialNumber,_that.profile,_that.inverterId,_that.displayName,_that.location);case _:
   return orElse();
 
 }
@@ -468,10 +479,10 @@ return $default(_that.mode,_that.hardwareId,_that.inverterSerialNumber,_that.pro
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@JsonKey(name: 'mode')  GatewayRegistrationMode mode, @JsonKey(name: 'hardware_id')  String hardwareId, @JsonKey(name: 'inverter_sn')  String inverterSerialNumber, @JsonKey(name: 'profile')  String? profile, @JsonKey(name: 'inverter_id')  String? inverterId)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@JsonKey(name: 'mode')  GatewayRegistrationMode mode, @JsonKey(name: 'hardware_id')  String hardwareId, @JsonKey(name: 'inverter_sn')  String inverterSerialNumber, @JsonKey(name: 'profile')  String? profile, @JsonKey(name: 'inverter_id')  String? inverterId, @JsonKey(name: 'display_name')  String displayName, @JsonKey(name: 'location')  Location location)  $default,) {final _that = this;
 switch (_that) {
 case _GatewayRegistrationRequest():
-return $default(_that.mode,_that.hardwareId,_that.inverterSerialNumber,_that.profile,_that.inverterId);case _:
+return $default(_that.mode,_that.hardwareId,_that.inverterSerialNumber,_that.profile,_that.inverterId,_that.displayName,_that.location);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -488,10 +499,10 @@ return $default(_that.mode,_that.hardwareId,_that.inverterSerialNumber,_that.pro
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function(@JsonKey(name: 'mode')  GatewayRegistrationMode mode, @JsonKey(name: 'hardware_id')  String hardwareId, @JsonKey(name: 'inverter_sn')  String inverterSerialNumber, @JsonKey(name: 'profile')  String? profile, @JsonKey(name: 'inverter_id')  String? inverterId)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function(@JsonKey(name: 'mode')  GatewayRegistrationMode mode, @JsonKey(name: 'hardware_id')  String hardwareId, @JsonKey(name: 'inverter_sn')  String inverterSerialNumber, @JsonKey(name: 'profile')  String? profile, @JsonKey(name: 'inverter_id')  String? inverterId, @JsonKey(name: 'display_name')  String displayName, @JsonKey(name: 'location')  Location location)?  $default,) {final _that = this;
 switch (_that) {
 case _GatewayRegistrationRequest() when $default != null:
-return $default(_that.mode,_that.hardwareId,_that.inverterSerialNumber,_that.profile,_that.inverterId);case _:
+return $default(_that.mode,_that.hardwareId,_that.inverterSerialNumber,_that.profile,_that.inverterId,_that.displayName,_that.location);case _:
   return null;
 
 }
@@ -503,7 +514,7 @@ return $default(_that.mode,_that.hardwareId,_that.inverterSerialNumber,_that.pro
 @JsonSerializable()
 
 class _GatewayRegistrationRequest with DiagnosticableTreeMixin implements GatewayRegistrationRequest {
-  const _GatewayRegistrationRequest({@JsonKey(name: 'mode') required this.mode, @JsonKey(name: 'hardware_id') required this.hardwareId, @JsonKey(name: 'inverter_sn') required this.inverterSerialNumber, @JsonKey(name: 'profile') this.profile, @JsonKey(name: 'inverter_id') this.inverterId});
+  const _GatewayRegistrationRequest({@JsonKey(name: 'mode') required this.mode, @JsonKey(name: 'hardware_id') required this.hardwareId, @JsonKey(name: 'inverter_sn') required this.inverterSerialNumber, @JsonKey(name: 'profile') this.profile, @JsonKey(name: 'inverter_id') this.inverterId, @JsonKey(name: 'display_name') required this.displayName, @JsonKey(name: 'location') required this.location});
   factory _GatewayRegistrationRequest.fromJson(Map<String, dynamic> json) => _$GatewayRegistrationRequestFromJson(json);
 
 @override@JsonKey(name: 'mode') final  GatewayRegistrationMode mode;
@@ -511,6 +522,8 @@ class _GatewayRegistrationRequest with DiagnosticableTreeMixin implements Gatewa
 @override@JsonKey(name: 'inverter_sn') final  String inverterSerialNumber;
 @override@JsonKey(name: 'profile') final  String? profile;
 @override@JsonKey(name: 'inverter_id') final  String? inverterId;
+@override@JsonKey(name: 'display_name') final  String displayName;
+@override@JsonKey(name: 'location') final  Location location;
 
 /// Create a copy of GatewayRegistrationRequest
 /// with the given fields replaced by the non-null parameter values.
@@ -526,21 +539,21 @@ Map<String, dynamic> toJson() {
 void debugFillProperties(DiagnosticPropertiesBuilder properties) {
   properties
     ..add(DiagnosticsProperty('type', 'GatewayRegistrationRequest'))
-    ..add(DiagnosticsProperty('mode', mode))..add(DiagnosticsProperty('hardwareId', hardwareId))..add(DiagnosticsProperty('inverterSerialNumber', inverterSerialNumber))..add(DiagnosticsProperty('profile', profile))..add(DiagnosticsProperty('inverterId', inverterId));
+    ..add(DiagnosticsProperty('mode', mode))..add(DiagnosticsProperty('hardwareId', hardwareId))..add(DiagnosticsProperty('inverterSerialNumber', inverterSerialNumber))..add(DiagnosticsProperty('profile', profile))..add(DiagnosticsProperty('inverterId', inverterId))..add(DiagnosticsProperty('displayName', displayName))..add(DiagnosticsProperty('location', location));
 }
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _GatewayRegistrationRequest&&(identical(other.mode, mode) || other.mode == mode)&&(identical(other.hardwareId, hardwareId) || other.hardwareId == hardwareId)&&(identical(other.inverterSerialNumber, inverterSerialNumber) || other.inverterSerialNumber == inverterSerialNumber)&&(identical(other.profile, profile) || other.profile == profile)&&(identical(other.inverterId, inverterId) || other.inverterId == inverterId));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _GatewayRegistrationRequest&&(identical(other.mode, mode) || other.mode == mode)&&(identical(other.hardwareId, hardwareId) || other.hardwareId == hardwareId)&&(identical(other.inverterSerialNumber, inverterSerialNumber) || other.inverterSerialNumber == inverterSerialNumber)&&(identical(other.profile, profile) || other.profile == profile)&&(identical(other.inverterId, inverterId) || other.inverterId == inverterId)&&(identical(other.displayName, displayName) || other.displayName == displayName)&&(identical(other.location, location) || other.location == location));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,mode,hardwareId,inverterSerialNumber,profile,inverterId);
+int get hashCode => Object.hash(runtimeType,mode,hardwareId,inverterSerialNumber,profile,inverterId,displayName,location);
 
 @override
 String toString({ DiagnosticLevel minLevel = DiagnosticLevel.info }) {
-  return 'GatewayRegistrationRequest(mode: $mode, hardwareId: $hardwareId, inverterSerialNumber: $inverterSerialNumber, profile: $profile, inverterId: $inverterId)';
+  return 'GatewayRegistrationRequest(mode: $mode, hardwareId: $hardwareId, inverterSerialNumber: $inverterSerialNumber, profile: $profile, inverterId: $inverterId, displayName: $displayName, location: $location)';
 }
 
 
@@ -551,11 +564,11 @@ abstract mixin class _$GatewayRegistrationRequestCopyWith<$Res> implements $Gate
   factory _$GatewayRegistrationRequestCopyWith(_GatewayRegistrationRequest value, $Res Function(_GatewayRegistrationRequest) _then) = __$GatewayRegistrationRequestCopyWithImpl;
 @override @useResult
 $Res call({
-@JsonKey(name: 'mode') GatewayRegistrationMode mode,@JsonKey(name: 'hardware_id') String hardwareId,@JsonKey(name: 'inverter_sn') String inverterSerialNumber,@JsonKey(name: 'profile') String? profile,@JsonKey(name: 'inverter_id') String? inverterId
+@JsonKey(name: 'mode') GatewayRegistrationMode mode,@JsonKey(name: 'hardware_id') String hardwareId,@JsonKey(name: 'inverter_sn') String inverterSerialNumber,@JsonKey(name: 'profile') String? profile,@JsonKey(name: 'inverter_id') String? inverterId,@JsonKey(name: 'display_name') String displayName,@JsonKey(name: 'location') Location location
 });
 
 
-
+@override $LocationCopyWith<$Res> get location;
 
 }
 /// @nodoc
@@ -568,18 +581,29 @@ class __$GatewayRegistrationRequestCopyWithImpl<$Res>
 
 /// Create a copy of GatewayRegistrationRequest
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? mode = null,Object? hardwareId = null,Object? inverterSerialNumber = null,Object? profile = freezed,Object? inverterId = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? mode = null,Object? hardwareId = null,Object? inverterSerialNumber = null,Object? profile = freezed,Object? inverterId = freezed,Object? displayName = null,Object? location = null,}) {
   return _then(_GatewayRegistrationRequest(
 mode: null == mode ? _self.mode : mode // ignore: cast_nullable_to_non_nullable
 as GatewayRegistrationMode,hardwareId: null == hardwareId ? _self.hardwareId : hardwareId // ignore: cast_nullable_to_non_nullable
 as String,inverterSerialNumber: null == inverterSerialNumber ? _self.inverterSerialNumber : inverterSerialNumber // ignore: cast_nullable_to_non_nullable
 as String,profile: freezed == profile ? _self.profile : profile // ignore: cast_nullable_to_non_nullable
 as String?,inverterId: freezed == inverterId ? _self.inverterId : inverterId // ignore: cast_nullable_to_non_nullable
-as String?,
+as String?,displayName: null == displayName ? _self.displayName : displayName // ignore: cast_nullable_to_non_nullable
+as String,location: null == location ? _self.location : location // ignore: cast_nullable_to_non_nullable
+as Location,
   ));
 }
 
-
+/// Create a copy of GatewayRegistrationRequest
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$LocationCopyWith<$Res> get location {
+  
+  return $LocationCopyWith<$Res>(_self.location, (value) {
+    return _then(_self.copyWith(location: value));
+  });
+}
 }
 
 // dart format on
