@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../models/cities.dart';
-import '../../services/cities_provider.dart';
+import '../../models/location.dart';
+import '../../services/cities_service.dart';
 import 'loading_indicator.dart';
 
 class CityFormField extends StatelessWidget {
@@ -16,11 +16,11 @@ class CityFormField extends StatelessWidget {
     this.textInputAction,
   });
 
-  final City? initialValue;
+  final Location? initialValue;
 
-  final void Function(City? city)? onSaved;
-  final void Function(City? city)? onChanged;
-  final String? Function(City? city)? validator;
+  final void Function(Location? city)? onSaved;
+  final void Function(Location? city)? onChanged;
+  final String? Function(Location? city)? validator;
 
   final InputDecoration? decoration;
 
@@ -28,14 +28,14 @@ class CityFormField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return FormField<City?>(
+    return FormField<Location?>(
       initialValue: initialValue,
       onSaved: onSaved,
       validator: validator,
       builder: (state) {
         return Consumer(
           builder: (context, ref, child) {
-            final (Cities? cities, Object? error) = ref
+            final (CityService? cities, Object? error) = ref
                 .watch(citiesProvider)
                 .when(
                   data: (data) => (data, null),
@@ -82,9 +82,9 @@ class _AutoComplete extends StatelessWidget {
     this.textInputAction,
   });
 
-  final City? initialValue;
-  final void Function(City? city) onSelected;
-  final List<City> Function(String query) search;
+  final Location? initialValue;
+  final void Function(Location? city) onSelected;
+  final List<Location> Function(String query) search;
   final String? errorText;
 
   final InputDecoration? decoration;
@@ -92,7 +92,7 @@ class _AutoComplete extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Autocomplete<City>(
+    return Autocomplete<Location>(
       initialValue: initialValue != null
           ? TextEditingValue(text: initialValue!.name)
           : null,
@@ -108,7 +108,7 @@ class _AutoComplete extends StatelessWidget {
       },
       optionsBuilder: (textEditingValue) {
         if (textEditingValue.text.isEmpty) {
-          return const Iterable<City>.empty();
+          return const Iterable<Location>.empty();
         }
         return search(textEditingValue.text);
       },
