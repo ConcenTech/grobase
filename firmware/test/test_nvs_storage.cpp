@@ -60,9 +60,16 @@ void test_nvs_set_and_get_provisioning_fields() {
   TEST_ASSERT_EQUAL_STRING("abc1234567", sn.c_str());
 }
 
+void test_nvs_begin_is_idempotent() {
+  TEST_ASSERT_TRUE(nvsBegin());
+  TEST_ASSERT_TRUE(nvsBegin());
+  TEST_ASSERT_TRUE(nvsSetWifiCredentials("repeat_ssid", "repeat_pass"));
+}
+
 int main(int argc, char **argv) {
   UNITY_BEGIN();
 
+  RUN_TEST(test_nvs_begin_is_idempotent);
   RUN_TEST(test_nvs_set_and_get_wifi);
   RUN_TEST(test_nvs_set_and_get_device_and_gateway);
   RUN_TEST(test_nvs_set_and_get_provisioning_fields);

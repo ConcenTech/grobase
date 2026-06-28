@@ -65,12 +65,20 @@ void test_modbus_core_rejects_exception_frame() {
   TEST_ASSERT_FALSE(parse_modbus_response(frame.data(), frame.size(), slave, func, decoded));
 }
 
+void test_modbus_core_sn_read_request_frame() {
+  // Growatt SPA serial number: FC 0x03, holding regs 23-27 (doc "#" = PDU address).
+  const uint8_t req[] = {0x01, 0x03, 0x00, 0x17, 0x00, 0x05};
+  const uint16_t crc = crc16_modbus(req, sizeof(req));
+  TEST_ASSERT_EQUAL_HEX16(0xCD35, crc);
+}
+
 int main(int argc, char **argv) {
   UNITY_BEGIN();
 
   RUN_TEST(test_modbus_core_crc_and_parse_valid_frame);
   RUN_TEST(test_modbus_core_rejects_corrupted_crc);
   RUN_TEST(test_modbus_core_rejects_exception_frame);
+  RUN_TEST(test_modbus_core_sn_read_request_frame);
 
   return UNITY_END();
 }

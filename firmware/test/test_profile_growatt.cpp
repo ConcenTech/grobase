@@ -95,6 +95,7 @@ void test_profile_growatt_fill_maps_expected_fields() {
   TEST_ASSERT_EQUAL_FLOAT(230.0f, snapshot.grid_voltage_v);
   TEST_ASSERT_EQUAL_FLOAT(12.3f, snapshot.grid_current_a);
   TEST_ASSERT_EQUAL_FLOAT(10.0f, snapshot.eac_today_kwh);
+  TEST_ASSERT_EQUAL_FLOAT(10.0f, snapshot.pv_energy_today_kwh);
   TEST_ASSERT_EQUAL_FLOAT(7.7f, snapshot.ea_charge_today_kwh);
   TEST_ASSERT_EQUAL_FLOAT(1000.0f, snapshot.ac_charge_power_spa_w);
 }
