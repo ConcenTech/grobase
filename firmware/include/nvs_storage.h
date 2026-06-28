@@ -19,9 +19,6 @@ bool nvsSetGatewayId(const String &id);
 bool nvsGetSupabaseUrl(String &outUrl);
 bool nvsSetSupabaseUrl(const String &url);
 
-bool nvsGetSupabaseAnonKey(String &outKey);
-bool nvsSetSupabaseAnonKey(const String &key);
-
 bool nvsGetInverterId(String &outId);
 bool nvsSetInverterId(const String &id);
 
