@@ -1,7 +1,7 @@
 import { SupabaseClient } from "@supabase/supabase-js";
 import { withSupabase } from "@supabase/server";
 
-import { Database } from "../../database.types.ts";
+import { Database, Json } from "../../database.types.ts";
 import {
   generateDeviceSecret,
   normalizeInverterSn,
@@ -14,8 +14,16 @@ type RegisterGatewayRequest = {
   hardware_id: string;
   inverter_sn: string;
   profile?: string;
-  inverter_id?: string | null;
+  inverter_id?: string | null,
+  display_name?: string | null,
+  location?: Location | null;
 };
+
+type Location = {
+  latitude: number;
+  longitude: number;
+  name: string
+}
 
 export default {
   fetch: withSupabase({ auth: "user" }, async (req, ctx) => {
@@ -134,11 +142,32 @@ export default {
     }
 
     if (!existingInverter) {
+      const displayName = toTrimmedString(body.display_name);
+      const location = body.location;
+      
+      if (!displayName) {
+        return jsonError(
+          400,
+          "invalid_request",
+          "display_name is required for new inverters.",
+        );
+      }
+
+      if (!location) {
+        return jsonError(
+          400,
+          "invalid_request",
+          "location is required for new inverters.",
+        );
+      }
+
       const { data: inverter, error } = await supabaseAdmin
         .from("inverters")
         .insert({
           inverter_sn: inverterSn,
           profile,
+          display_name: toTrimmedString(body.display_name),
+          location: body.location,
         })
         .select("id, inverter_sn")
         .single();
@@ -162,6 +191,8 @@ export default {
           "Failed to create inverter record.",
         );
       }
+
+      inverterId = inverter.id;
 
       const memberInsert = await supabaseAdmin.from("inverter_members").upsert(
         {

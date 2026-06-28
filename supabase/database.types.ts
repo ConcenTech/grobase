@@ -318,26 +318,29 @@ export type Database = {
       inverters: {
         Row: {
           created_at: string
-          display_name: string | null
+          display_name: string
           id: string
           inverter_sn: string
           last_seen_at: string | null
+          location: Json
           profile: string
         }
         Insert: {
           created_at?: string
-          display_name?: string | null
+          display_name: string
           id?: string
           inverter_sn: string
           last_seen_at?: string | null
+          location?: Json
           profile: string
         }
         Update: {
           created_at?: string
-          display_name?: string | null
+          display_name?: string
           id?: string
           inverter_sn?: string
           last_seen_at?: string | null
+          location?: Json
           profile?: string
         }
         Relationships: []
@@ -406,6 +409,7 @@ export type Database = {
       }
       is_inverter_member: { Args: { p_inverter_id: string }; Returns: boolean }
       is_inverter_owner: { Args: { p_inverter_id: string }; Returns: boolean }
+      revoke_invite: { Args: { p_invite_id: string }; Returns: boolean }
     }
     Enums: {
       [_ in never]: never
