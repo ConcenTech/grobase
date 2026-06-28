@@ -1,6 +1,7 @@
 // Snapshot JSON printer plus a compatibility wrapper around the
 // profile-specific register decoder.
 #include "inverter_snapshot.h"
+#include "debug_print.h"
 #include "profile_growatt.h"
 
 void fillInverterSnapshot(InverterSnapshot *out,
@@ -14,31 +15,31 @@ void fillInverterSnapshot(InverterSnapshot *out,
 }
 
 void printInverterSnapshotJson(const InverterSnapshot *s) {
-  Serial.print("{");
-  Serial.printf("\"modbus_ok\":%s,", s->modbus_ok ? "true" : "false");
-  Serial.printf("\"BatteryDischargePower_W\":%.1f,", s->battery_discharge_power_w);
-  Serial.printf("\"BatteryChargePower_W\":%.1f,", s->battery_charge_power_w);
-  Serial.printf("\"Vbat\":%.1f,", s->vbat);
-  Serial.printf("\"Vbat_DSP\":%.1f,", s->vbat_dsp);
-  Serial.printf("\"SOC_1014\":%.0f,", s->soc_1014);
-  Serial.printf("\"BMS_SOC\":%.0f,", s->bms_soc);
-  Serial.printf("\"BMS_BatteryVolt\":%.1f,", s->bms_battery_volt);
-  Serial.printf("\"BMS_BatteryCurr\":%.1f,", s->bms_battery_curr);
-  Serial.printf("\"BatteryDischargeEnergyToday_kWh\":%.1f,", s->battery_discharge_energy_today_kwh);
-  Serial.printf("\"BatteryChargeEnergyToday_kWh\":%.1f,", s->battery_charge_energy_today_kwh);
-  Serial.printf("\"GridPac_W\":%.1f,", s->grid_pac_w);
-  Serial.printf("\"GridFrequency_Hz\":%.2f,", s->grid_frequency_hz);
-  Serial.printf("\"GridVoltage_V\":%.1f,", s->grid_voltage_v);
-  Serial.printf("\"GridCurrent_A\":%.1f,", s->grid_current_a);
-  Serial.printf("\"PowerToGrid_W\":%.1f,", s->power_to_grid_w);
-  Serial.printf("\"EnergyToGridToday_kWh\":%.1f,", s->energy_to_grid_today_kwh);
-  Serial.printf("\"ACChargeEnergyToday_kWh\":%.1f,", s->ac_charge_energy_today_kwh);
-  Serial.printf("\"ACChargePower_W\":%.1f,", s->ac_charge_power_w);
-  Serial.printf("\"EacToday_kWh\":%.1f,", s->eac_today_kwh);
-  Serial.printf("\"EAChargeToday_kWh\":%.1f,", s->ea_charge_today_kwh);
-  Serial.printf("\"ACChargePower_SPA_W\":%.1f,", s->ac_charge_power_spa_w);
-  Serial.printf("\"PVEnergyToday_kWh\":%.1f,", s->pv_energy_today_kwh);
-  Serial.printf("\"PowerToUser_W\":%.1f,", s->power_to_user_w);
-  Serial.printf("\"LocalLoadPower_W\":%.1f", s->local_load_power_w);
-  Serial.println("}");
+  DEBUG_PRINT("{");
+  DEBUG_PRINTF("\"modbus_ok\":%s,", s->modbus_ok ? "true" : "false");
+  DEBUG_PRINTF("\"BatteryDischargePower_W\":%.1f,", s->battery_discharge_power_w);
+  DEBUG_PRINTF("\"BatteryChargePower_W\":%.1f,", s->battery_charge_power_w);
+  DEBUG_PRINTF("\"Vbat\":%.1f,", s->vbat);
+  DEBUG_PRINTF("\"Vbat_DSP\":%.1f,", s->vbat_dsp);
+  DEBUG_PRINTF("\"SOC_1014\":%.0f,", s->soc_1014);
+  DEBUG_PRINTF("\"BMS_SOC\":%.0f,", s->bms_soc);
+  DEBUG_PRINTF("\"BMS_BatteryVolt\":%.1f,", s->bms_battery_volt);
+  DEBUG_PRINTF("\"BMS_BatteryCurr\":%.1f,", s->bms_battery_curr);
+  DEBUG_PRINTF("\"BatteryDischargeEnergyToday_kWh\":%.1f,", s->battery_discharge_energy_today_kwh);
+  DEBUG_PRINTF("\"BatteryChargeEnergyToday_kWh\":%.1f,", s->battery_charge_energy_today_kwh);
+  DEBUG_PRINTF("\"GridPac_W\":%.1f,", s->grid_pac_w);
+  DEBUG_PRINTF("\"GridFrequency_Hz\":%.2f,", s->grid_frequency_hz);
+  DEBUG_PRINTF("\"GridVoltage_V\":%.1f,", s->grid_voltage_v);
+  DEBUG_PRINTF("\"GridCurrent_A\":%.1f,", s->grid_current_a);
+  DEBUG_PRINTF("\"PowerToGrid_W\":%.1f,", s->power_to_grid_w);
+  DEBUG_PRINTF("\"EnergyToGridToday_kWh\":%.1f,", s->energy_to_grid_today_kwh);
+  DEBUG_PRINTF("\"ACChargeEnergyToday_kWh\":%.1f,", s->ac_charge_energy_today_kwh);
+  DEBUG_PRINTF("\"ACChargePower_W\":%.1f,", s->ac_charge_power_w);
+  DEBUG_PRINTF("\"EacToday_kWh\":%.1f,", s->eac_today_kwh);
+  DEBUG_PRINTF("\"EAChargeToday_kWh\":%.1f,", s->ea_charge_today_kwh);
+  DEBUG_PRINTF("\"ACChargePower_SPA_W\":%.1f,", s->ac_charge_power_spa_w);
+  DEBUG_PRINTF("\"PVEnergyToday_kWh\":%.1f,", s->pv_energy_today_kwh);
+  DEBUG_PRINTF("\"PowerToUser_W\":%.1f,", s->power_to_user_w);
+  DEBUG_PRINTF("\"LocalLoadPower_W\":%.1f", s->local_load_power_w);
+  DEBUG_PRINTLN("}");
 }
