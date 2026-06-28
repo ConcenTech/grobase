@@ -1,6 +1,7 @@
 // WiFi manager: centralizes station mode setup and connection retries.
 
 #include "wifi_manager.h"
+#include "debug_print.h"
 #include "nvs_storage.h"
 
 #include <WiFi.h>
@@ -17,35 +18,35 @@ bool wifiManagerBegin() {
   }
 
   if (!nvsBegin()) {
-    Serial.println("NVS init failed");
+    DEBUG_PRINTLN("NVS init failed");
     return false;
   }
 
   String ssid;
   String password;
   if (!nvsGetWifiCredentials(ssid, password)) {
-    Serial.println("WiFi credentials not provisioned in NVS");
+    DEBUG_PRINTLN("WiFi credentials not provisioned in NVS");
     return false;
   }
 
-  Serial.printf("WiFi connecting to %s ...\n", ssid.c_str());
+  DEBUG_PRINTF("WiFi connecting to %s ...\n", ssid.c_str());
   WiFi.mode(WIFI_STA);
   WiFi.begin(ssid.c_str(), password.c_str());
 
   uint32_t startMs = millis();
   while (!wifiManagerIsConnected() && (millis() - startMs) < WIFI_CONNECT_TIMEOUT_MS) {
     delay(250);
-    Serial.print('.');
+    DEBUG_PRINT('.');
   }
-  Serial.println();
+  DEBUG_PRINTLN();
 
   if (!wifiManagerIsConnected()) {
-    Serial.println("WiFi connect failed");
+    DEBUG_PRINTLN("WiFi connect failed");
     return false;
   }
 
-  Serial.print("WiFi OK, IP=");
-  Serial.println(WiFi.localIP());
+  DEBUG_PRINT("WiFi OK, IP=");
+  DEBUG_PRINTLN(WiFi.localIP());
   return true;
 }
 

@@ -68,8 +68,8 @@ void profileGrowattFill(InverterSnapshot *out,
   out->ac_charge_power_spa_w =
     u32_scaled(regAt(R2112_START, r2112, 2116), regAt(R2112_START, r2112, 2117), 1.0f);
 
-  out->pv_energy_today_kwh =
-    u32_scaled(regAt(R1124_START, r1124, 1149), regAt(R1124_START, r1124, 1150), 0.1f);
+  // SPA: "Today generate energy" (2053-2054), not EPVAll_Today (1149-1150).
+  out->pv_energy_today_kwh = out->eac_today_kwh;
 
   out->power_to_user_w =
     u32_scaled(regAt(R1009_START, r1009, 1021), regAt(R1009_START, r1009, 1022), 0.1f);

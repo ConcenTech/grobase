@@ -3,6 +3,7 @@
 #// `supabase_client` modules.
 #include <Arduino.h>
 #include "ble_provision.h"
+#include "debug_print.h"
 #include "inverter_snapshot.h"
 #include "supabase_client.h"
 #include "wifi_manager.h"
@@ -27,40 +28,35 @@ static String g_cachedSn;
 static bool g_snReadOk = false;
 static uint32_t g_lastModbusFailMs = 0;
 static bool readAndCacheSerialNumber();
-static void setBootStatus();
-static void setSetupStatus();
-static void setWifiConnectingStatus();
-static void setHealthyStatus();
-static void setWifiUnreachableFault();
-static void setCloudUnreachableFault();
-static void setSnReadFailedFault();
-static void setSnMismatchFault();
+
+
+static void logProvisioningFields(const char *context);
 
 void setup() {
   Serial.begin(DEBUG_BAUD);
+
+  initStatusLed();
+  
+  setStatusLed(StatusLed::BOOT);
+
   delay(1000);
 
   modbusInit();
-  bleProvisionBegin();
-#ifdef LED_BUILTIN
-  status_led_init(LED_BUILTIN);
-#else
-  status_led_init(2);
-#endif
-  // Show BOOT status briefly
-  setBootStatus();
-  Serial.println("Growatt SPA3000TL gateway — Modbus + Supabase (state machine)");
+
+  DEBUG_PRINTLN("Growatt SPA3000TL gateway — Modbus + Supabase (state machine)");
 
   // NVS init early so modules can read provisioning state.
   if (!nvsBegin()) {
-    Serial.println("NVS init failed");
+    DEBUG_PRINTLN("NVS init failed");
+  } else {
+    logProvisioningFields("boot");
   }
   // Read SN once at boot for BLE display and later SN_CHECK
   if (!readAndCacheSerialNumber()) {
-    Serial.println("Warning: SN read failed at boot");
+    DEBUG_PRINTLN("Warning: SN read failed at boot");
     bleProvisionSetInverterSn("");
   } else {
-    Serial.printf("Cached SN=%s\n", g_cachedSn.c_str());
+    DEBUG_PRINTF("Cached SN=%s\n", g_cachedSn.c_str());
   }
 }
 
@@ -131,77 +127,94 @@ static bool isProvisioned() {
   return gw.length() > 0 && secret.length() > 0 && url.length() > 0 && inverterId.length() > 0 && expectedSn.length() > 0;
 }
 
-static void setBootStatus() {
-  status_led_set_status(4);
+static void logProvisioningFields(const char *context) {
+  String gw;
+  String secret;
+  String url;
+  String inverterId;
+  String expectedSn;
+  String ssid;
+  String password;
+  DEBUG_PRINTF(
+      "Provision fields (%s): gateway=%s secret=%s url=%s inverter=%s "
+      "expected_sn=%s wifi=%s\n",
+      context, nvsGetGatewayId(gw) ? "yes" : "no",
+      nvsGetDeviceSecret(secret) ? "yes" : "no",
+      nvsGetSupabaseUrl(url) ? "yes" : "no",
+      nvsGetInverterId(inverterId) ? "yes" : "no",
+      nvsGetExpectedInverterSn(expectedSn) ? "yes" : "no",
+      nvsGetWifiCredentials(ssid, password) ? "yes" : "no");
 }
 
-static void setSetupStatus() {
-  status_led_clear();
-  status_led_set_status(2);
+static const char *systemStateName(SystemState state) {
+  switch (state) {
+  case SystemState::Startup:
+    return "Startup";
+  case SystemState::Provisioning:
+    return "Provisioning";
+  case SystemState::WifiConnecting:
+    return "WifiConnecting";
+  case SystemState::Ready:
+    return "Ready";
+  case SystemState::Running:
+    return "Running";
+  case SystemState::FaultSn:
+    return "FaultSn";
+  case SystemState::Error:
+    return "Error";
+  }
+  return "Unknown";
 }
 
-static void setWifiConnectingStatus() {
-  status_led_clear();
-  status_led_set_status(3);
-}
+static void setSystemState(SystemState nextState) {
+  if (g_state == nextState) {
+    return;
+  }
 
-static void setHealthyStatus() {
-  status_led_clear();
-}
+  if (g_state == SystemState::Provisioning) {
+    bleProvisionStop();
+  }
 
-static void setWifiUnreachableFault() {
-  status_led_set_status(0);
-  status_led_set_fault(3);
-}
+  DEBUG_PRINTF("System state: %s -> %s\n", systemStateName(g_state),
+               systemStateName(nextState));
+  g_state = nextState;
 
-static void setCloudUnreachableFault() {
-  status_led_set_status(0);
-  status_led_set_fault(5);
-}
-
-static void setSnReadFailedFault() {
-  status_led_set_status(0);
-  status_led_set_fault(2);
-}
-
-static void setSnMismatchFault() {
-  status_led_set_status(0);
-  status_led_set_fault(4);
+  if (nextState == SystemState::Provisioning) {
+    bleProvisionBegin();
+  }
 }
 
 void processProvisioning() {
   // BLE handles writes and may attempt WiFi connect itself; poll BLE continuously.
   bleProvisionPoll();
-  // Provisioning -> BLE setup long blink (2)
-  setSetupStatus();
 }
 
 void processWifiConnect() {
   // Attempt to connect using wifi_manager which reads NVS credentials.
   // Indicate WiFi connecting
-  setWifiConnectingStatus();
+  setStatusLed(StatusLed::WIFI_CONNECTING);
   if (wifiManagerEnsureConnected()) {
-    Serial.println("WiFi connected via wifi_manager");
+    DEBUG_PRINTLN("WiFi connected via wifi_manager");
     if (supabaseBegin()) {
-      setHealthyStatus();
-      g_state = SystemState::Ready;
+      setStatusLed(StatusLed::PROVISIONED);
+      setSystemState(SystemState::Ready);
       return;
     } else {
-      Serial.println("supabaseBegin failed; will retry");
+      DEBUG_PRINTLN("supabaseBegin failed; will retry");
       // Cloud unreachable fault
-      setCloudUnreachableFault();
-      g_state = SystemState::Error;
+      setStatusLed(StatusLed::CLOUD_UNREACHABLE);
+      setSystemState(SystemState::Error);
       return;
     }
   }
-  setWifiUnreachableFault();
+  DEBUG_PRINTLN("WiFi connect failed; staying in WifiConnecting for retry");
+  setStatusLed(StatusLed::WIFI_FAILED);
   // Stay in WifiConnecting and retry after delay handled by loop timing.
 }
 
 void processRunning() {
   // Primary work: poll Modbus and upload snapshots on interval.
   static uint32_t lastUpload = 0;
-  bleProvisionPoll();
 
   // Respect modbus backoff window after failures
   if (g_lastModbusFailMs != 0 && (millis() - g_lastModbusFailMs) < MODBUS_BACKOFF_MS) {
@@ -209,7 +222,8 @@ void processRunning() {
     return;
   }
 
-  if (millis() - lastUpload < UPLOAD_INTERVAL_MS) return;
+  // lastUpload == 0 means no upload yet — run immediately on first entry to Running.
+  if (lastUpload != 0 && (millis() - lastUpload) < UPLOAD_INTERVAL_MS) return;
   lastUpload = millis();
 
   static uint16_t r1009[51];
@@ -221,12 +235,12 @@ void processRunning() {
 
   InverterSnapshot snapshot = {};
   if (!readAppRegisters(r1009, r1086, r1124, r2035, r2097, r2112)) {
-    Serial.println("Modbus read failed; posting event and entering backoff");
+    DEBUG_PRINTLN("Modbus read failed; posting event and entering backoff");
     String invId;
     if (!nvsGetInverterId(invId)) invId = "";
     // Post event; don't block on failure — v1 drops events if cannot upload
     supabaseInsertEvent(invId, "modbus_failed", "warn", "scheduled modbus poll failed", "{}");
-    setCloudUnreachableFault();
+    setStatusLed(StatusLed::MODBUS_FAILED);
     g_lastModbusFailMs = millis();
     return;
   }
@@ -237,15 +251,17 @@ void processRunning() {
   printInverterSnapshotJson(&snapshot);
 
   if (!supabaseInsertSnapshot(&snapshot)) {
-    Serial.println("{\"error\":\"supabase_upload_failed\"}");
+    DEBUG_PRINTLN("{\"error\":\"supabase_upload_failed\"}");
+    setStatusLed(StatusLed::CLOUD_UNREACHABLE);
+    return;
   }
 
-
+  if (wifiManagerIsConnected()) {
+    setStatusLed(StatusLed::PROVISIONED);
+  }
 }
 
 void loop() {
-  // Drive LED state machine every loop
-  status_led_poll();
   static uint32_t lastProvisionCheck = 0;
   static uint32_t lastWifiRetry = 0;
 
@@ -253,43 +269,41 @@ void loop() {
     case SystemState::Startup: {
       // Boot: first, ensure SN read succeeded. If SN read failed, halt until reboot.
       if (!g_snReadOk) {
-        Serial.println("Boot SN read failed; entering FaultSn state (no further actions until reboot)");
-        // Expose empty SN to BLE and set status for app
-        bleProvisionSetInverterSn("");
-        bleProvisionSetStatus("sn_unavailable");
+        DEBUG_PRINTLN("Boot SN read failed; entering FaultSn state (no further actions until reboot)");
         // If device was previously provisioned, post an event to backend
         if (isProvisioned()) {
           String invId;
           if (!nvsGetInverterId(invId)) invId = "";
           supabaseInsertEvent(invId, "sn_read_failed", "error", "boot SN read failed", "{}");
         }
-        setSnReadFailedFault();
-        g_state = SystemState::FaultSn;
+        setStatusLed(StatusLed::SN_READ_FAILED);
+        setSystemState(SystemState::FaultSn);
       } else if (isProvisioned()) {
-        Serial.println("Device is provisioned; performing boot SN check");
+        DEBUG_PRINTLN("Device is provisioned; performing boot SN check");
         // Compare to expected_inverter_sn from NVS
         String expected;
         if (nvsGetExpectedInverterSn(expected)) {
           expected.toUpperCase();
           if (expected.length() > 0 && expected != g_cachedSn) {
-            Serial.printf("SN mismatch: cached=%s expected=%s\n", g_cachedSn.c_str(), expected.c_str());
+            DEBUG_PRINTF("SN mismatch: cached=%s expected=%s\n", g_cachedSn.c_str(), expected.c_str());
             String invId;
             if (!nvsGetInverterId(invId)) invId = "";
             supabaseInsertEvent(invId, "sn_mismatch", "error", "boot serial mismatch", "{}");
-            setSnMismatchFault();
-            g_state = SystemState::FaultSn;
+            setStatusLed(StatusLed::SN_MISMATCH);
+            setSystemState(SystemState::FaultSn);
           } else {
-            Serial.println("Boot SN OK; attempting WiFi");
-            g_state = SystemState::WifiConnecting;
+            DEBUG_PRINTLN("Boot SN OK; attempting WiFi");
+            setSystemState(SystemState::WifiConnecting);
           }
         } else {
           // No expected SN in NVS; proceed to WiFi (defensive)
-          Serial.println("No expected SN found in NVS; attempting WiFi");
-          g_state = SystemState::WifiConnecting;
+          DEBUG_PRINTLN("No expected SN found in NVS; attempting WiFi");
+          setSystemState(SystemState::WifiConnecting);
         }
       } else {
-        Serial.println("Device not provisioned; entering provisioning mode");
-        g_state = SystemState::Provisioning;
+        DEBUG_PRINTLN("Device not provisioned; entering provisioning mode");
+        setStatusLed(StatusLed::SETUP);
+        setSystemState(SystemState::Provisioning);
       }
       break;
     }
@@ -299,8 +313,9 @@ void loop() {
       if (millis() - lastProvisionCheck > PROVISION_CHECK_INTERVAL_MS) {
         lastProvisionCheck = millis();
         if (isProvisioned()) {
-          Serial.println("Provisioning complete; moving to WiFi connect");
-          g_state = SystemState::WifiConnecting;
+          DEBUG_PRINTLN("Provisioning complete; moving to WiFi connect");
+          logProvisioningFields("provisioned");
+          setSystemState(SystemState::WifiConnecting);
         }
       }
       break;
@@ -309,8 +324,7 @@ void loop() {
     case SystemState::WifiConnecting: {
       // Avoid tight retry loops
       if (millis() - lastWifiRetry < WIFI_RETRY_INTERVAL_MS) {
-        setWifiConnectingStatus();
-        bleProvisionPoll();
+        setStatusLed(StatusLed::WIFI_CONNECTING);
         delay(50);
         break;
       }
@@ -321,16 +335,14 @@ void loop() {
 
     case SystemState::Ready: {
       // Ready → start running main loop
-      Serial.println("System ready; entering running state");
-      g_state = SystemState::Running;
+      DEBUG_PRINTLN("System ready; entering running state");
+      setSystemState(SystemState::Running);
       break;
     }
 
     case SystemState::Running: {
       if (!wifiManagerIsConnected()) {
-        setWifiUnreachableFault();
-      } else {
-        setHealthyStatus();
+        setStatusLed(StatusLed::WIFI_FAILED);
       }
       processRunning();
       break;
@@ -338,9 +350,11 @@ void loop() {
 
     case SystemState::FaultSn: {
       // Fault due to SN mismatch or SN read failure — idle until reboot.
-      // BLE remains available for recovery/inspection.
-      bleProvisionPoll();
-      // SN mismatch fault code (4 short) or SN read failed (2 short) already set where detected
+      static bool faultLogged = false;
+      if (!faultLogged) {
+        DEBUG_PRINTLN("FaultSn: serial number fault — idle until reboot");
+        faultLogged = true;
+      }
       delay(500);
       break;
     }
@@ -348,11 +362,10 @@ void loop() {
     case SystemState::Error: {
       // On error, try to recover by attempting WiFi again after a pause.
       if (millis() - lastWifiRetry > WIFI_RETRY_INTERVAL_MS) {
-        Serial.println("Recovering from error: retrying WiFi");
-        g_state = SystemState::WifiConnecting;
+        DEBUG_PRINTLN("Recovering from error: retrying WiFi");
+        setSystemState(SystemState::WifiConnecting);
         lastWifiRetry = millis();
       }
-      bleProvisionPoll();
       delay(100);
       break;
     }

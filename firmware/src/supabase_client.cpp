@@ -1,13 +1,17 @@
 #// Minimal Supabase client for ESP32: WiFi connection, password grant
 #// authentication, and REST `inverter_snapshots` insertion.
 #include "supabase_client.h"
-
+#if DEBUG_MODE
+#include <WiFiClient.h>
+#else
 #include <WiFiClientSecure.h>
+#endif
 #include <HTTPClient.h>
 #include <time.h>
 
 #include "wifi_manager.h"
 #include "nvs_storage.h"
+#include "debug_print.h"
 
 #if __has_include("../include/supabase_root_ca.h")
 #include "../include/supabase_root_ca.h"
@@ -17,7 +21,9 @@
 #error "Please provide your Supabase root CA certificate"
 #endif
 
-// Supabase URL and anon key are provided by the app during provisioning and
+
+
+// Supabase URL is provided by the app during provisioning and
 // stored in NVS; do not rely on a local `secrets.h` file.
 
 static const uint32_t HTTP_TIMEOUT_MS = 20000;
@@ -30,7 +36,7 @@ static bool syncTimeNtp() {
       return true;
     }
   }
-  Serial.println("NTP sync failed (recorded_at will use DB default)");
+  DEBUG_PRINTLN("NTP sync failed (recorded_at will use DB default)");
   return false;
 }
 
@@ -45,25 +51,49 @@ static String jsonEscape(const char *s) {
   }
   return out;
 }
+
+static String iso8601Now() {
+  struct tm timeinfo;
+  if (!getLocalTime(&timeinfo, 100)) {
+    return "";
+  }
+  char buf[25];
+  strftime(buf, sizeof(buf), "%Y-%m-%dT%H:%M:%SZ", &timeinfo);
+  return String(buf);
+}
+
+static void appendJsonNumber(String &j, const char *key, float value, uint8_t decimals) {
+  char buf[24];
+  snprintf(buf, sizeof(buf), "%.*f", static_cast<int>(decimals), static_cast<double>(value));
+  j += ",\"";
+  j += key;
+  j += "\":";
+  j += buf;
+}
 static bool httpPostJsonWithDeviceAuth(const String &url,
                                       const String &jsonBody,
                                       const String &gatewayId,
                                       const String &deviceSecret,
-                                      const String &anonKey,
                                       int *outStatus,
                                       String *outBody) {
-  WiFiClientSecure client;
-  client.setCACert(SUPABASE_ROOT_CA_PEM);
+  #if DEBUG_MODE
+    DEBUG_PRINTLN("Supabase client: using insecure WiFiClient for testing");
+    WiFiClient client;
+  #else
+    WiFiClientSecure client;
+    client.setCACert(SUPABASE_ROOT_CA_PEM);
+  #endif
 
+  DEBUG_PRINTLN("Supabase client: POST " + url + " body=" + jsonBody);
+  
   HTTPClient http;
   http.setTimeout(HTTP_TIMEOUT_MS);
   if (!http.begin(client, url)) {
-    Serial.println("HTTP begin failed");
+    DEBUG_PRINTLN("HTTP begin failed");
     return false;
   }
 
   http.addHeader("Content-Type", "application/json");
-  http.addHeader("apikey", anonKey);
   if (gatewayId.length() > 0 && deviceSecret.length() > 0) {
     http.addHeader("x-gateway-id", gatewayId);
     http.addHeader("x-device-secret", deviceSecret);
@@ -90,7 +120,7 @@ bool supabaseBegin() {
   String gwId;
   String devSecret;
   if (!nvsGetSupabaseUrl(baseUrl) || !nvsGetGatewayId(gwId) || !nvsGetDeviceSecret(devSecret)) {
-    Serial.println("Supabase client: device not provisioned (missing URL or device creds)");
+    DEBUG_PRINTLN("Supabase client: device not provisioned (missing URL or device creds)");
     return false;
   }
   syncTimeNtp();
@@ -106,61 +136,40 @@ bool supabaseEnsureAuth() {
   return true;
 }
 
-static String buildSnapshotJson(const InverterSnapshot *s, const String &deviceId) {
+static String buildSnapshotJson(const InverterSnapshot *s,
+                              const String &inverterId,
+                              const String &recordedAt) {
   String j;
   j.reserve(900);
   j += "{";
-  j += "\"device_id\":\"" + jsonEscape(deviceId.c_str()) + "\",";
-  j += "\"modbus_ok\":";
-  j += s->modbus_ok ? "true" : "false";
-  j += ",\"battery_discharge_power_w\":";
-  j += String(s->battery_discharge_power_w, 1);
-  j += ",\"battery_charge_power_w\":";
-  j += String(s->battery_charge_power_w, 1);
-  j += ",\"vbat\":";
-  j += String(s->vbat, 1);
-  j += ",\"vbat_dsp\":";
-  j += String(s->vbat_dsp, 1);
-  j += ",\"soc_1014\":";
-  j += String(s->soc_1014, 0);
-  j += ",\"bms_soc\":";
-  j += String(s->bms_soc, 0);
-  j += ",\"bms_battery_volt\":";
-  j += String(s->bms_battery_volt, 1);
-  j += ",\"bms_battery_curr\":";
-  j += String(s->bms_battery_curr, 1);
-  j += ",\"battery_discharge_energy_today_kwh\":";
-  j += String(s->battery_discharge_energy_today_kwh, 1);
-  j += ",\"battery_charge_energy_today_kwh\":";
-  j += String(s->battery_charge_energy_today_kwh, 1);
-  j += ",\"grid_pac_w\":";
-  j += String(s->grid_pac_w, 1);
-  j += ",\"grid_frequency_hz\":";
-  j += String(s->grid_frequency_hz, 2);
-  j += ",\"grid_voltage_v\":";
-  j += String(s->grid_voltage_v, 1);
-  j += ",\"grid_current_a\":";
-  j += String(s->grid_current_a, 1);
-  j += ",\"power_to_grid_w\":";
-  j += String(s->power_to_grid_w, 1);
-  j += ",\"energy_to_grid_today_kwh\":";
-  j += String(s->energy_to_grid_today_kwh, 1);
-  j += ",\"ac_charge_energy_today_kwh\":";
-  j += String(s->ac_charge_energy_today_kwh, 1);
-  j += ",\"ac_charge_power_w\":";
-  j += String(s->ac_charge_power_w, 1);
-  j += ",\"eac_today_kwh\":";
-  j += String(s->eac_today_kwh, 1);
-  j += ",\"ea_charge_today_kwh\":";
-  j += String(s->ea_charge_today_kwh, 1);
-  j += ",\"ac_charge_power_spa_w\":";
-  j += String(s->ac_charge_power_spa_w, 1);
-  j += ",\"pv_energy_today_kwh\":";
-  j += String(s->pv_energy_today_kwh, 1);
-  j += ",\"power_to_user_w\":";
-  j += String(s->power_to_user_w, 1);
-  j += ",\"local_load_power_w\":";
-  j += String(s->local_load_power_w, 1);
+  j += "\"inverter_id\":\"" + jsonEscape(inverterId.c_str()) + "\"";
+  j += ",\"recorded_at\":\"" + jsonEscape(recordedAt.c_str()) + "\"";
+
+  const float batterySoc =
+      s->bms_soc > 0.0f ? s->bms_soc : s->soc_1014;
+  const float batteryVoltage =
+      s->vbat_dsp > 0.0f ? s->vbat_dsp :
+      (s->vbat > 0.0f ? s->vbat : s->bms_battery_volt);
+
+  appendJsonNumber(j, "battery_soc_percent", batterySoc, 0);
+  appendJsonNumber(j, "battery_voltage_v", batteryVoltage, 1);
+  appendJsonNumber(j, "battery_current_a", s->bms_battery_curr, 1);
+  appendJsonNumber(j, "battery_charge_power_w", s->battery_charge_power_w, 1);
+  appendJsonNumber(j, "battery_discharge_power_w", s->battery_discharge_power_w, 1);
+  appendJsonNumber(j, "battery_charge_energy_today_kwh", s->battery_charge_energy_today_kwh, 1);
+  appendJsonNumber(j, "battery_discharge_energy_today_kwh", s->battery_discharge_energy_today_kwh, 1);
+  appendJsonNumber(j, "grid_active_power_w", s->grid_pac_w, 1);
+  appendJsonNumber(j, "grid_frequency_hz", s->grid_frequency_hz, 2);
+  appendJsonNumber(j, "grid_voltage_v", s->grid_voltage_v, 1);
+  appendJsonNumber(j, "grid_current_a", s->grid_current_a, 1);
+  appendJsonNumber(j, "grid_export_power_w", s->power_to_grid_w, 1);
+  appendJsonNumber(j, "grid_export_energy_today_kwh", s->energy_to_grid_today_kwh, 1);
+  appendJsonNumber(j, "grid_import_energy_today_kwh", s->ac_charge_energy_today_kwh, 1);
+  appendJsonNumber(j, "grid_charge_power_w", s->ac_charge_power_spa_w, 1);
+  appendJsonNumber(j, "solar_energy_today_kwh", s->pv_energy_today_kwh, 1);
+  appendJsonNumber(j, "solar_power_w", s->power_to_user_w, 1);
+  appendJsonNumber(j, "home_load_power_w", s->local_load_power_w, 1);
+
   j += "}";
   return j;
 }
@@ -170,46 +179,52 @@ bool supabaseInsertSnapshot(const InverterSnapshot *snapshot) {
 
   String baseUrl;
   if (!nvsGetSupabaseUrl(baseUrl)) {
-    Serial.println("Supabase insert: supabase URL not provisioned");
+    DEBUG_PRINTLN("Supabase insert: supabase URL not provisioned");
     return false;
   }
   String gwId;
   String devSecret;
-  if (!nvsGetGatewayId(gwId) || !nvsGetDeviceSecret(devSecret)) {
-    Serial.println("Supabase insert: missing gateway credentials");
+  String inverterId;
+  if (!nvsGetGatewayId(gwId) || !nvsGetDeviceSecret(devSecret) ||
+      !nvsGetInverterId(inverterId)) {
+    DEBUG_PRINTLN("Supabase insert: missing gateway credentials");
+    return false;
+  }
+
+  String recordedAt = iso8601Now();
+  if (recordedAt.length() == 0) {
+    syncTimeNtp();
+    recordedAt = iso8601Now();
+  }
+  if (recordedAt.length() == 0) {
+    DEBUG_PRINTLN("Supabase insert: recorded_at unavailable (NTP not synced)");
     return false;
   }
 
   String url = baseUrl + "/functions/v1/ingest_snapshot";
-  String body = buildSnapshotJson(snapshot, gwId);
-
-  String anonKey;
-  if (!nvsGetSupabaseAnonKey(anonKey)) {
-    Serial.println("Supabase insert: anon key not provisioned");
-    return false;
-  }
+  String body = buildSnapshotJson(snapshot, inverterId, recordedAt);
 
   const int maxAttempts = 3;
   for (int attempt = 1; attempt <= maxAttempts; ++attempt) {
     int status = 0;
     String response;
-    if (!httpPostJsonWithDeviceAuth(url, body, gwId, devSecret, anonKey, &status, &response)) {
+    if (!httpPostJsonWithDeviceAuth(url, body, gwId, devSecret, &status, &response)) {
       if (attempt == maxAttempts) return false;
       delay(200 * attempt);
       continue;
     }
 
     if (status >= 200 && status < 300) {
-      Serial.println("Supabase insert OK");
+      DEBUG_PRINTLN("Supabase insert OK");
       return true;
     }
 
     if (status == 401) {
-      Serial.println("Supabase insert: invalid device credentials");
+      DEBUG_PRINTLN("Supabase insert: invalid device credentials");
       return false;
     }
 
-    Serial.printf("Supabase insert failed HTTP %d: %s\n", status, response.c_str());
+    DEBUG_PRINTLN("Supabase insert failed HTTP " + String(status) + ": " + response);
     if (status >= 500 || status <= 0) {
       if (attempt < maxAttempts) delay(500 * attempt);
       continue;
@@ -260,48 +275,42 @@ bool supabaseInsertEvent(const String &inverterId,
 
   String baseUrl;
   if (!nvsGetSupabaseUrl(baseUrl)) {
-    Serial.println("Supabase event: supabase URL not provisioned");
+    DEBUG_PRINTLN("Supabase event: supabase URL not provisioned");
     return false;
   }
 
   String gwId;
   String devSecret;
   if (!nvsGetGatewayId(gwId) || !nvsGetDeviceSecret(devSecret)) {
-    Serial.println("Supabase event: missing gateway credentials");
+    DEBUG_PRINTLN("Supabase event: missing gateway credentials");
     return false;
   }
 
   String url = baseUrl + "/functions/v1/ingest_event";
   String body = buildEventJson(inverterId, code, level, message, metadata);
 
-  String anonKey;
-  if (!nvsGetSupabaseAnonKey(anonKey)) {
-    Serial.println("Supabase event: anon key not provisioned");
-    return false;
-  }
-
   const int maxAttempts = 3;
   for (int attempt = 1; attempt <= maxAttempts; ++attempt) {
     int status = 0;
     String response;
-    if (!httpPostJsonWithDeviceAuth(url, body, gwId, devSecret, anonKey, &status, &response)) {
-      Serial.printf("Supabase event: HTTP post failed (attempt %d)\n", attempt);
+    if (!httpPostJsonWithDeviceAuth(url, body, gwId, devSecret, &status, &response)) {
+      DEBUG_PRINTLN("Supabase event: HTTP post failed (attempt " + String(attempt) + ")");
       if (attempt == maxAttempts) return false;
       delay(200 * attempt);
       continue;
     }
 
     if (status >= 200 && status < 300) {
-      Serial.println("Supabase event OK");
+      DEBUG_PRINTLN("Supabase event OK");
       return true;
     }
 
     if (status == 401) {
-      Serial.println("Supabase event: invalid device credentials");
+      DEBUG_PRINTLN("Supabase event: invalid device credentials");
       return false;
     }
 
-    Serial.printf("Supabase event failed HTTP %d: %s\n", status, response.c_str());
+    DEBUG_PRINTLN("Supabase event failed HTTP " + String(status) + ": " + response);
     if (status >= 500 || status <= 0) {
       if (attempt < maxAttempts) delay(500 * attempt);
       continue;

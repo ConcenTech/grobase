@@ -4,6 +4,11 @@
 // the implementation extracted from the prototype `main.cpp`.
 
 #include "modbus.h"
+#include "debug_print.h"
+
+#if MODBUS_MOCK
+#include "modbus_mock.h"
+#endif
 
 // Configuration local to Modbus module.
 static const uint8_t MODBUS_SLAVE_ID = 1;
@@ -17,7 +22,7 @@ static const uint32_t MODBUS_TIMEOUT_MS = 1500;
 static const uint8_t READ_FUNC = 0x04;
 static const uint16_t MAX_CHUNK_REGS = 40;
 
-static const bool DEBUG_HEX = false;
+static const bool DEBUG_HEX = true;
 
 HardwareSerial InverterSerial(2);
 
@@ -27,21 +32,32 @@ HardwareSerial InverterSerial(2);
 
 void printHexBytes(const uint8_t *buf, size_t len) {
 	for (size_t i = 0; i < len; i++) {
-		if (buf[i] < 16) Serial.print('0');
-		Serial.print(buf[i], HEX);
-		if (i + 1 < len) Serial.print(' ');
+		if (buf[i] < 16) DEBUG_PRINT('0');
+		DEBUG_PRINT(buf[i], HEX);
+		if (i + 1 < len) DEBUG_PRINT(' ');
 	}
-	Serial.println();
+	DEBUG_PRINTLN();
 }
 
 void modbusInit() {
+#if MODBUS_MOCK
+	DEBUG_PRINTF("MODBUS_MOCK enabled: skipping UART, SN=%s\n", MODBUS_MOCK_SERIAL_NUMBER);
+	return;
+#endif
 	InverterSerial.begin(MODBUS_BAUD, SERIAL_8N1, PIN_RX2, PIN_TX2);
 	if (DEBUG_HEX) {
-		Serial.printf("Modbus UART initialized RX=%d TX=%d @ %lu\n", PIN_RX2, PIN_TX2, MODBUS_BAUD);
+		DEBUG_PRINTF("Modbus UART initialized RX=%d TX=%d @ %lu\n", PIN_RX2, PIN_TX2, MODBUS_BAUD);
 	}
 }
 
 bool readRegisters04(uint8_t slave, uint16_t startReg, uint16_t count, uint16_t *outRegs) {
+#if MODBUS_MOCK
+	(void)slave;
+	(void)startReg;
+	(void)count;
+	(void)outRegs;
+	return false;
+#endif
 	uint8_t req[8];
 	req[0] = slave;
 	req[1] = READ_FUNC;
@@ -59,7 +75,7 @@ bool readRegisters04(uint8_t slave, uint16_t startReg, uint16_t count, uint16_t 
 	}
 
 	if (DEBUG_HEX) {
-		Serial.printf("TX f=0x%02X start=%u count=%u frame=", READ_FUNC, startReg, count);
+		DEBUG_PRINTF("TX f=0x%02X start=%u count=%u frame=", READ_FUNC, startReg, count);
 		printHexBytes(req, sizeof(req));
 	}
 
@@ -83,19 +99,19 @@ bool readRegisters04(uint8_t slave, uint16_t startReg, uint16_t count, uint16_t 
 	}
 
 	if (got != expectedLen) {
-		Serial.printf("RX short/timeout start=%u count=%u got=%u expected=%u\n",
+		DEBUG_PRINTF("RX short/timeout start=%u count=%u got=%u expected=%u\n",
 									startReg, count, (unsigned)got, (unsigned)expectedLen);
 		return false;
 	}
 
 	if (DEBUG_HEX) {
-		Serial.print("RX full=");
+		DEBUG_PRINT("RX full=");
 		printHexBytes(resp, expectedLen);
 	}
 
 	if (resp[0] != slave) return false;
 	if (resp[1] == (READ_FUNC | 0x80)) {
-		Serial.printf("Modbus exception start=%u code=0x%02X\n", startReg, resp[2]);
+		DEBUG_PRINTF("Modbus exception start=%u code=0x%02X\n", startReg, resp[2]);
 		return false;
 	}
 	if (resp[1] != READ_FUNC) return false;
@@ -117,6 +133,14 @@ bool readRegisters04(uint8_t slave, uint16_t startReg, uint16_t count, uint16_t 
 
 // Similar to readRegisters04 but for Function 0x03 (holding registers)
 bool readRegisters03(uint8_t slave, uint16_t startReg, uint16_t count, uint16_t *outRegs) {
+#if MODBUS_MOCK
+	(void)slave;
+	if (startReg == 23 && count == 5) {
+		modbusMockFillSerialNumberRegisters(outRegs);
+		return true;
+	}
+	return false;
+#endif
 	uint8_t req[8];
 	req[0] = slave;
 	req[1] = 0x03; // FC 03
@@ -134,7 +158,7 @@ bool readRegisters03(uint8_t slave, uint16_t startReg, uint16_t count, uint16_t 
 	}
 
 	if (DEBUG_HEX) {
-		Serial.printf("TX f=0x%02X start=%u count=%u frame=", 0x03, startReg, count);
+		DEBUG_PRINTF("TX f=0x%02X start=%u count=%u frame=", 0x03, startReg, count);
 		printHexBytes(req, sizeof(req));
 	}
 
@@ -158,19 +182,19 @@ bool readRegisters03(uint8_t slave, uint16_t startReg, uint16_t count, uint16_t 
 	}
 
 	if (got != expectedLen) {
-		Serial.printf("RX short/timeout start=%u count=%u got=%u expected=%u\n",
+		DEBUG_PRINTF("RX short/timeout start=%u count=%u got=%u expected=%u\n",
 									startReg, count, (unsigned)got, (unsigned)expectedLen);
 		return false;
 	}
 
 	if (DEBUG_HEX) {
-		Serial.print("RX full=");
+		DEBUG_PRINT("RX full=");
 		printHexBytes(resp, expectedLen);
 	}
 
 	if (resp[0] != slave) return false;
 	if (resp[1] == (0x03 | 0x80)) {
-		Serial.printf("Modbus exception start=%u code=0x%02X\n", startReg, resp[2]);
+		DEBUG_PRINTF("Modbus exception start=%u code=0x%02X\n", startReg, resp[2]);
 		return false;
 	}
 	if (resp[1] != 0x03) return false;
@@ -221,6 +245,10 @@ bool readAppRegisters(uint16_t *r1009,
 											uint16_t *r2035,
 											uint16_t *r2097,
 											uint16_t *r2112) {
+#if MODBUS_MOCK
+	modbusMockFillAppRegisters(r1009, r1086, r1124, r2035, r2097, r2112);
+	return true;
+#endif
 	if (!readRange04Chunked(R1009_START, R1009_COUNT, r1009)) return false;
 	if (!readRange04Chunked(R1086_START, R1086_COUNT, r1086)) return false;
 	if (!readRange04Chunked(R1124_START, R1124_COUNT, r1124)) return false;
