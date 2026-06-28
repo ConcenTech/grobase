@@ -10,6 +10,8 @@ Hardware & Modbus:
 - Modbus slave ID: 1
 - SN read: FC `0x03`, registers 23–27 (5 registers → 10 ASCII chars)
 - Telemetry: FC `0x04` input registers in blocks (see below)
+- Solar energy today: FC `0x04` registers **2053–2054** (`Eac today`, SPA "Today generate energy"), not 1149–1150
+- Battery voltage for upload: prefer **2097** (`BatVolt_DSP`) or **1013** (`Vbat`) over **1087** (`BMS_BatteryVolt`, SPH6K)
 
 Register blocks used by firmware v1 (prototype ranges):
 
