@@ -15,6 +15,9 @@ final databaseProvider = Provider.autoDispose((ref) => DatabaseService());
 class DatabaseService {
   final _db = Supabase.instance.client;
 
+  /// Base Supabase URL for provisioning the gateway firmware.
+  String get supabaseUrl => _db.rest.url.replaceFirst(RegExp(r'/rest/v1$'), '');
+
   // Returns the current user's inverters for the home screen.
   Future<List<Inverter>> inverters() async {
     try {
@@ -238,5 +241,5 @@ class DatabaseException implements Exception {
   DatabaseException(this.message, {this.error});
 
   @override
-  String toString() => 'DatabaseException: $message';
+  String toString() => 'DatabaseException: $message $error';
 }
