@@ -228,8 +228,8 @@ return $default(_that.id,_that.serialNumber,_that.displayName,_that.createdAt,_t
 /// @nodoc
 @JsonSerializable()
 
-class _Inverter with DiagnosticableTreeMixin implements Inverter {
-  const _Inverter({@JsonKey(name: 'id') required this.id, @JsonKey(name: 'serial_number') required this.serialNumber, @JsonKey(name: 'display_name') required this.displayName, @JsonKey(name: 'created_at') required this.createdAt, @JsonKey(name: 'last_seen_at') required this.lastSeenAt, @JsonKey(name: 'location') required this.location});
+class _Inverter extends Inverter with DiagnosticableTreeMixin {
+  const _Inverter({@JsonKey(name: 'id') required this.id, @JsonKey(name: 'serial_number') required this.serialNumber, @JsonKey(name: 'display_name') required this.displayName, @JsonKey(name: 'created_at') required this.createdAt, @JsonKey(name: 'last_seen_at') required this.lastSeenAt, @JsonKey(name: 'location') required this.location}): super._();
   factory _Inverter.fromJson(Map<String, dynamic> json) => _$InverterFromJson(json);
 
 @override@JsonKey(name: 'id') final  String id;

@@ -17,6 +17,10 @@ abstract class Inverter with _$Inverter {
     @JsonKey(name: 'location') required Location location,
   }) = _Inverter;
 
+  const Inverter._(); // Added constructor for custom getters
+
   factory Inverter.fromJson(Map<String, dynamic> json) =>
       _$InverterFromJson(json);
+
+  bool get isOnline => DateTime.now().difference(lastSeenAt).inHours < 5;
 }
