@@ -7,6 +7,8 @@
 #include <Arduino.h>
 
 void bleProvisionBegin();
+void bleProvisionStop();
+bool bleProvisionIsActive();
 void bleProvisionPoll();
 
 void bleProvisionSetHardwareId(const String &hardwareId);
