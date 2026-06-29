@@ -6,7 +6,7 @@
 #include "modbus.h"
 #include "debug_print.h"
 
-#if MODBUS_MOCK
+#if MOCK_INVERTER
 #include "modbus_mock.h"
 #endif
 
@@ -40,8 +40,8 @@ void printHexBytes(const uint8_t *buf, size_t len) {
 }
 
 void modbusInit() {
-#if MODBUS_MOCK
-	DEBUG_PRINTF("MODBUS_MOCK enabled: skipping UART, SN=%s\n", MODBUS_MOCK_SERIAL_NUMBER);
+#if MOCK_INVERTER
+	DEBUG_PRINTF("MOCK_INVERTER enabled: skipping UART, SN=%s\n", MODBUS_MOCK_SERIAL_NUMBER);
 	return;
 #endif
 	InverterSerial.begin(MODBUS_BAUD, SERIAL_8N1, PIN_RX2, PIN_TX2);
@@ -51,7 +51,7 @@ void modbusInit() {
 }
 
 bool readRegisters04(uint8_t slave, uint16_t startReg, uint16_t count, uint16_t *outRegs) {
-#if MODBUS_MOCK
+#if MOCK_INVERTER
 	(void)slave;
 	(void)startReg;
 	(void)count;
@@ -133,7 +133,7 @@ bool readRegisters04(uint8_t slave, uint16_t startReg, uint16_t count, uint16_t 
 
 // Similar to readRegisters04 but for Function 0x03 (holding registers)
 bool readRegisters03(uint8_t slave, uint16_t startReg, uint16_t count, uint16_t *outRegs) {
-#if MODBUS_MOCK
+#if MOCK_INVERTER
 	(void)slave;
 	if (startReg == 23 && count == 5) {
 		modbusMockFillSerialNumberRegisters(outRegs);
@@ -245,7 +245,7 @@ bool readAppRegisters(uint16_t *r1009,
 											uint16_t *r2035,
 											uint16_t *r2097,
 											uint16_t *r2112) {
-#if MODBUS_MOCK
+#if MOCK_INVERTER
 	modbusMockFillAppRegisters(r1009, r1086, r1124, r2035, r2097, r2112);
 	return true;
 #endif

@@ -2,7 +2,7 @@
 
 #include <stdint.h>
 
-// Serial number returned when MODBUS_MOCK is enabled. Use this value when
+// Serial number returned when MOCK_INVERTER is enabled. Use this value when
 // provisioning the device in mock mode so boot SN check passes.
 static const char MODBUS_MOCK_SERIAL_NUMBER[] = "MOCKINV001";
 
