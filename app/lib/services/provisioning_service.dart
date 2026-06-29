@@ -59,7 +59,7 @@ class ProvisioningService extends Notifier<ProvisioningState> {
     return const ProvisioningInformation();
   }
 
-  StreamSubscription<BleDevice>? _provisioningScanSubscription;
+  StreamSubscription<String>? _provisioningScanSubscription;
   StreamSubscription<ble.ConnectionStateUpdate>? _connectionSubscription;
   StreamSubscription<WifiStatus>? _wifiStatusSubscription;
 
@@ -146,9 +146,7 @@ class ProvisioningService extends Notifier<ProvisioningState> {
             return;
           }
 
-          _logger.info(
-            'Discovered provisioning device: ${device.name} (${device.id})',
-          );
+          _logger.info('Discovered provisioning device: $device');
 
           state = ProvisioningScanning({...currentState.devices, device});
         });
@@ -160,21 +158,19 @@ class ProvisioningService extends Notifier<ProvisioningState> {
     _logger.info('Provisioning scan stopped.');
   }
 
-  void connectToDevice(BleDevice device) {
+  void connectToDevice(String device) {
     // stopProvisioningScan();
 
-    _logger.info(
-      'Connecting to provisioning device: ${device.name} (${device.id})',
-    );
+    _logger.info('Connecting to provisioning device: $device');
 
     state = ProvisioningDeviceConnecting(device);
 
     _connectionSubscription = _ble
-        .connectionStream(device.id) //
+        .connectionStream(device) //
         .listen(
           (update) {
             _logger.info(
-              'Connection state update for ${device.name} (${device.id}): '
+              'Connection state update for $device: '
               '${update.connectionState}',
             );
             switch (update.connectionState) {
@@ -186,9 +182,16 @@ class ProvisioningService extends Notifier<ProvisioningState> {
                 _readIdentity(device);
                 break;
               case .disconnected:
+                // TODO: Verify disconnecting after writing config stops the error state
+                // if (state is ProvisioningDeviceWritingConfig) {
+                //   // Likely the config was written and the disconnection
+                //   // happened before we stopped the stream.
+                //   // TODO: Investigate whether the device is supposed to send an updated status after the config is written, before disconnecting.
+                //   return;
+                // }
                 if (state is! ProvisioningDeviceConnecting) {
                   _logger.info(
-                    'Disconnected from provisioning device: ${device.name} (${device.id})',
+                    'Disconnected from provisioning device: $device',
                   );
                   state = ProvisioningDeviceDisconnected(device);
                 } else {
@@ -205,7 +208,7 @@ class ProvisioningService extends Notifier<ProvisioningState> {
           onError: (Object error, StackTrace stackTrace) {
             _logger.severe(
               'Connection error for provisioning device '
-              '${device.name} (${device.id})',
+              '$device',
               error,
               stackTrace,
             );
@@ -223,14 +226,14 @@ class ProvisioningService extends Notifier<ProvisioningState> {
     _logger.info('Disconnected from provisioning device.');
   }
 
-  void _readIdentity(BleDevice device) async {
+  void _readIdentity(String device) async {
     try {
-      final gatewayStatus = await _ble.readStatus(device.id);
+      final gatewayStatus = await _ble.readStatus(device);
 
       if (gatewayStatus.status != .advertising) {
         _logger.severe(
           'Provisioning device is not in advertising state: '
-          '${device.name} (${device.id}) - Status: ${gatewayStatus.status}',
+          '$device - Status: ${gatewayStatus.status}',
         );
         state = ProvisioningDeviceError(
           device,
@@ -239,13 +242,13 @@ class ProvisioningService extends Notifier<ProvisioningState> {
         return;
       }
 
-      final hardwareId = await _ble.readHardwareId(device.id);
-      final inverterSn = await _ble.readInverterSerialNumber(device.id);
+      final hardwareId = await _ble.readHardwareId(device);
+      final inverterSn = await _ble.readInverterSerialNumber(device);
 
       if (inverterSn.isEmpty || inverterSn == 'UNKNOWN') {
         _logger.severe(
           'Provisioning device returned an invalid inverter serial number: '
-          '${device.name} (${device.id}) - Inverter SN: $inverterSn',
+          '$device - Inverter SN: $inverterSn',
         );
         state = ProvisioningDeviceError(
           device,
@@ -255,8 +258,7 @@ class ProvisioningService extends Notifier<ProvisioningState> {
       }
 
       _logger.info(
-        'Read identity from provisioning device: '
-        '${device.name} (${device.id}) - '
+        'Read identity from provisioning device: $device - '
         'Hardware ID: $hardwareId, '
         'Inverter SN: $inverterSn',
       );
@@ -267,8 +269,7 @@ class ProvisioningService extends Notifier<ProvisioningState> {
       );
     } catch (e) {
       _logger.severe(
-        'Failed to read identity from provisioning device: '
-        '${device.name} (${device.id})',
+        'Failed to read identity from provisioning device: $device',
         e,
       );
       state = ProvisioningDeviceError(device, e.toString());
@@ -276,7 +277,7 @@ class ProvisioningService extends Notifier<ProvisioningState> {
   }
 
   void sendWifiCredentials(
-    BleDevice device, {
+    String device, {
     required String ssid,
     required String password,
   }) async {
@@ -299,17 +300,14 @@ class ProvisioningService extends Notifier<ProvisioningState> {
 
     try {
       await _ble.writeWifiConfig(
-        deviceId: device.id,
+        deviceId: device,
         ssid: ssid,
         password: password,
       );
-      _logger.info(
-        'Sent WiFi credentials to provisioning device: '
-        '${device.name} (${device.id})',
-      );
+      _logger.info('Sent WiFi credentials to provisioning device: $device');
 
       try {
-        final deviceStatus = await _ble.readStatus(device.id);
+        final deviceStatus = await _ble.readStatus(device);
         _logger.info(
           'Device status after WiFi write: ${deviceStatus.detail} '
           '(${deviceStatus.status})',
@@ -321,15 +319,14 @@ class ProvisioningService extends Notifier<ProvisioningState> {
       // #endregion
     } catch (e) {
       _logger.severe(
-        'Failed to send WiFi credentials to provisioning device: '
-        '${device.name} (${device.id})',
+        'Failed to send WiFi credentials to provisioning device: $device',
         e,
       );
       state = ProvisioningDeviceError(device, e.toString());
     }
   }
 
-  void _waitForWifiConnection(BleDevice device) {
+  void _waitForWifiConnection(String device) {
     final currentState = state;
     if (currentState is! ProvisioningDeviceWiFiConnecting) {
       _logger.warning(
@@ -339,25 +336,22 @@ class ProvisioningService extends Notifier<ProvisioningState> {
       return;
     }
 
-    _logger.info(
-      'Waiting for provisioning device to connect to WiFi: '
-      '${device.name} (${device.id})',
-    );
+    _logger.info('Waiting for provisioning device to connect to WiFi: $device');
 
     _wifiStatusSubscription = _ble
-        .watchWifiStatus(device.id)
+        .watchWifiStatus(device)
         .listen(
           (status) {
             _logger.info(
               'Provisioning device WiFi status update: '
-              '${device.name} (${device.id}) - Status: $status',
+              '$device - Status: $status',
             );
 
             _handleWifiStatusUpdate(device, currentState, status);
           },
           onError: (Object error, StackTrace stackTrace) {
             _logger.severe(
-              'WiFi status subscription error for ${device.name} (${device.id})',
+              'WiFi status subscription error for $device',
               error,
               stackTrace,
             );
@@ -371,7 +365,7 @@ class ProvisioningService extends Notifier<ProvisioningState> {
   }
 
   void _handleWifiStatusUpdate(
-    BleDevice device,
+    String device,
     ProvisioningDeviceWiFiConnecting waitingState,
     WifiStatus status,
   ) {
@@ -385,13 +379,13 @@ class ProvisioningService extends Notifier<ProvisioningState> {
       case .connecting:
         _logger.info(
           'Provisioning device is connecting to WiFi: '
-          '${device.name} (${device.id})',
+          '$device',
         );
         break;
       case .connected:
         _logger.info(
           'Provisioning device connected to WiFi: '
-          '${device.name} (${device.id})',
+          '$device',
         );
         state = ProvisioningDeviceRegisteringGateway(
           device,
@@ -404,7 +398,7 @@ class ProvisioningService extends Notifier<ProvisioningState> {
       case .error:
         _logger.severe(
           'Provisioning device failed to connect to WiFi: '
-          '${device.name} (${device.id})',
+          '$device',
         );
         state = ProvisioningDeviceError(device, 'Failed to connect to WiFi');
         break;
@@ -434,7 +428,7 @@ class ProvisioningService extends Notifier<ProvisioningState> {
       );
       _logger.info(
         'Registered gateway for provisioning device: '
-        '${currentState.device.name} (${currentState.device.id})',
+        '${currentState.device}',
       );
       state = ProvisioningDeviceWritingConfig(
         currentState.device,
@@ -449,7 +443,7 @@ class ProvisioningService extends Notifier<ProvisioningState> {
     } catch (e) {
       _logger.severe(
         'Failed to register gateway for provisioning device: '
-        '${currentState.device.name} (${currentState.device.id})',
+        '${currentState.device}',
         e,
       );
       state = ProvisioningDeviceError(currentState.device, e.toString());
@@ -468,29 +462,33 @@ class ProvisioningService extends Notifier<ProvisioningState> {
 
     _logger.info(
       'Writing device config to provisioning device: '
-      '${currentState.device.name} (${currentState.device.id})',
+      '${currentState.device}',
     );
 
     try {
       await _ble.writeCloudConfig(
-        deviceId: currentState.device.id,
+        deviceId: currentState.device,
         supabaseUrl: _db.supabaseUrl,
       );
       _logger.info(
         'Wrote cloud config to provisioning device: '
-        '${currentState.device.name} (${currentState.device.id})',
+        '${currentState.device}',
       );
 
-      await _ble.writeDeviceConfig(currentState.device.id, currentState.config);
+      await _ble.writeDeviceConfig(currentState.device, currentState.config);
       _logger.info(
         'Successfully wrote device config to provisioning device: '
-        '${currentState.device.name} (${currentState.device.id})',
+        '${currentState.device}',
       );
+
+      // Stop listening to the connection as device is now fully provisioned
+      // and about to turn off the BLE connection.
+      _connectionSubscription?.cancel();
       state = const ProvisioningComplete();
     } catch (e) {
       _logger.severe(
         'Failed to write device config to provisioning device: '
-        '${currentState.device.name} (${currentState.device.id})',
+        '${currentState.device}',
         e,
       );
       state = ProvisioningDeviceError(currentState.device, e.toString());
@@ -511,7 +509,7 @@ class ProvisioningInitial extends ProvisioningState {
 }
 
 class ProvisioningScanning extends ProvisioningState {
-  final Set<BleDevice> devices;
+  final Set<String> devices;
 
   const ProvisioningScanning(this.devices);
 }
@@ -529,7 +527,7 @@ class ProvisioningPermissionsError extends ProvisioningState {
 }
 
 abstract class ProvisioningDevice extends ProvisioningState {
-  final BleDevice device;
+  final String device;
 
   const ProvisioningDevice(this.device);
 }

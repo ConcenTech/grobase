@@ -3,7 +3,6 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 
 import '../../../core/components/animations/bluetooth_connecting_animation.dart';
-import '../../../services/bluetooth/bluetooth_service.dart';
 
 class ConnectingToDeviceWidget extends StatelessWidget {
   const ConnectingToDeviceWidget({
@@ -18,7 +17,7 @@ class ConnectingToDeviceWidget extends StatelessWidget {
          'onRetry must be provided when status is error or disconnected, and should be null otherwise.',
        );
 
-  final BleDevice device;
+  final String device;
 
   final ConnectionSatus status;
 
@@ -39,14 +38,14 @@ class ConnectingToDeviceWidget extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(switch (status) {
-            .connecting => 'Connecting to ${device.name}. \n',
+            .connecting => 'Connecting to $device. \n',
             .connected =>
-              'Connected to ${device.name} \n'
+              'Connected to $device \n'
                   'Configuring device.',
             .error =>
-              'Failed to connect to ${device.name}. \n'
+              'Failed to connect to $device. \n'
                   '${error ?? 'An unknown error occurred.'}',
-            .disconnected => '${device.name} disconnected. \n',
+            .disconnected => '$device disconnected. \n',
           }, textAlign: TextAlign.center),
           BluetoothConnectingAnimation(status: status),
           const SizedBox(height: 16),

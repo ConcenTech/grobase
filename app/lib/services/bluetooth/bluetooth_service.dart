@@ -21,25 +21,6 @@ final bluetoothProvider = Provider.autoDispose(
   (ref) => BluetoothService(FlutterReactiveBle()),
 );
 
-class BleDevice {
-  final String name;
-  final String id;
-
-  BleDevice(this.name, this.id);
-
-  factory BleDevice.fromBle(DiscoveredDevice device) {
-    return BleDevice(device.name, device.id);
-  }
-
-  @override
-  int get hashCode => id.hashCode;
-
-  @override
-  bool operator ==(Object other) {
-    return other is BleDevice && other.id == id;
-  }
-}
-
 class BluetoothService {
   const BluetoothService(this._ble);
   // ignore: unused_field
@@ -72,7 +53,7 @@ class BluetoothService {
   static const String _setupDeviceName = 'GroBase-Setup';
 
   // Starts scanning for the ESP32 setup device used during provisioning.
-  Stream<BleDevice> provisioningStream() {
+  Stream<String> provisioningStream() {
     return _ble
         .scanForDevices(
           // Must match connectToAdvertisingDevice's withServices so the
@@ -85,7 +66,7 @@ class BluetoothService {
               device.serviceUuids.contains(_setupServiceUuid);
         })
         .map((device) {
-          return BleDevice.fromBle(device);
+          return device.id;
         });
   }
 

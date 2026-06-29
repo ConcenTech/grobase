@@ -3,7 +3,6 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 
 import '../../../core/components/animations/bluetooth_searching_animation.dart';
-import '../../../services/bluetooth/bluetooth_service.dart';
 
 class SearchingForDevicesWidget extends StatelessWidget {
   const SearchingForDevicesWidget({
@@ -12,8 +11,8 @@ class SearchingForDevicesWidget extends StatelessWidget {
     required this.onDeviceSelected,
   });
 
-  final Set<BleDevice> devices;
-  final void Function(BleDevice device) onDeviceSelected;
+  final Set<String> devices;
+  final void Function(String device) onDeviceSelected;
 
   @override
   Widget build(BuildContext context) {
@@ -45,10 +44,8 @@ class SearchingForDevicesWidget extends StatelessWidget {
                 final device = devices.elementAt(index);
                 return Card(
                   child: ListTile(
-                    title: Text(
-                      device.name.isNotEmpty ? device.name : 'Unknown Device',
-                    ),
-                    subtitle: Text(device.id),
+                    title: Text(device.isEmpty ? 'Unknown Device' : device),
+                    subtitle: const Text('GroBase-Setup'),
                     trailing: ElevatedButton(
                       onPressed: () => onDeviceSelected(device),
                       child: const Text('Connect'),
