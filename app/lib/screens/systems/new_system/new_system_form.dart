@@ -60,6 +60,7 @@ class _NewSystemFormState extends State<NewSystemForm> {
                 onSaved: (value) {
                   _systemName = value;
                 },
+                textCapitalization: TextCapitalization.sentences,
               ),
               const Text('Where is your system located?'),
               CityFormField(
@@ -72,6 +73,7 @@ class _NewSystemFormState extends State<NewSystemForm> {
                 onSaved: (city) {
                   _systemLocation = city!;
                 },
+                textCapitalization: TextCapitalization.words,
               ),
               const SizedBox(height: 16),
               ElevatedButton(

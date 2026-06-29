@@ -14,6 +14,7 @@ class CityFormField extends StatelessWidget {
     this.validator,
     this.decoration,
     this.textInputAction,
+    this.textCapitalization,
   });
 
   final Location? initialValue;
@@ -25,6 +26,8 @@ class CityFormField extends StatelessWidget {
   final InputDecoration? decoration;
 
   final TextInputAction? textInputAction;
+
+  final TextCapitalization? textCapitalization;
 
   @override
   Widget build(BuildContext context) {
@@ -61,6 +64,7 @@ class CityFormField extends StatelessWidget {
                       errorText: state.errorText ?? error?.toString(),
                     ),
                     textInputAction: textInputAction,
+                    textCapitalization: textCapitalization,
                   ),
               ],
             );
@@ -80,6 +84,7 @@ class _AutoComplete extends StatelessWidget {
     this.errorText,
     this.decoration,
     this.textInputAction,
+    this.textCapitalization,
   });
 
   final Location? initialValue;
@@ -89,6 +94,7 @@ class _AutoComplete extends StatelessWidget {
 
   final InputDecoration? decoration;
   final TextInputAction? textInputAction;
+  final TextCapitalization? textCapitalization;
 
   @override
   Widget build(BuildContext context) {
@@ -104,6 +110,7 @@ class _AutoComplete extends StatelessWidget {
           focusNode: focusNode,
           onFieldSubmitted: (_) => onSubmit(),
           textInputAction: textInputAction,
+          textCapitalization: textCapitalization ?? TextCapitalization.none,
         );
       },
       optionsBuilder: (textEditingValue) {
