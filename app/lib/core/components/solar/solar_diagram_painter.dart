@@ -201,7 +201,10 @@ class SolarDiagramPainter extends CustomPainter {
       fr - w * 0.15,
       ft + h * 0.44,
     );
-    final screen = RRect.fromRectAndRadius(screenRect, Radius.circular(half * 0.06));
+    final screen = RRect.fromRectAndRadius(
+      screenRect,
+      Radius.circular(half * 0.06),
+    );
     canvas.drawRRect(screen, Paint()..color = _tone(const Color(0xFF18222D)));
     final bar = Paint()
       ..style = PaintingStyle.stroke
@@ -520,7 +523,7 @@ class SolarDiagramPainter extends CustomPainter {
       Radius.circular(r * 0.12),
     );
     // Fill colour reflects state of charge (red → amber → green).
-    final fillColor = SolarDiagramPalette.batteryColor(data.batteryLevel);
+    final fillColor = SolarDiagramPalette.batteryColor(data.batteryLevel / 100);
     final innerRect = inner.outerRect;
     final fillTop = innerRect.bottom - innerRect.height * data.batteryLevel;
     final fillRect = Rect.fromLTRB(
@@ -577,7 +580,7 @@ class SolarDiagramPainter extends CustomPainter {
   // House (with night illumination)
   // ---------------------------------------------------------------------------
 
-  void _paintHouse(Canvas canvas, Offset c, double baseR) {
+  void _paintHouse(Canvas canvas, Offset centre, double baseR) {
     final na = nightAmount;
     // The house reads a little small next to the other icons, so draw it larger.
     final r = baseR * 1.3;
@@ -600,12 +603,12 @@ class SolarDiagramPainter extends CustomPainter {
       ..strokeCap = StrokeCap.round
       ..color = outlineCol;
 
-    final groundY = c.dy + r * 0.86;
+    final groundY = centre.dy + r * 0.86;
 
     // Soft glow spilling from the house at night (fades in with nightAmount).
     if (na > 0.001) {
       canvas.drawCircle(
-        c,
+        centre,
         r * 1.7,
         Paint()
           ..color = palette.windowLit.withValues(alpha: 0.16 * na)
@@ -617,7 +620,7 @@ class SolarDiagramPainter extends CustomPainter {
     canvas.drawOval(
       Rect.fromCenter(
         center: Offset(
-          c.dx + r * (showGarage ? 0.25 : 0.05),
+          centre.dx + r * (showGarage ? 0.25 : 0.05),
           groundY + r * 0.04,
         ),
         width: r * (showGarage ? 2.7 : 1.9),
@@ -631,13 +634,13 @@ class SolarDiagramPainter extends CustomPainter {
     // 3/4-view geometry. Depth vector pushes faces back-right and up.
     final dxp = r * 0.30;
     final dyp = -r * 0.18;
-    final fbl = Offset(c.dx - r * 0.66, groundY);
-    final fbr = Offset(c.dx + r * 0.30, groundY);
-    final ftr = Offset(c.dx + r * 0.30, c.dy + r * 0.04);
-    final ftl = Offset(c.dx - r * 0.66, c.dy + r * 0.04);
+    final fbl = Offset(centre.dx - r * 0.66, groundY);
+    final fbr = Offset(centre.dx + r * 0.30, groundY);
+    final ftr = Offset(centre.dx + r * 0.30, centre.dy + r * 0.04);
+    final ftl = Offset(centre.dx - r * 0.66, centre.dy + r * 0.04);
     final sbr = Offset(fbr.dx + dxp, fbr.dy + dyp);
     final str = Offset(ftr.dx + dxp, ftr.dy + dyp);
-    final apexF = Offset(c.dx - r * 0.18, c.dy - r * 0.5);
+    final apexF = Offset(centre.dx - r * 0.18, centre.dy - r * 0.5);
     final apexB = Offset(apexF.dx + dxp, apexF.dy + dyp);
 
     void poly(List<Offset> pts, Color fill) {
@@ -651,10 +654,10 @@ class SolarDiagramPainter extends CustomPainter {
     poly([ftr, str, apexB, apexF], roofSide);
 
     // Chimney (3D box) sitting on the right roof slope.
-    final chx0 = c.dx + r * 0.08;
-    final chx1 = c.dx + r * 0.2;
-    final chTop = c.dy - r * 0.52;
-    final chBot = c.dy - r * 0.16;
+    final chx0 = centre.dx + r * 0.08;
+    final chx1 = centre.dx + r * 0.2;
+    final chTop = centre.dy - r * 0.52;
+    final chBot = centre.dy - r * 0.16;
     final chD = Offset(dxp * 0.35, dyp * 0.35);
     poly([
       Offset(chx1, chTop),
@@ -676,7 +679,7 @@ class SolarDiagramPainter extends CustomPainter {
     // Arched wooden door.
     final doorW = r * 0.23;
     final doorH = r * 0.42;
-    final doorCx = c.dx - r * 0.18;
+    final doorCx = centre.dx - r * 0.18;
     final door = RRect.fromRectAndCorners(
       Rect.fromLTRB(
         doorCx - doorW / 2,
@@ -712,7 +715,7 @@ class SolarDiagramPainter extends CustomPainter {
       for (final wx in winXs) {
         _paintHouseWindow(
           canvas,
-          Offset(c.dx + r * wx, c.dy + r * wy),
+          Offset(centre.dx + r * wx, centre.dy + r * wy),
           winSize,
           outlineCol,
           na,
@@ -729,10 +732,10 @@ class SolarDiagramPainter extends CustomPainter {
       canvas.scale(1, 0.78);
       canvas.translate(0, -groundY);
 
-      final gL = c.dx + r * 0.3;
-      final gR = c.dx + r * 0.78;
-      final gEaveY = c.dy + r * 0.12;
-      final gApex = Offset((gL + gR) / 2, c.dy - r * 0.26);
+      final gL = centre.dx + r * 0.3;
+      final gR = centre.dx + r * 0.78;
+      final gEaveY = centre.dy + r * 0.12;
+      final gApex = Offset((gL + gR) / 2, centre.dy - r * 0.26);
       final gApexB = Offset(gApex.dx + dxp, gApex.dy + dyp);
       final gtl = Offset(gL, gEaveY);
       final gtr = Offset(gR, gEaveY);
@@ -751,7 +754,7 @@ class SolarDiagramPainter extends CustomPainter {
       // Up-and-over door.
       final dL = gL + r * 0.07;
       final dR = gR - r * 0.07;
-      final dTop = c.dy + r * 0.22;
+      final dTop = centre.dy + r * 0.22;
       final dBot = groundY - r * 0.02;
       final garageDoor = RRect.fromRectAndCorners(
         Rect.fromLTRB(dL, dTop, dR, dBot),
