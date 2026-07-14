@@ -17,4 +17,10 @@ Initial beta app release
 - Settings screen. Placeholder only for now.
 - Bottom bar added to home screen. Users can now navigate between [Home] [Systems] [Settings]
 
-[0.2.1]: https://github.com/ConcenTech/album_share/compare/main...v0.1.1
+## [0.1.2] - 14/07/26
+
+### Fixed
+- Unable to find SplashScreen or TestScreen during build
+
+[0.1.1]: https://github.com/ConcenTech/grobase/compare/main...v0.1.1
+[0.1.2]: https://github.com/ConcenTech/grobase/compare/v0.1.1...v0.1.2

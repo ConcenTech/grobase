@@ -6,7 +6,6 @@ import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../core/components/app_scaffold.dart';
-import '../core/components/test/test_page.dart';
 import '../screens/auth/auth_screen.dart';
 import '../screens/home/home_screen.dart';
 import '../screens/settings/settings_screen.dart';
@@ -42,9 +41,9 @@ class AppRouter {
     return null;
   }
 
-  List<RouteBase> get _testRoutes => [
-    GoRoute(path: '/', builder: (context, state) => const TestPage()),
-  ];
+  // List<RouteBase> get _testRoutes => [
+  //   GoRoute(path: '/', builder: (context, state) => const TestPage()),
+  // ];
 
   List<RouteBase> get _routes => [
     GoRoute(
