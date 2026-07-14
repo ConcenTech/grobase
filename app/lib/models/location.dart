@@ -33,9 +33,13 @@ class Location with _$Location {
     'longitude': longitude,
   };
 
-  factory Location.fromJsonList(List<dynamic> json) => Location(
-    name: json[0] as String,
-    latitude: (json[1] as num).toDouble(),
-    longitude: (json[2] as num).toDouble(),
-  );
+  factory Location.fromJsonList(List<dynamic> json) {
+    final name = json[0] as String;
+    return Location(
+      name: name,
+      latitude: (json[1] as num).toDouble(),
+      longitude: (json[2] as num).toDouble(),
+      searchName: name.toLowerCase(),
+    );
+  }
 }
