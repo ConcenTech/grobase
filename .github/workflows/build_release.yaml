@@ -78,7 +78,9 @@ jobs:
         working-directory: app
         run: |
           flutter pub get
-          flutter build appbundle
+          flutter build appbundle \
+            --dart-define=SUPABASE_URL=${{ secrets.SUPABASE_URL }} \
+            --dart-define=SUPABASE_PUBLISHABLE_KEY=${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
           ls -lah
 
       - name: Rename bundle
