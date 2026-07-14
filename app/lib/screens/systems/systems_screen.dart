@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_material_design_icons/flutter_material_design_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../core/components/app_scaffold.dart';
 import '../../core/components/images/renewable_energy_site.dart';
-import '../../models/inverter.dart';
-import '../home/home_screen.dart';
+import '../../core/components/loading_indicator.dart';
+import '../../models/database/inverter.dart';
+import '../../services/inverters_provider.dart';
 import 'new_system/new_system_wizard.dart';
 
 void _showNewSystemBottomSheet(BuildContext context) {
@@ -21,7 +24,9 @@ void _showNewSystemBottomSheet(BuildContext context) {
 class SystemsScreen extends StatelessWidget {
   const SystemsScreen({super.key});
 
-  void _onSystemSelected(BuildContext context, Inverter system) {
+  void _onSystemSelected(BuildContext context, WidgetRef ref, Inverter system) {
+    ref.read(selectedInverterProvider.notifier).select(system);
+    GoRouter.of(context).go('/');
     // Handle system selection, e.g., navigate to system details
   }
 
@@ -34,25 +39,35 @@ class SystemsScreen extends StatelessWidget {
         builder: (context, ref, child) {
           final invertersRef = ref.watch(invertersProvider);
 
-          return invertersRef.when(
-            data: (systems) {
-              if (systems.isEmpty) {
-                return const NoSystemsWidget();
-              } else {
-                return SystemsListWidget(
-                  systems: systems,
-                  onSystemSelected: (system) {
-                    _onSystemSelected(context, system);
-                  },
-                );
-              }
-            },
-            error: (e, s) {
-              return Center(child: Text('Error loading systems: $e'));
-            },
-            loading: () {
-              return const Center(child: CircularProgressIndicator());
-            },
+          if (invertersRef.hasValue) {
+            final systems = invertersRef.requireValue;
+
+            if (systems.isEmpty) {
+              return const NoSystemsWidget();
+            } else {
+              return Consumer(
+                builder: (context, ref, child) {
+                  return SystemsListWidget(
+                    systems: systems,
+                    onSystemSelected: (system) {
+                      _onSystemSelected(context, ref, system);
+                    },
+                  );
+                },
+              );
+            }
+          }
+
+          final isLoading = invertersRef.isLoading;
+
+          return WindTurbinesIndicator(
+            status: invertersRef.isLoading ? .loading : .error,
+            caption: isLoading
+                ? 'Fetching your systems'
+                : 'Unable to load your systems',
+            details: isLoading
+                ? null
+                : 'Please check your internet connection and try again.',
           );
         },
       ),
@@ -139,6 +154,7 @@ class SystemsListWidget extends StatelessWidget {
         final system = systems[index];
         return Card(
           child: ListTile(
+            onTap: () => onSystemSelected(system),
             title: Text(system.displayName, style: theme.textTheme.titleMedium),
             subtitle: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -152,7 +168,7 @@ class SystemsListWidget extends StatelessWidget {
                   spacing: 12.0,
                   children: [
                     SystemDetailCard(
-                      icon: Icons.bolt, //
+                      icon: MdiIcons.transmissionTower, //
                       value: null,
                       unit: 'kW',
                     ),
