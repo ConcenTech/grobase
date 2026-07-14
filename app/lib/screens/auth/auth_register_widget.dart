@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -54,7 +55,12 @@ class _AuthRegisterWidgetState extends ConsumerState<AuthRegisterWidget> {
       form.save();
       ref
           .read(_registerAccountProvider.notifier)
-          .registerAccount(_email!, _passwordController.text);
+          .registerAccount(_email!, _passwordController.text) //
+          .then((success) {
+            if (success) {
+              TextInput.finishAutofillContext();
+            }
+          });
     }
   }
 
@@ -136,82 +142,84 @@ class _AuthRegisterWidgetState extends ConsumerState<AuthRegisterWidget> {
 
         return Form(
           key: _formKey,
-          child: AuthColumn(
-            children: [
-              TextFormField(
-                key: const Key('email-field'),
-                restorationId: 'email-field',
-                enabled: !isLoading,
-                autofocus: true,
-                decoration: const InputDecoration(
-                  labelText: 'Email',
-                  border: OutlineInputBorder(),
-                ),
-                validator: Validators.email,
-                autofillHints: const [AutofillHints.email],
-                keyboardType: TextInputType.emailAddress,
-                textInputAction: TextInputAction.next,
-                onSaved: (value) => _email = value,
-              ),
-              TextFormField(
-                enabled: !isLoading,
-                obscureText: true,
-                decoration: const InputDecoration(
-                  labelText: 'Password',
-                  border: OutlineInputBorder(),
-                ),
-                validator: Validators.password,
-                autofillHints: const [AutofillHints.password],
-                keyboardType: TextInputType.visiblePassword,
-                textInputAction: TextInputAction.done,
-                controller: _passwordController,
-                onFieldSubmitted: isLoading ? null : (_) => _register(),
-              ),
-              TextFormField(
-                enabled: !isLoading,
-                obscureText: true,
-                decoration: const InputDecoration(
-                  labelText: 'Confirm Password',
-                  border: OutlineInputBorder(),
-                ),
-                validator: (v) =>
-                    Validators.confirmPassword(v, _passwordController.text),
-                autofillHints: const [AutofillHints.password],
-                keyboardType: TextInputType.visiblePassword,
-                textInputAction: TextInputAction.done,
-                controller: _confirmPasswordController,
-                onFieldSubmitted: isLoading || !_termsAgreed
-                    ? null
-                    : (_) => _register(),
-              ),
-              CheckboxListTile(
-                contentPadding: EdgeInsets.zero,
-                title: const Text('I agree to the Terms and Conditions'),
-                controlAffinity: ListTileControlAffinity.leading,
-                value: _termsAgreed,
-
-                onChanged: (value) {
-                  setState(() {
-                    _termsAgreed = value ?? false;
-                  });
-                },
-              ),
-              if (state.error != null)
-                Text(
-                  state.error!,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.error,
+          child: AutofillGroup(
+            child: AuthColumn(
+              children: [
+                TextFormField(
+                  key: const Key('email-field'),
+                  restorationId: 'email-field',
+                  enabled: !isLoading,
+                  autofocus: true,
+                  decoration: const InputDecoration(
+                    labelText: 'Email',
+                    border: OutlineInputBorder(),
                   ),
+                  validator: Validators.email,
+                  autofillHints: const [AutofillHints.email],
+                  keyboardType: TextInputType.emailAddress,
+                  textInputAction: TextInputAction.next,
+                  onSaved: (value) => _email = value,
                 ),
+                TextFormField(
+                  enabled: !isLoading,
+                  obscureText: true,
+                  decoration: const InputDecoration(
+                    labelText: 'Password',
+                    border: OutlineInputBorder(),
+                  ),
+                  validator: Validators.password,
+                  autofillHints: const [AutofillHints.password],
+                  keyboardType: TextInputType.visiblePassword,
+                  textInputAction: TextInputAction.done,
+                  controller: _passwordController,
+                  onFieldSubmitted: isLoading ? null : (_) => _register(),
+                ),
+                TextFormField(
+                  enabled: !isLoading,
+                  obscureText: true,
+                  decoration: const InputDecoration(
+                    labelText: 'Confirm Password',
+                    border: OutlineInputBorder(),
+                  ),
+                  validator: (v) =>
+                      Validators.confirmPassword(v, _passwordController.text),
+                  autofillHints: const [AutofillHints.password],
+                  keyboardType: TextInputType.visiblePassword,
+                  textInputAction: TextInputAction.done,
+                  controller: _confirmPasswordController,
+                  onFieldSubmitted: isLoading || !_termsAgreed
+                      ? null
+                      : (_) => _register(),
+                ),
+                CheckboxListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: const Text('I agree to the Terms and Conditions'),
+                  controlAffinity: ListTileControlAffinity.leading,
+                  value: _termsAgreed,
 
-              const SizedBox(height: 16),
-              FilledButton(
-                onPressed: isLoading || !_termsAgreed ? null : _register,
-                child: isLoading
-                    ? const CircularProgressIndicator()
-                    : const Text('Register'),
-              ),
-            ],
+                  onChanged: (value) {
+                    setState(() {
+                      _termsAgreed = value ?? false;
+                    });
+                  },
+                ),
+                if (state.error != null)
+                  Text(
+                    state.error!,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: Theme.of(context).colorScheme.error,
+                    ),
+                  ),
+
+                const SizedBox(height: 16),
+                FilledButton(
+                  onPressed: isLoading || !_termsAgreed ? null : _register,
+                  child: isLoading
+                      ? const CircularProgressIndicator()
+                      : const Text('Register'),
+                ),
+              ],
+            ),
           ),
         );
       },
@@ -264,7 +272,7 @@ class _RegisterAccountNotifier extends Notifier<_RegisterAccountState> {
   /// An email confirmation will be sent to the user, and the notifier will
   /// listen for authentication state changes to detect when the email is
   /// confirmed.
-  Future<void> registerAccount(String email, String password) async {
+  Future<bool> registerAccount(String email, String password) async {
     state = state.copyWith(status: AsyncStatus.loading);
     try {
       await Supabase.instance.client.auth.signUp(
@@ -273,6 +281,7 @@ class _RegisterAccountNotifier extends Notifier<_RegisterAccountState> {
         emailRedirectTo: 'com.concentech.grobase://login-callback',
       );
       state = state.copyWith(status: AsyncStatus.success, email: email);
+      return true;
     } on AuthException catch (e) {
       state = state.copyWith(status: AsyncStatus.error, error: e.message);
     } catch (e) {
@@ -281,6 +290,7 @@ class _RegisterAccountNotifier extends Notifier<_RegisterAccountState> {
         error: 'An unexpected error occurred',
       );
     }
+    return false;
   }
 
   /// Account has been registered previously or on another device.
