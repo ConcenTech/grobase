@@ -1,4 +1,4 @@
-package com.example.grobase
+package com.concentech.grobase
 
 import io.flutter.embedding.android.FlutterActivity
 
