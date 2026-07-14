@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../screens/systems/systems_screen.dart';
 import 'logo.dart';
 import 'solar/weather_background.dart';
 
@@ -13,7 +15,10 @@ class AppScaffold extends StatelessWidget {
     this.actions = const [],
     this.showBackButton = false,
     this.bottomSheet,
+    this.navigationBar,
   });
+
+  final Widget? navigationBar;
 
   final Widget body;
 
@@ -62,6 +67,7 @@ class AppScaffold extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      bottomNavigationBar: navigationBar,
       backgroundColor: Colors.transparent,
       body: Stack(
         fit: StackFit.expand,
@@ -104,6 +110,53 @@ class AppScaffold extends StatelessWidget {
         ],
       ),
       bottomSheet: bottomSheet,
+    );
+  }
+}
+
+class HomeScaffold extends StatelessWidget {
+  const HomeScaffold(this.shell, {super.key});
+
+  final StatefulNavigationShell shell;
+
+  String? get _title => switch (shell.currentIndex) {
+    0 => null,
+    1 => 'Systems',
+    2 => 'Settings',
+    _ => null,
+  };
+
+  List<Widget> get _actions => switch (shell.currentIndex) {
+    0 => [],
+    1 => const [NewSystemButton()],
+    2 => const [],
+    _ => const [],
+  };
+
+  EdgeInsetsGeometry? get _padding => switch (shell.currentIndex) {
+    0 => const EdgeInsets.all(0),
+    _ => null,
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    return AppScaffold(
+      body: shell,
+      title: _title,
+      actions: _actions,
+      padding: _padding,
+      navigationBar: NavigationBar(
+        onDestinationSelected: (index) => shell.goBranch(index),
+        selectedIndex: shell.currentIndex,
+        destinations: const [
+          NavigationDestination(icon: Icon(Icons.home), label: 'Home'),
+          NavigationDestination(
+            icon: Icon(Icons.solar_power),
+            label: 'Systems',
+          ),
+          NavigationDestination(icon: Icon(Icons.settings), label: 'Settings'),
+        ],
+      ),
     );
   }
 }
