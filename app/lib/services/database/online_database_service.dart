@@ -1,18 +1,21 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:logging/logging.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../models/gateway.dart';
-import '../models/gateway_event.dart';
-import '../models/gateway_registration.dart';
-import '../models/inverter.dart';
-import '../models/inverter_member.dart';
-import '../models/inverter_snapshot.dart';
-import '../models/invite_link.dart';
-import '../models/invite_preview.dart';
+import '../../models/database/gateway.drift.dart';
+import '../../models/database/gateway_event.drift.dart';
+import '../../models/database/inverter.dart';
+import '../../models/database/inverter_member.drift.dart';
+import '../../models/database/inverter_snapshot.drift.dart';
+import '../../models/gateway_registration.dart';
+import '../../models/invite_link.dart';
+import '../../models/invite_preview.dart';
 
-final databaseProvider = Provider.autoDispose((ref) => DatabaseService());
+final databaseProvider = Provider.autoDispose((ref) => OnlineDatabaseService());
 
-class DatabaseService {
+final _logger = Logger('OnlineDatabaseService');
+
+class OnlineDatabaseService {
   final _db = Supabase.instance.client;
 
   /// Base Supabase URL for provisioning the gateway firmware.
@@ -58,13 +61,18 @@ class DatabaseService {
     DateTime? end,
   }) async {
     try {
-      final data = await _db
+      var query = _db
           .from('inverter_snapshots')
           .select()
-          .eq('inverter_id', inverterId)
-          .filter('ingested_at', '<=', end?.toIso8601String())
-          .filter('ingested_at', '>=', start?.toIso8601String())
-          .order('timestamp', ascending: true);
+          .eq('inverter_id', inverterId);
+      if (start != null) {
+        query = query.gte('recorded_at', start.toIso8601String());
+      }
+
+      if (end != null) {
+        query = query.lte('recorded_at', end.toIso8601String());
+      }
+      final data = await query.order('recorded_at', ascending: true);
 
       return data.map((item) => InverterSnapshot.fromJson(item)).toList();
     } on PostgrestException catch (e) {
@@ -72,6 +80,74 @@ class DatabaseService {
     } catch (e) {
       throw DatabaseException('An unexpected error occurred', error: e);
     }
+  }
+
+  RealtimeChannel inverterChanges({
+    required void Function(Inverter user) onCreate,
+    required void Function(Inverter user) onUpdate,
+    required void Function(String id) onDelete,
+  }) {
+    return _db
+        .channel('inverters')
+        .onPostgresChanges(
+          event: PostgresChangeEvent.all,
+          schema: 'public',
+          table: 'inverters',
+          callback: (payload) {
+            switch (payload.eventType) {
+              case .insert:
+                onCreate(Inverter.fromJson(payload.newRecord));
+              case .update:
+                onUpdate(Inverter.fromJson(payload.newRecord));
+              case .delete:
+                onDelete(payload.oldRecord['id']);
+              default:
+                break;
+            }
+          },
+        )
+        .subscribe((status, object) {
+          _logger.info('Inverter changes subscription status: $status');
+          if (status == RealtimeSubscribeStatus.channelError) {
+            _logger.warning(object);
+          }
+        });
+  }
+
+  RealtimeChannel snapshotChanges({
+    required String inverterId,
+    DateTime? start,
+    required void Function(InverterSnapshot user) onCreate,
+    // required void Function(String id) onDelete,
+  }) {
+    return _db
+        .channel('snapshots:$inverterId')
+        .onPostgresChanges(
+          event: PostgresChangeEvent.all,
+          schema: 'public',
+          table: 'inverter_snapshots',
+          filter: PostgresChangeFilter(
+            type: .eq,
+            column: 'inverter_id',
+            value: inverterId,
+          ),
+          callback: (payload) {
+            switch (payload.eventType) {
+              case .insert:
+                onCreate(InverterSnapshot.fromJson(payload.newRecord));
+              // case .delete:
+              //   onDelete(payload.oldRecord['id']);
+              default:
+                break;
+            }
+          },
+        )
+        .subscribe((status, object) {
+          _logger.info('Snapshot changes subscription status: $status');
+          if (status == RealtimeSubscribeStatus.channelError) {
+            _logger.warning(object);
+          }
+        });
   }
 
   // Returns all the gateways for the authenticated user.
@@ -93,7 +169,7 @@ class DatabaseService {
           .from('gateway_events')
           .select()
           .eq('inverter_id', inverterId)
-          .order('timestamp', ascending: false);
+          .order('recorded_at', ascending: false);
       return data.map((item) => GatewayEvent.fromJson(item)).toList();
     } on PostgrestException catch (e) {
       throw DatabaseException(e.message, error: e.details);
