@@ -72,13 +72,13 @@ class NewSystemWizard extends ConsumerWidget {
           ref.read(provisioningServiceProvider.notifier).reset();
         },
       ),
-      ProvisioningDeviceError(:final device, :final error) =>
+      ProvisioningDeviceError(:final device, :final error, :final retryState) =>
         ConnectingToDeviceWidget(
           device: device,
           status: .error,
           error: error,
           onRetry: () {
-            ref.read(provisioningServiceProvider.notifier).reset();
+            ref.read(provisioningServiceProvider.notifier).retry(retryState);
           },
         ),
       ProvisioningDeviceIdentityRead(:final device) => WifiCredentialsForm(

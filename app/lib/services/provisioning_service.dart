@@ -10,7 +10,7 @@ import '../models/gateway_registration.dart';
 import '../models/location.dart';
 import 'bluetooth/bluetooth_service.dart';
 import 'bluetooth/wifi_status.dart';
-import 'database_service.dart';
+import 'database/online_database_service.dart';
 
 final _logger = Logger('ProvisioningService');
 
@@ -43,11 +43,14 @@ final provisioningServiceProvider =
 class ProvisioningService extends Notifier<ProvisioningState> {
   ProvisioningService();
 
-  late final DatabaseService _db;
+  late final OnlineDatabaseService _db;
   late final BluetoothService _ble;
 
   late String _displayName;
   late Location _location;
+
+  String? _ssid;
+  String? _password;
 
   @override
   ProvisioningState build() {
@@ -68,6 +71,11 @@ class ProvisioningService extends Notifier<ProvisioningState> {
     stopProvisioningScan();
     disconnectFromDevice();
     state = const ProvisioningInitial();
+  }
+
+  void retry(ProvisioningState retryState) {
+    _logger.info('Retrying provisioning with state: ${retryState.runtimeType}');
+    state = retryState;
   }
 
   Future<bool> _checkPermissions() async {
@@ -196,7 +204,11 @@ class ProvisioningService extends Notifier<ProvisioningState> {
                   state = ProvisioningDeviceDisconnected(device);
                 } else {
                   final error = update.failure?.message ?? 'Unknown error';
-                  state = ProvisioningDeviceError(device, error);
+                  state = ProvisioningDeviceError(
+                    device,
+                    error: error,
+                    retryState: const ProvisioningScanning({}),
+                  );
                 }
 
                 disconnectFromDevice();
@@ -212,7 +224,11 @@ class ProvisioningService extends Notifier<ProvisioningState> {
               error,
               stackTrace,
             );
-            state = ProvisioningDeviceError(device, error.toString());
+            state = ProvisioningDeviceError(
+              device,
+              error: error.toString(),
+              retryState: const ProvisioningScanning({}),
+            );
             disconnectFromDevice();
           },
         );
@@ -237,7 +253,9 @@ class ProvisioningService extends Notifier<ProvisioningState> {
         );
         state = ProvisioningDeviceError(
           device,
-          'Provisioning device is not in advertising state. ${gatewayStatus.status.humanised}',
+          error:
+              'Provisioning device is not in advertising state. ${gatewayStatus.status.humanised}',
+          retryState: const ProvisioningScanning({}),
         );
         return;
       }
@@ -252,7 +270,9 @@ class ProvisioningService extends Notifier<ProvisioningState> {
         );
         state = ProvisioningDeviceError(
           device,
-          'Provisioning device returned an invalid inverter serial number. $inverterSn',
+          error:
+              'Provisioning device returned an invalid inverter serial number. $inverterSn',
+          retryState: const ProvisioningScanning({}),
         );
         return;
       }
@@ -272,7 +292,11 @@ class ProvisioningService extends Notifier<ProvisioningState> {
         'Failed to read identity from provisioning device: $device',
         e,
       );
-      state = ProvisioningDeviceError(device, e.toString());
+      state = ProvisioningDeviceError(
+        device,
+        error: e.toString(),
+        retryState: const ProvisioningScanning({}),
+      );
     }
   }
 
@@ -289,6 +313,9 @@ class ProvisioningService extends Notifier<ProvisioningState> {
       );
       return;
     }
+
+    _ssid = ssid;
+    _password = password;
 
     state = ProvisioningDeviceWiFiConnecting(
       device,
@@ -322,7 +349,17 @@ class ProvisioningService extends Notifier<ProvisioningState> {
         'Failed to send WiFi credentials to provisioning device: $device',
         e,
       );
-      state = ProvisioningDeviceError(device, e.toString());
+      state = ProvisioningDeviceError(
+        device,
+        error: 'Failed to send WiFi credentials to device',
+        retryState: ProvisioningDeviceIdentityRead(
+          currentState.device,
+          hardwareId: currentState.hardwareId,
+          inverterSn: currentState.inverterSn,
+          ssid: _ssid,
+          password: _password,
+        ),
+      );
     }
   }
 
@@ -358,7 +395,14 @@ class ProvisioningService extends Notifier<ProvisioningState> {
 
             state = ProvisioningDeviceError(
               device,
-              'WiFi status subscription failed: $error',
+              error: 'Failed to connect to WiFi',
+              retryState: ProvisioningDeviceIdentityRead(
+                currentState.device,
+                hardwareId: currentState.hardwareId,
+                inverterSn: currentState.inverterSn,
+                ssid: _ssid,
+                password: _password,
+              ),
             );
           },
         );
@@ -369,7 +413,8 @@ class ProvisioningService extends Notifier<ProvisioningState> {
     ProvisioningDeviceWiFiConnecting waitingState,
     WifiStatus status,
   ) {
-    if (state is! ProvisioningDeviceWiFiConnecting) {
+    final currentState = state;
+    if (currentState is! ProvisioningDeviceWiFiConnecting) {
       return;
     }
 
@@ -400,7 +445,18 @@ class ProvisioningService extends Notifier<ProvisioningState> {
           'Provisioning device failed to connect to WiFi: '
           '$device',
         );
-        state = ProvisioningDeviceError(device, 'Failed to connect to WiFi');
+
+        state = ProvisioningDeviceError(
+          device,
+          error: 'Failed to connect to WiFi',
+          retryState: ProvisioningDeviceIdentityRead(
+            currentState.device,
+            hardwareId: currentState.hardwareId,
+            inverterSn: currentState.inverterSn,
+            ssid: _ssid,
+            password: _password,
+          ),
+        );
         break;
     }
   }
@@ -446,7 +502,11 @@ class ProvisioningService extends Notifier<ProvisioningState> {
         '${currentState.device}',
         e,
       );
-      state = ProvisioningDeviceError(currentState.device, e.toString());
+      state = ProvisioningDeviceError(
+        currentState.device,
+        error: e.toString(),
+        retryState: const ProvisioningScanning({}),
+      );
     }
   }
 
@@ -491,7 +551,11 @@ class ProvisioningService extends Notifier<ProvisioningState> {
         '${currentState.device}',
         e,
       );
-      state = ProvisioningDeviceError(currentState.device, e.toString());
+      state = ProvisioningDeviceError(
+        currentState.device,
+        error: e.toString(),
+        retryState: const ProvisioningScanning({}),
+      );
     }
   }
 }
@@ -551,7 +615,13 @@ class ProvisioningDeviceDisconnected extends ProvisioningDevice {
 class ProvisioningDeviceError extends ProvisioningDevice {
   final String error;
 
-  const ProvisioningDeviceError(super.device, this.error);
+  final ProvisioningState retryState;
+
+  const ProvisioningDeviceError(
+    super.device, {
+    required this.error,
+    required this.retryState,
+  });
 }
 
 /// Device connected and identity read successfully.
@@ -561,10 +631,16 @@ class ProvisioningDeviceIdentityRead extends ProvisioningDevice {
   final String hardwareId;
   final String inverterSn;
 
+  /// Not null if this is a retry after an error.
+  final String? ssid;
+  final String? password;
+
   const ProvisioningDeviceIdentityRead(
     super.device, {
     required this.hardwareId,
     required this.inverterSn,
+    this.ssid,
+    this.password,
   });
 }
 
