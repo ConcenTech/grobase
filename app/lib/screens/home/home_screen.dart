@@ -1,0 +1,306 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
+
+import '../../core/components/app_scaffold.dart';
+import '../../core/components/loading_indicator.dart';
+import '../../core/components/solar/solar_energy_diagram.dart';
+import '../../core/components/solar/solar_energy_diagram_v2.dart';
+import '../../models/database/inverter.drift.dart';
+import '../../models/database/inverter_snapshot.drift.dart';
+import '../../services/database/database_providers.dart';
+import '../../services/inverters_provider.dart';
+import '../../services/weather_provider.dart';
+import 'dialogs/battery_chart_dialog.dart';
+import 'dialogs/grid_chart_dialog.dart';
+import 'dialogs/load_chart_dialog.dart';
+import 'dialogs/solar_chart_dialog.dart';
+import 'energy_card.dart';
+
+class HomeScreen extends StatelessWidget {
+  const HomeScreen({super.key});
+
+  void _navigateToSystems(BuildContext context) {
+    if (context.mounted) {
+      GoRouter.of(context).go('/systems');
+    }
+  }
+
+  void _showError(BuildContext context, String message) {
+    if (context.mounted) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(message)));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AppScaffold(
+      padding: EdgeInsets.all(0),
+      body: Consumer(
+        builder: (context, ref, child) {
+          ref.listen(homeProvider, (_, next) {
+            if (next.isLoading) {
+              return;
+            }
+            if (!next.hasSelectedInverter) {
+              _navigateToSystems(context);
+            }
+          });
+
+          final inverterRef = ref.watch(homeProvider);
+          final inverter = inverterRef.value;
+
+          AsyncValue<List<InverterSnapshot>>? snapshotsRef;
+          if (inverter != null) {
+            final provider = DatabaseProviders.inverterSnapshots(inverter);
+            snapshotsRef = ref.watch(provider);
+
+            ref.listen(provider, (_, next) {
+              if (next.hasError) {
+                return _showError(context, next.error.toString());
+              }
+            });
+          }
+
+          final snapshots = snapshotsRef?.value ?? <InverterSnapshot>[];
+          final isLoading =
+              inverterRef.isLoading || (snapshotsRef?.isLoading ?? false);
+          final hasError =
+              inverterRef.hasError || (snapshotsRef?.hasError ?? false);
+          final showOverlay = isLoading || hasError;
+
+          return Stack(
+            fit: StackFit.expand,
+            children: [
+              HomeScreenContent(inverter: inverter, snapshots: snapshots),
+              if (showOverlay) ...[
+                const ModalBarrier(
+                  dismissible: false,
+                  color: Color(0x66000000),
+                ),
+                WindTurbinesIndicator(status: isLoading ? .loading : .error),
+              ],
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+class HomeScreenContent extends ConsumerStatefulWidget {
+  const HomeScreenContent({
+    super.key,
+    required this.inverter,
+    required this.snapshots,
+  });
+
+  final Inverter? inverter;
+  final List<InverterSnapshot> snapshots;
+  @override
+  ConsumerState<HomeScreenContent> createState() => _HomeScreenContentState();
+}
+
+class _HomeScreenContentState extends ConsumerState<HomeScreenContent> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      // TODO: Get weather condition.
+      ref
+          .read(weatherProvider.notifier) //
+          .setCondition(WeatherCondition.clear);
+    });
+  }
+
+  InverterSnapshot? getLatestSnapshot() {
+    return widget.snapshots.isNotEmpty ? widget.snapshots.last : null;
+  }
+
+  SolarEnergyData _getLatestSolarEnergyData() {
+    final snapshot = getLatestSnapshot();
+    return snapshot != null
+        ? SolarEnergyData.fromInverterSnapshot(snapshot)
+        : const SolarEnergyData.empty();
+  }
+
+  String _lastUpdatedText(SolarEnergyData data) {
+    final lastUpdated = data.lastSeenAt;
+
+    if (lastUpdated == null) {
+      return 'Offline';
+    }
+    final difference = DateTime.now().difference(lastUpdated);
+    var relative = difference.inDays;
+    var unit = 'day';
+    if (relative == 0) {
+      relative = difference.inHours;
+      unit = 'hour';
+      if (relative == 0) {
+        relative = difference.inMinutes;
+        unit = 'minute';
+        if (relative == 0) {
+          relative = difference.inSeconds;
+          unit = 'second';
+        }
+      }
+    }
+
+    if (relative != 1) {
+      unit += 's';
+    }
+
+    return 'Online. Last updated $relative $unit ago';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final screenSize = MediaQuery.sizeOf(context);
+    const titleTextHeight = 80;
+    const statusTextHeight = 40;
+
+    final Axis mainAxis;
+    final Size houseSize;
+    final Widget spacer;
+
+    if (screenSize.width > screenSize.height) {
+      mainAxis = Axis.horizontal;
+      houseSize = Size(
+        300,
+        screenSize.height - 16.0 - statusTextHeight - titleTextHeight,
+      );
+      spacer = const SizedBox(width: 16);
+    } else {
+      mainAxis = Axis.vertical;
+      houseSize = Size(screenSize.width - 16.0, 300);
+      spacer = const SizedBox.shrink();
+    }
+
+    final solarEnergyData = _getLatestSolarEnergyData();
+
+    return SingleChildScrollView(
+      scrollDirection: mainAxis,
+      padding: const EdgeInsets.all(0),
+      child: Flex(
+        direction: mainAxis,
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          spacer,
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox.fromSize(
+                size: houseSize,
+                child: Padding(
+                  padding: const EdgeInsets.only(left: 12.0),
+                  child: SolarEnergyDiagramV2(data: solarEnergyData),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.only(left: 12.0),
+                child: Text(
+                  widget.inverter?.displayName ?? '',
+                  style: Theme.of(context).textTheme.headlineMedium?.merge(
+                    GoogleFonts.montserrat(fontWeight: .w500),
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.only(left: 12.0),
+                child: Text(
+                  _lastUpdatedText(solarEnergyData),
+                  style: Theme.of(context).textTheme.labelSmall,
+                ),
+              ),
+            ],
+          ),
+          spacer,
+          EnergyCardContainer(
+            mainAxis: mainAxis,
+            children: [
+              EnergyCard.solar(
+                power: solarEnergyData.solarWatts,
+                onTap: () => showDialog(
+                  context: context,
+                  builder: (context) =>
+                      SolarChartDialog(snapshots: widget.snapshots),
+                ),
+              ),
+              EnergyCard.battery(
+                power: solarEnergyData.batteryWatts,
+                soc: solarEnergyData.batteryLevel,
+                onTap: () => showDialog(
+                  context: context,
+                  builder: (context) =>
+                      BatteryChartDialog(snapshots: widget.snapshots),
+                ),
+              ),
+              EnergyCard.grid(
+                power: solarEnergyData.gridWatts,
+                onTap: () {
+                  showDialog(
+                    context: context,
+                    builder: (context) =>
+                        GridChartDialog(snapshots: widget.snapshots),
+                  );
+                },
+              ),
+              EnergyCard.load(
+                power: solarEnergyData.houseWatts,
+                onTap: () {
+                  showDialog(
+                    context: context,
+                    builder: (context) =>
+                        LoadChartDialog(snapshots: widget.snapshots),
+                  );
+                },
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Resolves the inverter to show on the home screen.
+///
+/// Stays [AsyncLoading] until sync completes and inverters are available.
+/// Emits `null` when the user has no inverters.
+final homeProvider = Provider<AsyncValue<Inverter?>>((ref) {
+  final hasSynced = ref.watch(DatabaseProviders.syncComplete);
+
+  if (!hasSynced) {
+    return const AsyncLoading();
+  }
+
+  final invertersRef = ref.watch(DatabaseProviders.inverters);
+
+  return invertersRef.when(
+    loading: () => const AsyncLoading(),
+    error: AsyncError.new,
+    data: (inverters) {
+      if (inverters.isEmpty) {
+        return const AsyncData(null);
+      }
+
+      final selected = ref.watch(selectedInverterProvider);
+
+      if (selected == null) {
+        return AsyncData(inverters.first);
+      }
+      return AsyncData(
+        inverters.firstWhere((inverter) => inverter.id == selected),
+      );
+    },
+  );
+});
+
+extension _HomeProviderEx on AsyncValue<Inverter?> {
+  bool get hasSelectedInverter => hasValue && requireValue != null;
+}
