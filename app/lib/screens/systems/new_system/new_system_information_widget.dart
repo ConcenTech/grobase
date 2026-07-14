@@ -12,6 +12,8 @@ class NewSystemInformationWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Padding(
       padding: EdgeInsets.only(
         left: 16.0,
@@ -19,25 +21,28 @@ class NewSystemInformationWidget extends StatelessWidget {
         top: 24,
         bottom: max(MediaQuery.of(context).viewInsets.bottom, 16),
       ),
-      child: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          spacing: 8.0,
-          children: [
-            // TODO: Add instructions the user needs to follow to start the new system.
-            const SizedBox(height: 16),
-            ElevatedButton(onPressed: onStart, child: const Text('Start')),
-            // Preload cities without rebuilding the ui.
-            Consumer(
-              builder: (context, ref, child) {
-                ref.watch(citiesProvider);
-                return child!;
-              },
-              child: const SizedBox.shrink(),
-            ),
-          ],
-        ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            'Plug in your gateway to the inverter.\n'
+            'Once the light starts blinking, press start to begin.',
+            style: theme.textTheme.bodyLarge,
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 16),
+          ElevatedButton(onPressed: onStart, child: const Text('Start')),
+          const SizedBox(height: 22),
+          Consumer(
+            builder: (context, ref, child) {
+              ref.watch(citiesProvider);
+              return child!;
+            },
+            child: const SizedBox.shrink(),
+          ),
+        ],
       ),
     );
   }
