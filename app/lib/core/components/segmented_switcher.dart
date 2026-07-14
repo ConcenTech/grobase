@@ -12,6 +12,9 @@ class SegmentedSwitcher extends StatelessWidget {
   final int selectedIndex;
   final ValueChanged<int> onChanged;
 
+  static const _duration = Duration(milliseconds: 250);
+  static const _curve = Curves.easeOutCubic;
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -23,37 +26,54 @@ class SegmentedSwitcher extends StatelessWidget {
         color: theme.colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(28),
       ),
-      child: Row(
-        children: List.generate(labels.length, (index) {
-          final selected = index == selectedIndex;
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final segmentWidth = constraints.maxWidth / labels.length;
 
-          return Expanded(
-            child: GestureDetector(
-              onTap: () => onChanged(index),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                curve: Curves.easeOut,
-                decoration: BoxDecoration(
-                  color: selected
-                      ? theme.colorScheme.primary
-                      : Colors.transparent,
-                  borderRadius: BorderRadius.circular(24),
-                ),
-                alignment: Alignment.center,
-                child: AnimatedDefaultTextStyle(
-                  duration: const Duration(milliseconds: 200),
-                  style: theme.textTheme.labelLarge!.copyWith(
-                    color: selected
-                        ? theme.colorScheme.onPrimary
-                        : theme.colorScheme.onSurfaceVariant,
-                    fontWeight: FontWeight.w600,
+          return Stack(
+            children: [
+              AnimatedPositioned(
+                duration: _duration,
+                curve: _curve,
+                left: selectedIndex * segmentWidth,
+                top: 0,
+                bottom: 0,
+                width: segmentWidth,
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primary,
+                    borderRadius: BorderRadius.circular(24),
                   ),
-                  child: Text(labels[index]),
                 ),
               ),
-            ),
+              Row(
+                children: List.generate(labels.length, (index) {
+                  final selected = index == selectedIndex;
+
+                  return Expanded(
+                    child: GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: () => onChanged(index),
+                      child: Center(
+                        child: AnimatedDefaultTextStyle(
+                          duration: _duration,
+                          curve: _curve,
+                          style: theme.textTheme.labelLarge!.copyWith(
+                            color: selected
+                                ? theme.colorScheme.onPrimary
+                                : theme.colorScheme.onSurfaceVariant,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          child: Text(labels[index]),
+                        ),
+                      ),
+                    ),
+                  );
+                }),
+              ),
+            ],
           );
-        }),
+        },
       ),
     );
   }
