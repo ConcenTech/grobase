@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../models/database/inverter_snapshot.drift.dart';
+
 /// Immutable snapshot of the home energy system at a point in time.
 ///
 /// Sign conventions (all values in watts unless noted):
@@ -16,8 +18,32 @@ class SolarEnergyData {
     this.houseWatts = 0,
     this.batteryWatts = 0,
     this.gridWatts = 0,
-    this.batteryLevel = 0.5,
-  }) : assert(batteryLevel >= 0 && batteryLevel <= 1);
+    this.batteryLevel = 0,
+    this.lastSeenAt,
+  }) : assert(batteryLevel >= 0 && batteryLevel <= 100);
+
+  factory SolarEnergyData.fromInverterSnapshot(InverterSnapshot snapshot) {
+    final batteryPower = snapshot.chargePower - snapshot.dischargePower;
+    final gridPower = snapshot.gridActivePower - snapshot.gridExportPower;
+    return SolarEnergyData(
+      solarWatts: snapshot.solarPower,
+      houseWatts: snapshot.homeLoadPower,
+      batteryWatts: batteryPower,
+      gridWatts: gridPower,
+      batteryLevel: snapshot.batteryStateOfCharge.round(),
+      lastSeenAt: snapshot.recordedAt,
+    );
+  }
+
+  const SolarEnergyData.empty()
+    : this(
+        solarWatts: 0,
+        houseWatts: 0,
+        batteryWatts: 0,
+        gridWatts: 0,
+        batteryLevel: 0,
+        lastSeenAt: null,
+      );
 
   final double solarWatts;
   final double houseWatts;
@@ -28,20 +54,27 @@ class SolarEnergyData {
   /// Signed: positive = importing, negative = exporting.
   final double gridWatts;
 
-  /// Battery state of charge in the range `0..1`.
-  final double batteryLevel;
+  /// Battery state of charge in the range `0..100`.
+  final int batteryLevel;
 
-  bool get isCharging => batteryWatts > _epsilon;
-  bool get isDischarging => batteryWatts < -_epsilon;
-  bool get isImporting => gridWatts > _epsilon;
-  bool get isExporting => gridWatts < -_epsilon;
+  bool get isCharging => batteryWatts > epsilon;
+  bool get isDischarging => batteryWatts < -epsilon;
+  bool get isImporting => gridWatts > epsilon;
+  bool get isExporting => gridWatts < -epsilon;
+
+  final DateTime? lastSeenAt;
+
+  bool get isOnline =>
+      lastSeenAt != null &&
+      lastSeenAt!.isAfter(DateTime.now().subtract(const Duration(minutes: 30)));
 
   SolarEnergyData copyWith({
     double? solarWatts,
     double? houseWatts,
     double? batteryWatts,
     double? gridWatts,
-    double? batteryLevel,
+    int? batteryLevel,
+    DateTime? lastSeenAt,
   }) {
     return SolarEnergyData(
       solarWatts: solarWatts ?? this.solarWatts,
@@ -49,10 +82,12 @@ class SolarEnergyData {
       batteryWatts: batteryWatts ?? this.batteryWatts,
       gridWatts: gridWatts ?? this.gridWatts,
       batteryLevel: batteryLevel ?? this.batteryLevel,
+      lastSeenAt: lastSeenAt ?? this.lastSeenAt,
     );
   }
 
-  static const double _epsilon = 1.0;
+  /// Watts below this magnitude are treated as idle (labels and flow lines).
+  static const double epsilon = 1.0;
 }
 
 /// Identifies one of the four corner nodes / its connection to the centre.
@@ -127,12 +162,15 @@ class SolarDiagramPalette {
       surfaceBorder: dark ? const Color(0xFF2E3849) : const Color(0xFFD7DEEA),
       label: label,
       labelMuted: dark ? const Color(0xFF8A95A6) : const Color(0xFF6B7686),
-      idleLine: dark ? const Color(0xFF2C3445) : const Color(0xFFCBD4E1),
+      // idleLine: dark ? const Color(0xFF2C3445) : const Color(0xFFCBD4E1),
+      idleLine: const Color(0xFF2C3445),
       hub: dark ? const Color(0xFF3A4456) : const Color(0xFFB0BAC9),
       iconColor: label,
-      flowColor: _ensureVisible(scheme.primary, background),
+      // flowColor: _ensureVisible(scheme.primary, background)
+      flowColor: scheme.primaryFixed,
       windowLit: const Color(0xFFFFE082),
-      windowUnlit: dark ? const Color(0xFF2B3340) : const Color(0xFFC2CAD6),
+      // windowUnlit: dark ? const Color(0xFF2B3340) : const Color(0xFFC2CAD6),
+      windowUnlit: const Color(0xFF2B3340),
     );
   }
 

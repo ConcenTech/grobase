@@ -3,8 +3,11 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// High-level weather state for [WeatherBackground].
+import '../../../services/weather_provider.dart';
+
+/// High-level weather state for sky and weather effects.
 enum WeatherCondition { clear, partlyCloudy, cloudy, rain, snow }
 
 /// Continuously-interpolatable description of the sky. Every field can be
@@ -119,98 +122,303 @@ class WeatherParams {
   }
 }
 
-/// An animated sky that sits behind the solar diagram: gradient background,
-/// a sun by day / crescent moon + twinkling stars by night, clouds drifting
-/// across the top, and optional snow or rain. Changing [condition] or
-/// [isNight] cross-fades smoothly between states.
-class WeatherBackground extends StatefulWidget {
-  const WeatherBackground({
-    super.key,
-    required this.condition,
-    required this.isNight,
-    this.transition = const Duration(milliseconds: 1400),
-  });
-
-  final WeatherCondition condition;
-  final bool isNight;
-  final Duration transition;
+/// Animated sky gradient that fills its parent. Listens to [weatherProvider]
+/// and theme brightness, cross-fading smoothly between states.
+class SkyBackground extends ConsumerStatefulWidget {
+  const SkyBackground({super.key});
 
   @override
-  State<WeatherBackground> createState() => _WeatherBackgroundState();
+  ConsumerState<SkyBackground> createState() => _SkyBackgroundState();
 }
 
-class _WeatherBackgroundState extends State<WeatherBackground>
-    with TickerProviderStateMixin {
-  late final Ticker _ticker;
-  final ValueNotifier<double> _clock = ValueNotifier<double>(0);
-
-  late final AnimationController _trans;
-  late WeatherParams _from;
-  late WeatherParams _to;
-
-  late final List<_Cloud> _clouds;
-  late final List<_Star> _stars;
-  late final List<_Flake> _flakes;
+class _SkyBackgroundState extends ConsumerState<SkyBackground>
+    with SingleTickerProviderStateMixin {
+  bool _initialised = false;
+  late final _WeatherTransition _weather;
 
   @override
   void initState() {
     super.initState();
+    _weather = _WeatherTransition(this);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _weather.sync(
+      condition: ref.read(weatherProvider),
+      isNight: Theme.of(context).brightness == Brightness.dark,
+      initialised: _initialised,
+      onInitialised: () => _initialised = true,
+    );
+  }
+
+  @override
+  void dispose() {
+    _weather.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    ref.listen(weatherProvider, (_, _) {
+      _weather.sync(
+        condition: ref.read(weatherProvider),
+        isNight: Theme.of(context).brightness == Brightness.dark,
+        initialised: true,
+      );
+    });
+
+    return RepaintBoundary(
+      child: AnimatedBuilder(
+        animation: _weather.animation,
+        builder: (context, _) {
+          final params = _weather.params;
+          return CustomPaint(
+            size: Size.infinite,
+            painter: _SkyGradientPainter(
+              skyTop: params.skyTop,
+              skyBottom: params.skyBottom,
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _SkyGradientPainter extends CustomPainter {
+  _SkyGradientPainter({required this.skyTop, required this.skyBottom});
+
+  final Color skyTop;
+  final Color skyBottom;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final rect = Offset.zero & size;
+    canvas.drawRect(
+      rect,
+      Paint()
+        ..shader = LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [skyTop, skyBottom],
+        ).createShader(rect),
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant _SkyGradientPainter old) =>
+      skyTop != old.skyTop || skyBottom != old.skyBottom;
+}
+
+/// Sky-layer weather: sun / moon, stars, and drifting clouds.
+///
+/// Place behind diagram content. Does not paint the sky gradient — use
+/// [SkyBackground] for that. Pair with [WeatherEffectsForeground] for rain/snow.
+class WeatherEffectsBackground extends ConsumerStatefulWidget {
+  const WeatherEffectsBackground({super.key});
+
+  @override
+  ConsumerState<WeatherEffectsBackground> createState() =>
+      _WeatherEffectsBackgroundState();
+}
+
+class _WeatherEffectsBackgroundState
+    extends ConsumerState<WeatherEffectsBackground>
+    with TickerProviderStateMixin {
+  late final Ticker _ticker;
+  final ValueNotifier<double> _clock = ValueNotifier<double>(0);
+  late final _WeatherTransition _weather;
+
+  late final List<_Cloud> _clouds;
+  late final List<_Star> _stars;
+  bool _initialised = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _weather = _WeatherTransition(this);
     final rng = math.Random(7);
     _clouds = List.generate(6, (i) => _Cloud.random(rng, i, 6));
     _stars = List.generate(60, (_) => _Star.random(rng));
-    _flakes = List.generate(80, (_) => _Flake.random(rng));
 
-    _to = _from = WeatherParams.forCondition(widget.condition, widget.isNight);
-    _trans = AnimationController(vsync: this, duration: widget.transition)
-      ..value = 1.0;
     _ticker = createTicker((elapsed) {
       _clock.value = elapsed.inMicroseconds / Duration.microsecondsPerSecond;
     })..start();
   }
 
   @override
-  void didUpdateWidget(WeatherBackground old) {
-    super.didUpdateWidget(old);
-    if (old.condition != widget.condition || old.isNight != widget.isNight) {
-      final curve = Curves.easeInOut.transform(_trans.value);
-      _from = WeatherParams.lerp(_from, _to, curve);
-      _to = WeatherParams.forCondition(widget.condition, widget.isNight);
-      _trans.forward(from: 0);
-    }
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _weather.sync(
+      condition: ref.read(weatherProvider),
+      isNight: Theme.of(context).brightness == Brightness.dark,
+      initialised: _initialised,
+      onInitialised: () => _initialised = true,
+    );
   }
 
   @override
   void dispose() {
+    _weather.dispose();
     _ticker.dispose();
-    _trans.dispose();
     _clock.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    ref.listen(weatherProvider, (_, _) {
+      _weather.sync(
+        condition: ref.read(weatherProvider),
+        isNight: Theme.of(context).brightness == Brightness.dark,
+        initialised: true,
+      );
+    });
+
     return RepaintBoundary(
       child: AnimatedBuilder(
-        animation: Listenable.merge([_trans, _clock]),
+        animation: Listenable.merge([_weather.animation, _clock]),
         builder: (context, _) {
-          final params = WeatherParams.lerp(
-            _from,
-            _to,
-            Curves.easeInOut.transform(_trans.value),
-          );
           return CustomPaint(
             size: Size.infinite,
-            painter: _WeatherPainter(
-              params: params,
+            painter: _WeatherEffectsBackgroundPainter(
+              params: _weather.params,
               clock: _clock.value,
               clouds: _clouds,
               stars: _stars,
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+/// Precipitation-layer weather: rain and snow drawn over diagram content.
+///
+/// Pair with [WeatherEffectsBackground] for celestial bodies and clouds.
+class WeatherEffectsForeground extends ConsumerStatefulWidget {
+  const WeatherEffectsForeground({super.key});
+
+  @override
+  ConsumerState<WeatherEffectsForeground> createState() =>
+      _WeatherEffectsForegroundState();
+}
+
+class _WeatherEffectsForegroundState
+    extends ConsumerState<WeatherEffectsForeground>
+    with TickerProviderStateMixin {
+  late final Ticker _ticker;
+  final ValueNotifier<double> _clock = ValueNotifier<double>(0);
+  late final _WeatherTransition _weather;
+
+  late final List<_Flake> _flakes;
+  bool _initialised = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _weather = _WeatherTransition(this);
+    final rng = math.Random(7);
+    _flakes = List.generate(80, (_) => _Flake.random(rng));
+
+    _ticker = createTicker((elapsed) {
+      _clock.value = elapsed.inMicroseconds / Duration.microsecondsPerSecond;
+    })..start();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _weather.sync(
+      condition: ref.read(weatherProvider),
+      isNight: Theme.of(context).brightness == Brightness.dark,
+      initialised: _initialised,
+      onInitialised: () => _initialised = true,
+    );
+  }
+
+  @override
+  void dispose() {
+    _weather.dispose();
+    _ticker.dispose();
+    _clock.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    ref.listen(weatherProvider, (_, _) {
+      _weather.sync(
+        condition: ref.read(weatherProvider),
+        isNight: Theme.of(context).brightness == Brightness.dark,
+        initialised: true,
+      );
+    });
+
+    return RepaintBoundary(
+      child: AnimatedBuilder(
+        animation: Listenable.merge([_weather.animation, _clock]),
+        builder: (context, _) {
+          return CustomPaint(
+            size: Size.infinite,
+            painter: _WeatherEffectsForegroundPainter(
+              params: _weather.params,
+              clock: _clock.value,
               flakes: _flakes,
             ),
           );
         },
       ),
     );
+  }
+}
+
+/// Cross-fade between weather states. Each painter owns its own instance.
+class _WeatherTransition {
+  _WeatherTransition(TickerProvider vsync)
+    : _trans = AnimationController(
+        vsync: vsync,
+        duration: const Duration(milliseconds: 1400),
+      )..value = 1.0;
+
+  final AnimationController _trans;
+  late WeatherParams _from;
+  late WeatherParams _to;
+  WeatherCondition _condition = WeatherCondition.clear;
+  bool _isNight = false;
+
+  Listenable get animation => _trans;
+
+  WeatherParams get params =>
+      WeatherParams.lerp(_from, _to, Curves.easeInOut.transform(_trans.value));
+
+  void dispose() => _trans.dispose();
+
+  void sync({
+    required WeatherCondition condition,
+    required bool isNight,
+    required bool initialised,
+    VoidCallback? onInitialised,
+  }) {
+    if (!initialised) {
+      _condition = condition;
+      _isNight = isNight;
+      _from = _to = WeatherParams.forCondition(condition, isNight);
+      onInitialised?.call();
+      return;
+    }
+
+    if (condition == _condition && isNight == _isNight) return;
+
+    final curve = Curves.easeInOut.transform(_trans.value);
+    _from = WeatherParams.lerp(_from, _to, curve);
+    _to = WeatherParams.forCondition(condition, isNight);
+    _condition = condition;
+    _isNight = isNight;
+    _trans.forward(from: 0);
   }
 }
 
@@ -302,48 +510,32 @@ class _Flake {
   }
 }
 
-class _WeatherPainter extends CustomPainter {
-  _WeatherPainter({
+class _WeatherEffectsBackgroundPainter extends CustomPainter {
+  _WeatherEffectsBackgroundPainter({
     required this.params,
     required this.clock,
     required this.clouds,
     required this.stars,
-    required this.flakes,
   });
 
   final WeatherParams params;
   final double clock;
   final List<_Cloud> clouds;
   final List<_Star> stars;
-  final List<_Flake> flakes;
 
   @override
   void paint(Canvas canvas, Size size) {
-    final rect = Offset.zero & size;
     final short = size.shortestSide;
-
-    // Sky gradient.
-    canvas.drawRect(
-      rect,
-      Paint()
-        ..shader = LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [params.skyTop, params.skyBottom],
-        ).createShader(rect),
-    );
 
     if (params.stars > 0.01) _paintStars(canvas, size);
 
     // Sun / moon tucked into the top-left corner, clear of the diagram.
-    final celestial = Offset(size.width * 0.2, size.height * 0.13);
+    final celestial = Offset(size.width * 0.1, size.height * 0.13);
     final cr = short * 0.07;
     _paintSun(canvas, celestial, cr, 1.0 - params.nightAmount);
     _paintMoon(canvas, celestial, cr, params.nightAmount);
 
     if (params.cloudCover > 0.01) _paintClouds(canvas, size, short);
-    if (params.snow > 0.01) _paintSnow(canvas, size, short);
-    if (params.rain > 0.01) _paintRain(canvas, size, short);
   }
 
   void _paintStars(Canvas canvas, Size size) {
@@ -445,6 +637,28 @@ class _WeatherPainter extends CustomPainter {
     }
   }
 
+  @override
+  bool shouldRepaint(covariant _WeatherEffectsBackgroundPainter old) => true;
+}
+
+class _WeatherEffectsForegroundPainter extends CustomPainter {
+  _WeatherEffectsForegroundPainter({
+    required this.params,
+    required this.clock,
+    required this.flakes,
+  });
+
+  final WeatherParams params;
+  final double clock;
+  final List<_Flake> flakes;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final short = size.shortestSide;
+    if (params.snow > 0.01) _paintSnow(canvas, size, short);
+    if (params.rain > 0.01) _paintRain(canvas, size, short);
+  }
+
   void _paintSnow(Canvas canvas, Size size, double short) {
     final paint = Paint()..color = Colors.white;
     // Use a thinned-out subset of flakes so snow stays gentle.
@@ -483,5 +697,5 @@ class _WeatherPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant _WeatherPainter old) => true;
+  bool shouldRepaint(covariant _WeatherEffectsForegroundPainter old) => true;
 }

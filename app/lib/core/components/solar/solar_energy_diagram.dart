@@ -7,7 +7,12 @@ import 'weather_background.dart';
 
 export 'solar_energy_data.dart'
     show SolarEnergyData, SolarDiagramPalette, SolarDiagramTheme, EnergyNode;
-export 'weather_background.dart' show WeatherCondition;
+export 'weather_background.dart'
+    show
+        WeatherCondition,
+        SkyBackground,
+        WeatherEffectsBackground,
+        WeatherEffectsForeground;
 
 /// An animated diagram of a home solar / charging system.
 ///
@@ -20,24 +25,24 @@ export 'weather_background.dart' show WeatherCondition;
 /// night scene. Wrap this widget in a `Theme` to drive it independently of the
 /// global app theme.
 ///
-/// When [weather] is provided, an animated sky ([WeatherBackground]) is drawn
-/// behind the diagram: sun/moon at the top, clouds drifting across, stars at
-/// night, and optional snow/rain. The diagram itself is painted transparently
-/// so the sky shows through.
+/// When [showWeatherEffects] is true, [WeatherEffectsBackground] (sun/moon,
+/// stars, clouds) sits behind the diagram and [WeatherEffectsForeground]
+/// (rain/snow) sits in front. Both listen to [weatherProvider]. The diagram
+/// itself is painted transparently so the [SkyBackground] shows through.
 class SolarEnergyDiagram extends StatefulWidget {
   const SolarEnergyDiagram({
     super.key,
     required this.data,
-    this.weather,
+    this.showWeatherEffects = false,
     this.showGarage = true,
     this.duration,
   });
 
   final SolarEnergyData data;
 
-  /// Optional weather condition for the animated sky behind the diagram.
-  /// When null, the diagram uses a solid theme background.
-  final WeatherCondition? weather;
+  /// When true, draws weather effects around the diagram. Requires a
+  /// [SkyBackground] behind this widget (typically via [AppScaffold]).
+  final bool showWeatherEffects;
 
   /// Whether the house is drawn with an attached garage.
   final bool showGarage;
@@ -110,7 +115,7 @@ class _SolarEnergyDiagramState extends State<SolarEnergyDiagram>
 
     final dayPalette = resolve(false);
     final nightPalette = resolve(true);
-    final hasWeather = widget.weather != null;
+    final hasWeatherEffects = widget.showWeatherEffects;
 
     return AnimatedBuilder(
       animation: _night,
@@ -126,13 +131,13 @@ class _SolarEnergyDiagramState extends State<SolarEnergyDiagram>
               palette: palette,
               phase: _phase,
               showGarage: widget.showGarage,
-              paintBackground: !hasWeather,
+              paintBackground: !hasWeatherEffects,
               nightAmount: na,
             ),
           ),
         );
 
-        if (!hasWeather) {
+        if (!hasWeatherEffects) {
           return ColoredBox(color: palette.background, child: diagram);
         }
 
@@ -143,14 +148,12 @@ class _SolarEnergyDiagramState extends State<SolarEnergyDiagram>
             return Stack(
               fit: StackFit.expand,
               children: [
-                WeatherBackground(
-                  condition: widget.weather!,
-                  isNight: _isNight,
-                ),
+                const WeatherEffectsBackground(),
                 Padding(
                   padding: EdgeInsets.only(top: topInset),
                   child: diagram,
                 ),
+                const WeatherEffectsForeground(),
               ],
             );
           },
