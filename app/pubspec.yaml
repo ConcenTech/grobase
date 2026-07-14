@@ -29,7 +29,6 @@ dependencies:
   fl_chart: ^1.2.0
   intl: ^0.20.3
 
-
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -39,6 +38,7 @@ dev_dependencies:
   freezed: ^3.2.5
   drift_dev: ^2.34.0
   icons_launcher: ^3.1.0
+  flutter_native_splash: ^2.4.8
 
 flutter:
   uses-material-design: true
