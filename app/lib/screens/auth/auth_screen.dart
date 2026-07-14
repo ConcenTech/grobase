@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/components/logo.dart';
 import '../../core/components/segmented_switcher.dart';
 import '../../core/components/solar/solar_energy_diagram.dart';
+import '../../core/components/solar/solar_energy_diagram_v2.dart';
 import 'auth_column.dart';
 import 'auth_login_widget.dart';
 import 'auth_password_reset_widget.dart';
@@ -53,6 +54,7 @@ class AuthScreen extends ConsumerWidget {
     }
 
     return Scaffold(
+      backgroundColor: Colors.transparent,
       body: const _AuthScreenBody(),
       bottomSheet: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -95,50 +97,40 @@ class _AuthScreenBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        const SkyBackground(),
+        Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final isDark = Theme.of(context).brightness == Brightness.dark;
+              final diagram = SolarEnergyDiagramV2(
+                // showWeatherEffects: true,
+                data: SolarEnergyData(
+                  batteryLevel: 75,
+                  batteryWatts: isDark ? -500 : 1000,
+                  gridWatts: isDark ? 200 : -100,
+                  houseWatts: isDark ? 300 : 400,
+                  solarWatts: isDark ? 0 : 1500,
+                ),
+              );
 
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 1000),
-      color: isDark ? const Color(0xFF1B2440) : const Color(0xFFBBDDF5),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final Widget diagram;
-          if (isDark) {
-            diagram = const SolarEnergyDiagram(
-              data: SolarEnergyData(
-                batteryLevel: 0.75,
-                batteryWatts: -500,
-                gridWatts: 200,
-                houseWatts: 300,
-                solarWatts: 0,
-              ),
-              weather: WeatherCondition.clear,
-            );
-          } else {
-            diagram = const SolarEnergyDiagram(
-              data: SolarEnergyData(
-                batteryLevel: 0.75,
-                batteryWatts: 1000,
-                gridWatts: -100,
-                houseWatts: 400,
-                solarWatts: 1500,
-              ),
-              weather: WeatherCondition.clear,
-            );
-          }
+              final windowHeight = constraints.maxHeight;
+              // Clamp the diagram to a maximum of 350 pixels, using bottom padding to
+              // keep it pinned to top on larger devices.
+              // So bottom padding will be window height - 350, but not less than 0.
+              final bottomPadding = max(windowHeight - 550.0, 0.0);
 
-          final windowHeight = constraints.maxHeight;
-          // Clamp the diagram to a maximum of 350 pixels, using bottom padding to
-          // keep it pinned to top on larger devices.
-          // So bottom padding will be window height - 350, but not less than 0.
-          final bottomPadding = max(windowHeight - 550.0, 0.0);
-
-          return Padding(
-            padding: EdgeInsets.only(bottom: bottomPadding),
-            child: diagram,
-          );
-        },
-      ),
+              return Padding(
+                padding: EdgeInsets.only(bottom: bottomPadding),
+                child: diagram,
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 }
