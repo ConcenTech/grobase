@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../../core/components/app_scaffold.dart';
 import '../../core/components/loading_indicator.dart';
 import '../../core/components/solar/solar_energy_diagram.dart';
 import '../../core/components/solar/solar_energy_diagram_v2.dart';
@@ -18,7 +17,7 @@ import 'dialogs/load_chart_dialog.dart';
 import 'dialogs/solar_chart_dialog.dart';
 import 'energy_card.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
   void _navigateToSystems(BuildContext context) {
@@ -36,57 +35,46 @@ class HomeScreen extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return AppScaffold(
-      padding: EdgeInsets.all(0),
-      body: Consumer(
-        builder: (context, ref, child) {
-          ref.listen(homeProvider, (_, next) {
-            if (next.isLoading) {
-              return;
-            }
-            if (!next.hasSelectedInverter) {
-              _navigateToSystems(context);
-            }
-          });
+  Widget build(BuildContext context, WidgetRef ref) {
+    ref.listen(homeProvider, (_, next) {
+      if (next.isLoading) {
+        return;
+      }
+      if (!next.hasSelectedInverter) {
+        _navigateToSystems(context);
+      }
+    });
 
-          final inverterRef = ref.watch(homeProvider);
-          final inverter = inverterRef.value;
+    final inverterRef = ref.watch(homeProvider);
+    final inverter = inverterRef.value;
 
-          AsyncValue<List<InverterSnapshot>>? snapshotsRef;
-          if (inverter != null) {
-            final provider = DatabaseProviders.inverterSnapshots(inverter);
-            snapshotsRef = ref.watch(provider);
+    AsyncValue<List<InverterSnapshot>>? snapshotsRef;
+    if (inverter != null) {
+      final provider = DatabaseProviders.inverterSnapshots(inverter);
+      snapshotsRef = ref.watch(provider);
 
-            ref.listen(provider, (_, next) {
-              if (next.hasError) {
-                return _showError(context, next.error.toString());
-              }
-            });
-          }
+      ref.listen(provider, (_, next) {
+        if (next.hasError) {
+          return _showError(context, next.error.toString());
+        }
+      });
+    }
 
-          final snapshots = snapshotsRef?.value ?? <InverterSnapshot>[];
-          final isLoading =
-              inverterRef.isLoading || (snapshotsRef?.isLoading ?? false);
-          final hasError =
-              inverterRef.hasError || (snapshotsRef?.hasError ?? false);
-          final showOverlay = isLoading || hasError;
+    final snapshots = snapshotsRef?.value ?? <InverterSnapshot>[];
+    final isLoading =
+        inverterRef.isLoading || (snapshotsRef?.isLoading ?? false);
+    final hasError = inverterRef.hasError || (snapshotsRef?.hasError ?? false);
+    final showOverlay = isLoading || hasError;
 
-          return Stack(
-            fit: StackFit.expand,
-            children: [
-              HomeScreenContent(inverter: inverter, snapshots: snapshots),
-              if (showOverlay) ...[
-                const ModalBarrier(
-                  dismissible: false,
-                  color: Color(0x66000000),
-                ),
-                WindTurbinesIndicator(status: isLoading ? .loading : .error),
-              ],
-            ],
-          );
-        },
-      ),
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        HomeScreenContent(inverter: inverter, snapshots: snapshots),
+        if (showOverlay) ...[
+          const ModalBarrier(dismissible: false, color: Color(0x66000000)),
+          WindTurbinesIndicator(status: isLoading ? .loading : .error),
+        ],
+      ],
     );
   }
 }

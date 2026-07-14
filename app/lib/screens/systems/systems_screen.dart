@@ -3,7 +3,6 @@ import 'package:flutter_material_design_icons/flutter_material_design_icons.dart
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../core/components/app_scaffold.dart';
 import '../../core/components/images/renewable_energy_site.dart';
 import '../../core/components/loading_indicator.dart';
 import '../../models/database/inverter.dart';
@@ -21,7 +20,7 @@ void _showNewSystemBottomSheet(BuildContext context) {
   );
 }
 
-class SystemsScreen extends StatelessWidget {
+class SystemsScreen extends ConsumerWidget {
   const SystemsScreen({super.key});
 
   void _onSystemSelected(BuildContext context, WidgetRef ref, Inverter system) {
@@ -31,46 +30,38 @@ class SystemsScreen extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return AppScaffold(
-      title: 'Systems',
-      actions: const [NewSystemButton()],
-      body: Consumer(
-        builder: (context, ref, child) {
-          final invertersRef = ref.watch(invertersProvider);
+  Widget build(BuildContext context, WidgetRef ref) {
+    final invertersRef = ref.watch(invertersProvider);
 
-          if (invertersRef.hasValue) {
-            final systems = invertersRef.requireValue;
+    if (invertersRef.hasValue) {
+      final systems = invertersRef.requireValue;
 
-            if (systems.isEmpty) {
-              return const NoSystemsWidget();
-            } else {
-              return Consumer(
-                builder: (context, ref, child) {
-                  return SystemsListWidget(
-                    systems: systems,
-                    onSystemSelected: (system) {
-                      _onSystemSelected(context, ref, system);
-                    },
-                  );
-                },
-              );
-            }
-          }
+      if (systems.isEmpty) {
+        return const NoSystemsWidget();
+      } else {
+        return Consumer(
+          builder: (context, ref2, child) {
+            return SystemsListWidget(
+              systems: systems,
+              onSystemSelected: (system) {
+                _onSystemSelected(context, ref2, system);
+              },
+            );
+          },
+        );
+      }
+    }
 
-          final isLoading = invertersRef.isLoading;
+    final isLoading = invertersRef.isLoading;
 
-          return WindTurbinesIndicator(
-            status: invertersRef.isLoading ? .loading : .error,
-            caption: isLoading
-                ? 'Fetching your systems'
-                : 'Unable to load your systems',
-            details: isLoading
-                ? null
-                : 'Please check your internet connection and try again.',
-          );
-        },
-      ),
+    return WindTurbinesIndicator(
+      status: invertersRef.isLoading ? .loading : .error,
+      caption: isLoading
+          ? 'Fetching your systems'
+          : 'Unable to load your systems',
+      details: isLoading
+          ? null
+          : 'Please check your internet connection and try again.',
     );
   }
 }
