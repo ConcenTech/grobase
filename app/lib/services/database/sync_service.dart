@@ -134,8 +134,6 @@ class SyncService {
       start: latest,
     );
 
-    print('online snapshots: $snapshots');
-
     if (snapshots.isNotEmpty) {
       await _offlineService.addSnapshots(snapshots);
     }
