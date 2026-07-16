@@ -3,12 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/database/inverter.dart';
 import 'database/database_providers.dart';
 import 'database/offline_storage.dart';
-import 'database/online_database_service.dart';
 
 final invertersProvider = FutureProvider.autoDispose<List<Inverter>>((
   ref,
 ) async {
-  final db = ref.read(databaseProvider);
+  final db = ref.read(DatabaseProviders.onlineDatabase);
   return db.inverters();
 });
 

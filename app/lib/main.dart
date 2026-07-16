@@ -2,16 +2,16 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'core/components/solar/solar_energy_diagram_v2.dart';
 import 'routes/app_router.dart';
+import 'routes/mock_app_router.dart';
 import 'services/database/database_providers.dart';
+import 'services/database/mocks/mock_online_database_service.dart';
+import 'services/database/mocks/mock_sync_service.dart';
 import 'services/database/offline_storage.dart';
+import 'services/database/online_database_service.dart';
 import 'theme/theme.dart';
-
-const supabaseDebugUrl = 'http://localhost:54321';
-const supabaseDebugAnonKey = 'sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH';
 
 // Title font: Montserrat, weight: 600
 // Gro color: #6EB92B
@@ -19,6 +19,9 @@ const supabaseDebugAnonKey = 'sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH';
 
 // Light scaffold background: const Color(0xFFBBDDF5)
 // Dark scaffold background: const Color(0xFF1B2440)
+
+/// When true, use mock data for local development and never touch Supabase.
+const kUseMocks = true && kDebugMode;
 
 void main() async {
   LicenseRegistry.addLicense(() async* {
@@ -30,35 +33,35 @@ void main() async {
 
   await OfflineStorage.ensureInitialized();
 
-  /// These should be set via `--dart-define` at build time, but we provide
-  /// defaults for local development..
-  const supabaseUrl = String.fromEnvironment(
-    'SUPABASE_URL',
-    defaultValue: supabaseDebugUrl,
-  );
-  const supabasePublishableKey = String.fromEnvironment(
-    'SUPABASE_PUBLISHABLE_KEY',
-    defaultValue: supabaseDebugAnonKey,
-  );
-
-  if (!kDebugMode) {
-    if (supabaseUrl.isEmpty || supabaseUrl == supabaseDebugUrl) {
-      throw Exception('SUPABASE_URL is not set');
-    }
-    if (supabasePublishableKey.isEmpty ||
-        supabasePublishableKey == supabaseDebugAnonKey) {
-      throw Exception('SUPABASE_PUBLISHABLE_KEY is not set');
-    }
+  if (!kUseMocks) {
+    await OnlineDatabaseService.initialize();
   }
-
-  await Supabase.initialize(
-    url: supabaseUrl,
-    publishableKey: supabasePublishableKey,
-  );
 
   await SolarEnergyDiagramV2.precache();
 
-  runApp(const ProviderScope(child: MainApp()));
+  runApp(
+    ProviderScope(
+      overrides: kUseMocks
+          ? [
+              DatabaseProviders.onlineDatabase.overrideWithValue(
+                MockOnlineDatabaseService(),
+              ),
+              DatabaseProviders.syncService.overrideWith((ref) {
+                final service = MockSyncService(
+                  online: ref.watch(DatabaseProviders.onlineDatabase),
+                  offline: ref.watch(DatabaseProviders.offlineDatabase),
+                  onSyncChange: (complete) {
+                    DatabaseProviders.setSyncComplete(ref, complete);
+                  },
+                );
+                return service..init();
+              }),
+              appRouterProvider.overrideWithValue(MockAppRouter()),
+            ]
+          : [],
+      child: const MainApp(),
+    ),
+  );
 }
 
 class MainApp extends ConsumerWidget {
@@ -71,6 +74,7 @@ class MainApp extends ConsumerWidget {
     ref.listen(DatabaseProviders.syncService, (_, _) {});
 
     return MaterialApp.router(
+      debugShowCheckedModeBanner: false,
       title: 'Grobase',
       themeMode: ThemeMode.system,
       theme: AppTheme.light,

@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/components/images/renewable_energy_site.dart';
 import '../../core/components/loading_indicator.dart';
 import '../../models/database/inverter.dart';
+import '../../services/database/database_providers.dart';
 import '../../services/inverters_provider.dart';
 import 'new_system/new_system_wizard.dart';
 
@@ -153,27 +154,46 @@ class SystemsListWidget extends StatelessWidget {
               spacing: 8.0,
               children: [
                 Text(system.location.name),
-                const Row(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  spacing: 12.0,
-                  children: [
-                    SystemDetailCard(
-                      icon: MdiIcons.transmissionTower, //
-                      value: null,
-                      unit: 'kW',
-                    ),
-                    SystemDetailCard(
-                      icon: Icons.solar_power,
-                      value: null,
-                      unit: 'kWh',
-                    ),
-                    SystemDetailCard(
-                      icon: Icons.battery_charging_full,
-                      value: null,
-                      unit: 'kWh',
-                    ),
-                  ],
+                Consumer(
+                  builder: (context, ref, child) {
+                    final latest = ref
+                        .watch(DatabaseProviders.latestInverterSnapshot(system))
+                        .whenOrNull(data: (data) => data);
+
+                    return Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      spacing: 12.0,
+                      children: [
+                        SystemDetailCard(
+                          icon: MdiIcons.transmissionTower, //
+                          value: latest == null
+                              ? null
+                              : ((latest.gridActivePower -
+                                            latest.gridExportPower) /
+                                        100)
+                                    .toStringAsFixed(1),
+                          unit: 'kW',
+                        ),
+                        SystemDetailCard(
+                          icon: Icons.solar_power,
+                          value: latest == null
+                              ? null
+                              : (latest.solarPower / 1000).toStringAsFixed(1),
+                          unit: 'kWh',
+                        ),
+                        SystemDetailCard(
+                          icon: Icons.battery_charging_full,
+                          value: latest == null
+                              ? null
+                              : ((latest.chargePower - latest.dischargePower) /
+                                        1000)
+                                    .toStringAsFixed(1),
+                          unit: 'kWh',
+                        ),
+                      ],
+                    );
+                  },
                 ),
               ],
             ),

@@ -11,13 +11,13 @@ import 'sync_service.dart';
 
 abstract class DatabaseProviders {
   /// The generated Drift database.
-  static final _appDb = Provider((ref) => AppDatabase());
+  static final appDb = Provider((ref) => AppDatabase());
 
   static final Provider<OnlineDatabaseService> onlineDatabase =
       Provider.autoDispose((ref) => OnlineDatabaseService());
 
   static final Provider<OfflineDatabaseService> offlineDatabase =
-      Provider.autoDispose((ref) => OfflineDatabaseService(ref.watch(_appDb)));
+      Provider.autoDispose((ref) => OfflineDatabaseService(ref.watch(appDb)));
 
   static final Provider<OfflineStorage> offlineStorage = Provider.autoDispose(
     (ref) => OfflineStorage.instance,
@@ -31,7 +31,7 @@ abstract class DatabaseProviders {
       ref.watch(connectionProvider),
       ref.watch(onlineDatabase),
       ref.watch(offlineDatabase),
-      (complete) => _setSyncComplete(ref, complete),
+      (complete) => setSyncComplete(ref, complete),
     );
 
     ref.onDispose(service.dispose);
@@ -39,11 +39,11 @@ abstract class DatabaseProviders {
     return service..init();
   });
 
-  static final syncComplete = NotifierProvider<_SyncCompleteNotifier, bool>(
-    _SyncCompleteNotifier.new,
+  static final syncComplete = NotifierProvider<SyncCompleteNotifier, bool>(
+    SyncCompleteNotifier.new,
   );
 
-  static void _setSyncComplete(Ref ref, bool complete) {
+  static void setSyncComplete(Ref ref, bool complete) {
     ref.read(syncComplete.notifier).setComplete(complete);
   }
 
@@ -57,9 +57,14 @@ abstract class DatabaseProviders {
     (ref, Inverter inverter) =>
         ref.watch(offlineDatabase).todaysInverterSnapshots(inverter.id),
   );
+
+  static final latestInverterSnapshot = StreamProvider.autoDispose.family(
+    (ref, Inverter inverter) =>
+        ref.watch(offlineDatabase).latestInverterSnapshot(inverter.id),
+  );
 }
 
-class _SyncCompleteNotifier extends Notifier<bool> {
+class SyncCompleteNotifier extends Notifier<bool> {
   @override
   bool build() => false;
 

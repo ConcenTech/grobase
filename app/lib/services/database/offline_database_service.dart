@@ -36,9 +36,10 @@ class OfflineDatabaseService {
     }
   }
 
-  Stream<InverterSnapshot?> latestInverterSnapshot() {
+  Stream<InverterSnapshot?> latestInverterSnapshot(String inverterId) {
     try {
       final q = _db.inverterSnapshots.select()
+        ..where((e) => e.inverterId.equals(inverterId))
         ..orderBy([(e) => OrderingTerm.desc(e.recordedAt)])
         ..limit(1);
 

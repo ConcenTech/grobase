@@ -9,10 +9,15 @@ declare
   v_user_id uuid := 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
   v_inverter_id uuid := 'b1eebc99-9c0b-4ef8-bb6d-6bb9bd380a22';
   v_gateway_id uuid := 'c2eebc99-9c0b-4ef8-bb6d-6bb9bd380a33';
+  v_inverter_id_2 uuid := 'b1eebc99-9c0b-4ef8-bb6d-6bb9bd380a23';
+  v_gateway_id_2 uuid := 'c2eebc99-9c0b-4ef8-bb6d-6bb9bd380a34';
+  v_inverter_id_3 uuid := 'b1eebc99-9c0b-4ef8-bb6d-6bb9bd380a24';
+  v_gateway_id_3 uuid := 'c2eebc99-9c0b-4ef8-bb6d-6bb9bd380a35';
   v_email text := 'demo@grobase.local';
   v_password text := 'password123';
   v_now timestamptz := date_trunc('minute', now());
   v_start timestamptz := v_now - interval '24 hours';
+  v_yesterday timestamptz := v_now - interval '1 day';
 begin
   -- auth.users + auth.identities (required for email/password sign-in)
   insert into auth.users (
@@ -81,7 +86,7 @@ begin
     v_inverter_id,
     'SN-DEMO-0001',
     'growatt',
-    'Demo Home',
+    'Home',
     v_now,
     v_start,
     '{"name":"London","latitude":51.5074,"longitude":-0.1278}'::jsonb
@@ -253,4 +258,88 @@ begin
     solar_power_w,
     home_load_power_w
   from powers;
+
+  -- Inverter 2: online / current snapshot (screenshot: multi-system list + live home)
+  insert into public.inverters (
+    id, inverter_sn, profile, display_name, last_seen_at, created_at, location
+  ) values (
+    v_inverter_id_2,
+    'SN-DEMO-0002',
+    'growatt',
+    'Beach House',
+    v_now,
+    v_start,
+    '{"name":"Brighton","latitude":50.8225,"longitude":-0.1372}'::jsonb
+  );
+
+  insert into public.inverter_members (inverter_id, user_id, role, created_at)
+  values (v_inverter_id_2, v_user_id, 'owner', v_start);
+
+  insert into public.gateways (
+    id, hardware_id, inverter_id, status, provisioned_by,
+    last_seen_at, firmware_version, created_at
+  ) values (
+    v_gateway_id_2, 'GW-DEMO-0002', v_inverter_id_2, 'active',
+    v_user_id, v_now, '1.0.0-seed', v_start
+  );
+
+  insert into public.inverter_snapshots (
+    inverter_id, gateway_id, recorded_at, ingested_at,
+    battery_soc_percent, battery_voltage_v, battery_current_a,
+    battery_charge_power_w, battery_discharge_power_w,
+    battery_charge_energy_today_kwh, battery_discharge_energy_today_kwh,
+    grid_active_power_w, grid_frequency_hz, grid_voltage_v, grid_current_a,
+    grid_export_power_w, grid_export_energy_today_kwh, grid_import_energy_today_kwh,
+    grid_charge_power_w, solar_energy_today_kwh, solar_power_w, home_load_power_w
+  ) values (
+    v_inverter_id_2, v_gateway_id_2, v_now, v_now + interval '2 seconds',
+    72.0, 52.1, 8.5,
+    450.0, 0.0,
+    3.2, 0.4,
+    0.0, 50.0, 231.0, 0.0,
+    1200.0, 4.8, 0.2,
+    0.0, 12.5, 2800.0, 1150.0
+  );
+
+  -- Inverter 3: stale / 1 day prior (screenshot: offline / last updated yesterday)
+  insert into public.inverters (
+    id, inverter_sn, profile, display_name, last_seen_at, created_at, location
+  ) values (
+    v_inverter_id_3,
+    'SN-DEMO-0003',
+    'growatt',
+    'Workshop',
+    v_yesterday,
+    v_start,
+    '{"name":"Manchester","latitude":53.4808,"longitude":-2.2426}'::jsonb
+  );
+
+  insert into public.inverter_members (inverter_id, user_id, role, created_at)
+  values (v_inverter_id_3, v_user_id, 'owner', v_start);
+
+  insert into public.gateways (
+    id, hardware_id, inverter_id, status, provisioned_by,
+    last_seen_at, firmware_version, created_at
+  ) values (
+    v_gateway_id_3, 'GW-DEMO-0003', v_inverter_id_3, 'active',
+    v_user_id, v_yesterday, '1.0.0-seed', v_start
+  );
+
+  insert into public.inverter_snapshots (
+    inverter_id, gateway_id, recorded_at, ingested_at,
+    battery_soc_percent, battery_voltage_v, battery_current_a,
+    battery_charge_power_w, battery_discharge_power_w,
+    battery_charge_energy_today_kwh, battery_discharge_energy_today_kwh,
+    grid_active_power_w, grid_frequency_hz, grid_voltage_v, grid_current_a,
+    grid_export_power_w, grid_export_energy_today_kwh, grid_import_energy_today_kwh,
+    grid_charge_power_w, solar_energy_today_kwh, solar_power_w, home_load_power_w
+  ) values (
+    v_inverter_id_3, v_gateway_id_3, v_yesterday, v_yesterday + interval '2 seconds',
+    38.0, 50.4, -12.0,
+    0.0, 620.0,
+    1.1, 2.8,
+    450.0, 50.0, 229.0, 2.0,
+    0.0, 0.6, 3.4,
+    0.0, 6.1, 0.0, 980.0
+  );
 end $$;
