@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -146,9 +148,16 @@ class _HomeScreenContentState extends ConsumerState<HomeScreenContent> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final titleTextTheme = theme.textTheme.headlineMedium!.merge(
+      GoogleFonts.montserrat(fontWeight: .w500),
+    );
+    final subtitleTextTheme = theme.textTheme.labelSmall!;
+
     final screenSize = MediaQuery.sizeOf(context);
-    const titleTextHeight = 80;
-    const statusTextHeight = 40;
+    final titleTextHeight = titleTextTheme.height! * titleTextTheme.fontSize!;
+    final statusTextHeight =
+        subtitleTextTheme.height! * subtitleTextTheme.fontSize!;
 
     final Axis mainAxis;
     final Size houseSize;
@@ -156,9 +165,16 @@ class _HomeScreenContentState extends ConsumerState<HomeScreenContent> {
 
     if (screenSize.width > screenSize.height) {
       mainAxis = Axis.horizontal;
+      final houseHeight = min(
+        screenSize.height - 16.0,
+        (screenSize.width * .65) / 2,
+      );
+
+      final houseWidth = houseHeight * 2;
+
       houseSize = Size(
-        300,
-        screenSize.height - 16.0 - statusTextHeight - titleTextHeight,
+        houseWidth,
+        houseHeight - (statusTextHeight + titleTextHeight),
       );
       spacer = const SizedBox(width: 16);
     } else {
@@ -193,16 +209,14 @@ class _HomeScreenContentState extends ConsumerState<HomeScreenContent> {
                 padding: const EdgeInsets.only(left: 12.0),
                 child: Text(
                   widget.inverter?.displayName ?? '',
-                  style: Theme.of(context).textTheme.headlineMedium?.merge(
-                    GoogleFonts.montserrat(fontWeight: .w500),
-                  ),
+                  style: titleTextTheme,
                 ),
               ),
               Padding(
                 padding: const EdgeInsets.only(left: 12.0),
                 child: Text(
                   _lastUpdatedText(solarEnergyData),
-                  style: Theme.of(context).textTheme.labelSmall,
+                  style: subtitleTextTheme,
                 ),
               ),
             ],
