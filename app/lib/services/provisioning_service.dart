@@ -10,6 +10,7 @@ import '../models/gateway_registration.dart';
 import '../models/location.dart';
 import 'bluetooth/bluetooth_service.dart';
 import 'bluetooth/wifi_status.dart';
+import 'database/database_providers.dart';
 import 'database/online_database_service.dart';
 
 final _logger = Logger('ProvisioningService');
@@ -54,7 +55,7 @@ class ProvisioningService extends Notifier<ProvisioningState> {
 
   @override
   ProvisioningState build() {
-    _db = ref.read(databaseProvider);
+    _db = ref.read(DatabaseProviders.onlineDatabase);
     _ble = ref.read(bluetoothProvider);
 
     ref.onDispose(disconnectFromDevice);
