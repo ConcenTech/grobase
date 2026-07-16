@@ -74,6 +74,8 @@ class AppScaffold extends StatelessWidget {
         children: [
           const RepaintBoundary(child: SkyBackground()),
           SafeArea(
+            left: false,
+            right: false,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
