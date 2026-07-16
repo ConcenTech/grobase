@@ -1,4 +1,4 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/foundation.dart';
 import 'package:logging/logging.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -11,12 +11,42 @@ import '../../models/gateway_registration.dart';
 import '../../models/invite_link.dart';
 import '../../models/invite_preview.dart';
 
-final databaseProvider = Provider.autoDispose((ref) => OnlineDatabaseService());
+const supabaseDebugUrl = 'http://192.168.0.51:54321';
+const supabaseDebugAnonKey = 'sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH';
 
 final _logger = Logger('OnlineDatabaseService');
 
 class OnlineDatabaseService {
-  final _db = Supabase.instance.client;
+  static Future<void> initialize() async {
+    /// These should be set via `--dart-define` at build time, but we provide
+    /// defaults for local development..
+    const supabaseUrl = String.fromEnvironment(
+      'SUPABASE_URL',
+      defaultValue: supabaseDebugUrl,
+    );
+    const supabasePublishableKey = String.fromEnvironment(
+      'SUPABASE_PUBLISHABLE_KEY',
+      defaultValue: supabaseDebugAnonKey,
+    );
+
+    if (!kDebugMode) {
+      if (supabaseUrl.isEmpty || supabaseUrl == supabaseDebugUrl) {
+        throw Exception('SUPABASE_URL is not set');
+      }
+      if (supabasePublishableKey.isEmpty ||
+          supabasePublishableKey == supabaseDebugAnonKey) {
+        throw Exception('SUPABASE_PUBLISHABLE_KEY is not set');
+      }
+    }
+
+    await Supabase.initialize(
+      url: supabaseUrl,
+      publishableKey: supabasePublishableKey,
+    );
+  }
+
+  /// Lazy so subclasses (e.g. mocks) can construct without initializing Supabase.
+  SupabaseClient get _db => Supabase.instance.client;
 
   /// Base Supabase URL for provisioning the gateway firmware.
   String get supabaseUrl => _db.rest.url.replaceFirst(RegExp(r'/rest/v1$'), '');
