@@ -22,7 +22,7 @@ final appRouterProvider = Provider<AppRouter>((ref) {
 class AppRouter {
   late final GoRouter router;
 
-  final GoTrueClient auth = Supabase.instance.client.auth;
+  GoTrueClient get _auth => Supabase.instance.client.auth;
 
   static final navigatorKey = GlobalKey<NavigatorState>();
 
@@ -34,7 +34,7 @@ class AppRouter {
   }
 
   String? _authRequiredRedirect(BuildContext context, GoRouterState state) {
-    final session = auth.currentSession;
+    final session = _auth.currentSession;
     if (session == null) {
       return '/login';
     }
@@ -50,7 +50,7 @@ class AppRouter {
       path: '/',
       builder: (context, state) => const SplashScreen(),
       redirect: (context, state) {
-        final session = auth.currentSession;
+        final session = _auth.currentSession;
         if (session == null) {
           return '/login';
         } else {
@@ -62,7 +62,7 @@ class AppRouter {
       path: '/login',
       builder: (context, state) => const AuthScreen(),
       redirect: (context, state) {
-        final session = auth.currentSession;
+        final session = _auth.currentSession;
         if (session != null) {
           return '/home';
         }
@@ -104,7 +104,7 @@ class AppRouter {
   ];
 
   void _listenToAuthChanges() {
-    _authSubscription = auth.onAuthStateChange.listen((data) {
+    _authSubscription = _auth.onAuthStateChange.listen((data) {
       if (data.event == AuthChangeEvent.signedIn) {
         navigatorKey.currentContext?.go('/home');
       } else if (data.event == AuthChangeEvent.signedOut) {
