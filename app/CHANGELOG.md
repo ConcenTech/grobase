@@ -22,5 +22,19 @@ Initial beta app release
 ### Fixed
 - Unable to find SplashScreen or TestScreen during build
 
+## [0.1.3] - 16/07/26
+
+### Added
+- Mocks for OnlineDatabaseService and AppRouter to allow for easier UI testing
+
+### Fixed
+- House overflows on main screen when device is landscape.
+- Safe area clips home screen when device is landscape.
+- Duplicate permission declarations in Android manifest.
+- Real inverter data not displayed in systems screen.
+
+
 [0.1.1]: https://github.com/ConcenTech/grobase/compare/main...v0.1.1
 [0.1.2]: https://github.com/ConcenTech/grobase/compare/v0.1.1...v0.1.2
+[0.1.3]: https://github.com/ConcenTech/grobase/compare/v0.1.2...v0.1.3
+
