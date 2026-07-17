@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../core/utils/async_status.dart';
+import '../../core/utils/auth_errors.dart';
 import '../../core/utils/validators.dart';
 
 /// This widget is used for both password reset and password change flows, since
@@ -181,11 +182,14 @@ class _ChangePasswordNotifier extends Notifier<_ChangePasswordState> {
       state = state.copyWith(status: AsyncStatus.success);
       return true;
     } on AuthException catch (e) {
-      state = state.copyWith(status: AsyncStatus.error, error: e.message);
+      state = state.copyWith(
+        status: AsyncStatus.error,
+        error: AuthErrors.userFacingMessage(e),
+      );
     } catch (e) {
       state = state.copyWith(
         status: AsyncStatus.error,
-        error: 'An unexpected error occurred',
+        error: AuthErrors.unexpected,
       );
     }
     return false;

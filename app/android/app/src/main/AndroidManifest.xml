@@ -53,6 +53,9 @@
         </intent>
     </queries>
     <uses-feature android:name="android.hardware.bluetooth_le" android:required="true"/>
+    <!-- Required for Supabase and other network calls in release builds.
+         Debug/profile manifests also declare INTERNET for Flutter tooling. -->
+    <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.BLUETOOTH_SCAN" android:usesPermissionFlags="neverForLocation" />
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
     <!-- Replace rxandroidble's uses-permission-sdk-23 entries (Play rejects mixed maxSdkVersion). -->
