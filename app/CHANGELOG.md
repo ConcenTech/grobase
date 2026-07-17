@@ -33,8 +33,14 @@ Initial beta app release
 - Duplicate permission declarations in Android manifest.
 - Real inverter data not displayed in systems screen.
 
+## [0.1.4] - 17/07/26
+
+### Fixed
+- Android release builds missing INTERNET permission, blocking Supabase backend connectivity.
+
 
 [0.1.1]: https://github.com/ConcenTech/grobase/compare/main...v0.1.1
 [0.1.2]: https://github.com/ConcenTech/grobase/compare/v0.1.1...v0.1.2
 [0.1.3]: https://github.com/ConcenTech/grobase/compare/v0.1.2...v0.1.3
+[0.1.4]: https://github.com/ConcenTech/grobase/compare/v0.1.3...v0.1.4
 
