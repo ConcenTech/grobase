@@ -169,22 +169,15 @@ class EnergyCard extends StatelessWidget {
             padding: const EdgeInsets.all(16.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Row(
                   children: [
                     Icon(icon, color: textColor),
                     const SizedBox(width: 4),
-                    RichText(
-                      text: TextSpan(
-                        children: [
-                          TextSpan(
-                            text: title,
-                            style: theme.textTheme.titleSmall?.copyWith(
-                              color: textColor,
-                            ),
-                          ),
-                        ],
+                    Text(
+                      title,
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        color: textColor,
                       ),
                     ),
                   ],
@@ -196,23 +189,32 @@ class EnergyCard extends StatelessWidget {
                       color: textColor,
                     ),
                   ),
-                RichText(
-                  text: TextSpan(
-                    children: [
-                      TextSpan(
-                        text: _fmtPower(power),
-                        style: theme.textTheme.displayLarge?.copyWith(
-                          fontSize: 58,
-                          color: textColor,
+                Expanded(
+                  child: Align(
+                    alignment: Alignment.bottomLeft,
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.bottomLeft,
+                      child: Text.rich(
+                        TextSpan(
+                          children: [
+                            TextSpan(
+                              text: _fmtPower(power),
+                              style: theme.textTheme.displayLarge?.copyWith(
+                                fontSize: 58,
+                                color: textColor,
+                              ),
+                            ),
+                            TextSpan(
+                              text: _fmtUnit(power),
+                              style: theme.textTheme.labelMedium?.copyWith(
+                                color: textColor,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                      TextSpan(
-                        text: _fmtUnit(power),
-                        style: theme.textTheme.labelMedium?.copyWith(
-                          color: textColor,
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
                 ),
               ],

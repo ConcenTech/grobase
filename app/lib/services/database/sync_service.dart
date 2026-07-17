@@ -3,10 +3,12 @@ import 'dart:async';
 import 'package:logging/logging.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../core/utils/sync_errors.dart';
 import '../../models/database/inverter.dart';
 import '../connectivity/connection_manager.dart';
 import 'offline_database_service.dart';
 import 'online_database_service.dart';
+import 'sync_state_notifier.dart';
 
 final _logger = Logger('SyncService');
 
@@ -16,22 +18,14 @@ class SyncService {
     this._connectionManager,
     this._onlineService,
     this._offlineService,
-    this._onSyncChange,
+    this._syncStateNotifier,
   );
 
   final GoTrueClient _auth;
   final ConnectionManager _connectionManager;
   final OnlineDatabaseService _onlineService;
   final OfflineDatabaseService _offlineService;
-
-  /// A callback to be called when sync state chages.
-  ///
-  /// If there is data in the offline database, this will be called with true.
-  /// Otherwise, this will be called with true once the first sync fetches
-  /// inverters
-  ///
-  /// When the user signs out, this will be called with false.
-  final void Function(bool complete) _onSyncChange;
+  final SyncStateNotifier _syncStateNotifier;
 
   /// Whether the sync service is currently running.
   bool _isRunning = false;
@@ -52,7 +46,7 @@ class SyncService {
     _offlineService.getInverterCount().then((count) {
       if (count > 0) {
         _logger.info('Inverters found, sync complete');
-        _onSyncChange(true);
+        _syncStateNotifier.setSynced();
       }
     });
     // If the user is already authenticated, start the sync service.
@@ -89,6 +83,13 @@ class SyncService {
     _stopListeningForDbChanges();
   }
 
+  /// Retries sync after a failure by stopping and starting again.
+  void retry() {
+    _logger.info('Retrying sync');
+    _syncStateNotifier.setSyncing();
+    _restart();
+  }
+
   DateTime _startOfDay() {
     final now = DateTime.now();
     return DateTime(now.year, now.month, now.day);
@@ -104,7 +105,7 @@ class SyncService {
       await _offlineService.setInverters(inverters);
 
       // We only care abount inverters, snapshots can come later.
-      _onSyncChange(true);
+      _syncStateNotifier.setSynced();
 
       final startOfDay = _startOfDay();
 
@@ -116,6 +117,7 @@ class SyncService {
       }
     } catch (e, s) {
       _logger.severe('Failed to get initial sync state', e, s);
+      _syncStateNotifier.setError(SyncErrors.userFacingMessage(e));
     }
   }
 
@@ -167,6 +169,7 @@ class SyncService {
       }
     } catch (e, s) {
       _logger.severe('Failed to sync new inverter', e, s);
+      _syncStateNotifier.setError(SyncErrors.userFacingMessage(e));
     }
   }
 
@@ -190,7 +193,7 @@ class SyncService {
         _logger.info('User signed out, stopping sync and clearing database');
         stop();
         _offlineService.clear();
-        _onSyncChange(false);
+        _syncStateNotifier.setInitial();
         break;
       default:
         break;

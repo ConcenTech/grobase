@@ -61,7 +61,7 @@ class OnlineDatabaseService {
 
       return data.map((item) => Inverter.fromJson(item)).toList();
     } on PostgrestException catch (e) {
-      throw DatabaseException(e.message, error: e.details);
+      throw DatabaseException(e.message, error: e);
     } catch (e) {
       throw DatabaseException('An unexpected error occurred', error: e);
     }
@@ -78,7 +78,7 @@ class OnlineDatabaseService {
 
       return data == null ? null : Inverter.fromJson(data);
     } on PostgrestException catch (e) {
-      throw DatabaseException(e.message, error: e.details);
+      throw DatabaseException(e.message, error: e);
     } catch (e) {
       throw DatabaseException('An unexpected error occurred', error: e);
     }
@@ -106,7 +106,7 @@ class OnlineDatabaseService {
 
       return data.map((item) => InverterSnapshot.fromJson(item)).toList();
     } on PostgrestException catch (e) {
-      throw DatabaseException(e.message, error: e.details);
+      throw DatabaseException(e.message, error: e);
     } catch (e) {
       throw DatabaseException('An unexpected error occurred', error: e);
     }
@@ -186,7 +186,7 @@ class OnlineDatabaseService {
       final data = await _db.rpc('get_gateways_safe');
       return data.map((item) => Gateway.fromJson(item)).toList();
     } on PostgrestException catch (e) {
-      throw DatabaseException(e.message, error: e.details);
+      throw DatabaseException(e.message, error: e);
     } catch (e) {
       throw DatabaseException('An unexpected error occurred', error: e);
     }
@@ -202,7 +202,7 @@ class OnlineDatabaseService {
           .order('recorded_at', ascending: false);
       return data.map((item) => GatewayEvent.fromJson(item)).toList();
     } on PostgrestException catch (e) {
-      throw DatabaseException(e.message, error: e.details);
+      throw DatabaseException(e.message, error: e);
     } catch (e) {
       throw DatabaseException('An unexpected error occurred', error: e);
     }
@@ -218,7 +218,7 @@ class OnlineDatabaseService {
           .order('created_at', ascending: false);
       return data.map((item) => InverterMember.fromJson(item)).toList();
     } on PostgrestException catch (e) {
-      throw DatabaseException(e.message, error: e.details);
+      throw DatabaseException(e.message, error: e);
     } catch (e) {
       throw DatabaseException('An unexpected error occurred', error: e);
     }
@@ -236,7 +236,7 @@ class OnlineDatabaseService {
           .eq('inverter_id', inverterId)
           .eq('user_id', userId);
     } on PostgrestException catch (e) {
-      throw DatabaseException(e.message, error: e.details);
+      throw DatabaseException(e.message, error: e);
     } catch (e) {
       throw DatabaseException('An unexpected error occurred', error: e);
     }

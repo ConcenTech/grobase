@@ -8,6 +8,7 @@ import 'offline_database_service.dart';
 import 'offline_storage.dart';
 import 'online_database_service.dart';
 import 'sync_service.dart';
+import 'sync_state_notifier.dart';
 
 abstract class DatabaseProviders {
   /// The generated Drift database.
@@ -31,7 +32,7 @@ abstract class DatabaseProviders {
       ref.watch(connectionProvider),
       ref.watch(onlineDatabase),
       ref.watch(offlineDatabase),
-      (complete) => setSyncComplete(ref, complete),
+      ref.watch(syncState.notifier),
     );
 
     ref.onDispose(service.dispose);
@@ -39,13 +40,10 @@ abstract class DatabaseProviders {
     return service..init();
   });
 
-  static final syncComplete = NotifierProvider<SyncCompleteNotifier, bool>(
-    SyncCompleteNotifier.new,
-  );
-
-  static void setSyncComplete(Ref ref, bool complete) {
-    ref.read(syncComplete.notifier).setComplete(complete);
-  }
+  static final syncState =
+      NotifierProvider.autoDispose<SyncStateNotifier, SyncState>(
+        SyncStateNotifier.new,
+      );
 
   /// A stream of inverters from the offline database.
   static final inverters = StreamProvider(

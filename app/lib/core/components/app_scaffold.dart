@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../screens/systems/systems_screen.dart';
+import '../../services/database/database_providers.dart';
 import 'logo.dart';
 import 'solar/weather_background.dart';
 
-class AppScaffold extends StatelessWidget {
+class AppScaffold extends ConsumerWidget {
   const AppScaffold({
     super.key,
     required this.body,
@@ -65,7 +67,22 @@ class AppScaffold extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    ref.listen(DatabaseProviders.syncState, (previous, next) {
+      if (next.hasError) {
+        final messenger = ScaffoldMessenger.of(context);
+        messenger.showSnackBar(
+          SyncErrorSnackBar(
+            message: next.error!,
+            onRetry: () {
+              messenger.hideCurrentSnackBar();
+              ref.read(DatabaseProviders.syncService).retry();
+            },
+          ),
+        );
+      }
+    });
+
     return Scaffold(
       bottomNavigationBar: navigationBar,
       backgroundColor: Colors.transparent,
@@ -161,4 +178,17 @@ class HomeScaffold extends StatelessWidget {
       ),
     );
   }
+}
+
+class SyncErrorSnackBar extends SnackBar {
+  SyncErrorSnackBar({
+    required String message,
+    required VoidCallback onRetry,
+    super.key,
+  }) : super(
+         content: Text(message),
+         duration: const Duration(seconds: 8),
+         action: SnackBarAction(label: 'Retry', onPressed: onRetry),
+         behavior: SnackBarBehavior.floating,
+       );
 }

@@ -275,7 +275,8 @@ class _HomeScreenContentState extends ConsumerState<HomeScreenContent> {
 /// Stays [AsyncLoading] until sync completes and inverters are available.
 /// Emits `null` when the user has no inverters.
 final homeProvider = Provider<AsyncValue<Inverter?>>((ref) {
-  final hasSynced = ref.watch(DatabaseProviders.syncComplete);
+  final syncState = ref.watch(DatabaseProviders.syncState);
+  final hasSynced = syncState.hasSynced || syncState.hasError;
 
   if (!hasSynced) {
     return const AsyncLoading();
