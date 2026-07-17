@@ -11,12 +11,14 @@ class MockSyncService extends SyncService {
     required OnlineDatabaseService online,
     required OfflineDatabaseService offline,
     required void Function(bool complete) onSyncChange,
+    void Function(Object error, StackTrace stackTrace)? onSyncError,
   }) : super(
          GoTrueClient(),
          ConnectionManager(),
          online,
          offline,
-         onSyncChange,
+         onSyncChange: onSyncChange,
+         onSyncError: onSyncError,
        );
 
   @override

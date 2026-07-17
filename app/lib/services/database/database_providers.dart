@@ -9,6 +9,29 @@ import 'offline_storage.dart';
 import 'online_database_service.dart';
 import 'sync_service.dart';
 
+/// Progress of the first inverter sync used to gate the home screen.
+sealed class SyncCompletion {
+  const SyncCompletion();
+}
+
+/// Initial sync has not finished yet (new users start here).
+class SyncPending extends SyncCompletion {
+  const SyncPending();
+}
+
+/// Initial inverter sync finished successfully (list may be empty).
+class SyncReady extends SyncCompletion {
+  const SyncReady();
+}
+
+/// Initial sync failed after retries; UI should show an error instead of loading.
+class SyncFailed extends SyncCompletion {
+  const SyncFailed(this.error, [this.stackTrace]);
+
+  final Object error;
+  final StackTrace? stackTrace;
+}
+
 abstract class DatabaseProviders {
   /// The generated Drift database.
   static final appDb = Provider((ref) => AppDatabase());
@@ -31,7 +54,8 @@ abstract class DatabaseProviders {
       ref.watch(connectionProvider),
       ref.watch(onlineDatabase),
       ref.watch(offlineDatabase),
-      (complete) => setSyncComplete(ref, complete),
+      onSyncChange: (complete) => setSyncComplete(ref, complete),
+      onSyncError: (error, stackTrace) => setSyncFailed(ref, error, stackTrace),
     );
 
     ref.onDispose(service.dispose);
@@ -39,12 +63,17 @@ abstract class DatabaseProviders {
     return service..init();
   });
 
-  static final syncComplete = NotifierProvider<SyncCompleteNotifier, bool>(
-    SyncCompleteNotifier.new,
-  );
+  static final syncComplete =
+      NotifierProvider<SyncCompleteNotifier, SyncCompletion>(
+        SyncCompleteNotifier.new,
+      );
 
   static void setSyncComplete(Ref ref, bool complete) {
     ref.read(syncComplete.notifier).setComplete(complete);
+  }
+
+  static void setSyncFailed(Ref ref, Object error, [StackTrace? stackTrace]) {
+    ref.read(syncComplete.notifier).setFailed(error, stackTrace);
   }
 
   /// A stream of inverters from the offline database.
@@ -64,15 +93,19 @@ abstract class DatabaseProviders {
   );
 }
 
-class SyncCompleteNotifier extends Notifier<bool> {
+class SyncCompleteNotifier extends Notifier<SyncCompletion> {
   @override
-  bool build() => false;
+  SyncCompletion build() => const SyncPending();
 
   void setComplete(bool value) {
-    state = value;
+    state = value ? const SyncReady() : const SyncPending();
+  }
+
+  void setFailed(Object error, [StackTrace? stackTrace]) {
+    state = SyncFailed(error, stackTrace);
   }
 
   void setIncomplete() {
-    state = false;
+    state = const SyncPending();
   }
 }

@@ -53,6 +53,9 @@ void main() async {
                   onSyncChange: (complete) {
                     DatabaseProviders.setSyncComplete(ref, complete);
                   },
+                  onSyncError: (error, stackTrace) {
+                    DatabaseProviders.setSyncFailed(ref, error, stackTrace);
+                  },
                 );
                 return service..init();
               }),

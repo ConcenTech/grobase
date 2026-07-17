@@ -33,6 +33,11 @@ Initial beta app release
 - Duplicate permission declarations in Android manifest.
 - Real inverter data not displayed in systems screen.
 
+## [0.1.5] - 17/07/26
+
+### Fixed
+- New users stuck on permanent loading after login when the first sync failed: `syncComplete` never became ready, `start()` could not retry, and home had no error state.
+
 ## [0.1.4] - 17/07/26
 
 ### Fixed
@@ -44,4 +49,5 @@ Initial beta app release
 [0.1.2]: https://github.com/ConcenTech/grobase/compare/v0.1.1...v0.1.2
 [0.1.3]: https://github.com/ConcenTech/grobase/compare/v0.1.2...v0.1.3
 [0.1.4]: https://github.com/ConcenTech/grobase/compare/v0.1.3...v0.1.4
+[0.1.5]: https://github.com/ConcenTech/grobase/compare/v0.1.4...v0.1.5
 

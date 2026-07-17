@@ -15,9 +15,11 @@ class SyncService {
     this._auth,
     this._connectionManager,
     this._onlineService,
-    this._offlineService,
-    this._onSyncChange,
-  );
+    this._offlineService, {
+    required void Function(bool complete) onSyncChange,
+    void Function(Object error, StackTrace stackTrace)? onSyncError,
+  }) : _onSyncChange = onSyncChange,
+       _onSyncError = onSyncError;
 
   final GoTrueClient _auth;
   final ConnectionManager _connectionManager;
@@ -28,13 +30,26 @@ class SyncService {
   ///
   /// If there is data in the offline database, this will be called with true.
   /// Otherwise, this will be called with true once the first sync fetches
-  /// inverters
+  /// inverters — including when the list is empty (new users with no systems).
   ///
   /// When the user signs out, this will be called with false.
   final void Function(bool complete) _onSyncChange;
 
+  /// Called when the initial sync fails after exhausting retries.
+  final void Function(Object error, StackTrace stackTrace)? _onSyncError;
+
   /// Whether the sync service is currently running.
   bool _isRunning = false;
+
+  /// Whether the initial inverter fetch has completed successfully.
+  ///
+  /// New users have no offline cache, so home stays loading until this is true.
+  bool _hasCompletedInitialSync = false;
+
+  /// Consecutive failed initial sync attempts since the last success/sign-out.
+  int _initialSyncAttempts = 0;
+
+  static const int _maxInitialSyncAttempts = 5;
 
   /// Whether the device is currently online.
   bool _isOnline = true;
@@ -45,6 +60,9 @@ class SyncService {
   /// Subscription to connection status changes.
   StreamSubscription<bool>? _connectionSubscription;
 
+  /// Retries the initial sync after a failure without requiring a reconnect.
+  Timer? _initialSyncRetryTimer;
+
   RealtimeChannel? _inverterChangesChannel;
   final Map<String, RealtimeChannel> _snapshotChangesChannels = {};
 
@@ -52,6 +70,7 @@ class SyncService {
     _offlineService.getInverterCount().then((count) {
       if (count > 0) {
         _logger.info('Inverters found, sync complete');
+        _hasCompletedInitialSync = true;
         _onSyncChange(true);
       }
     });
@@ -74,6 +93,7 @@ class SyncService {
 
     _logger.info('Starting sync service');
     _isRunning = true;
+    _cancelInitialSyncRetry();
 
     _startListeningForDbChanges();
     unawaited(_syncAndStartSnapshotListeners());
@@ -86,6 +106,7 @@ class SyncService {
 
     _logger.info('Stopping sync service');
     _isRunning = false;
+    _cancelInitialSyncRetry();
     _stopListeningForDbChanges();
   }
 
@@ -103,7 +124,10 @@ class SyncService {
       final inverters = await _onlineService.inverters();
       await _offlineService.setInverters(inverters);
 
-      // We only care abount inverters, snapshots can come later.
+      // Mark complete for new users too — an empty inverter list is a valid
+      // first sync result and must unblock home/systems navigation.
+      _hasCompletedInitialSync = true;
+      _initialSyncAttempts = 0;
       _onSyncChange(true);
 
       final startOfDay = _startOfDay();
@@ -116,7 +140,57 @@ class SyncService {
       }
     } catch (e, s) {
       _logger.severe('Failed to get initial sync state', e, s);
+      _handleInitialSyncFailure(e, s);
     }
+  }
+
+  /// After a failed first sync, allow [start] to run again and schedule a retry.
+  ///
+  /// Without this, `_isRunning` stays true forever, `start()` becomes a no-op,
+  /// and new users remain stuck with syncComplete pending (permanent loading).
+  void _handleInitialSyncFailure(Object error, StackTrace stackTrace) {
+    if (_hasCompletedInitialSync) {
+      return;
+    }
+
+    _initialSyncAttempts++;
+    _isRunning = false;
+    _stopListeningForDbChanges();
+
+    if (_initialSyncAttempts >= _maxInitialSyncAttempts) {
+      _logger.severe(
+        'Initial sync failed after $_initialSyncAttempts attempts',
+        error,
+        stackTrace,
+      );
+      _onSyncError?.call(error, stackTrace);
+      return;
+    }
+
+    _scheduleInitialSyncRetry();
+  }
+
+  void _scheduleInitialSyncRetry() {
+    if (_hasCompletedInitialSync || _auth.currentSession == null) {
+      return;
+    }
+
+    _cancelInitialSyncRetry();
+    _logger.info(
+      'Scheduling initial sync retry '
+      '(attempt ${_initialSyncAttempts + 1}/$_maxInitialSyncAttempts)',
+    );
+    _initialSyncRetryTimer = Timer(const Duration(seconds: 3), () {
+      if (_hasCompletedInitialSync || _auth.currentSession == null) {
+        return;
+      }
+      start();
+    });
+  }
+
+  void _cancelInitialSyncRetry() {
+    _initialSyncRetryTimer?.cancel();
+    _initialSyncRetryTimer = null;
   }
 
   Future<void> _syncSnapshotsForInverter(String inverterId) async {
@@ -161,6 +235,14 @@ class SyncService {
   Future<void> _handleInverterCreated(Inverter inverter) async {
     try {
       await _offlineService.addInverter(inverter);
+      // Realtime create can arrive before/without a successful initial fetch.
+      // Unblock home for new users once we have local inverter data.
+      if (!_hasCompletedInitialSync) {
+        _hasCompletedInitialSync = true;
+        _initialSyncAttempts = 0;
+        _onSyncChange(true);
+        _cancelInitialSyncRetry();
+      }
       await _syncSnapshotsForInverter(inverter.id);
       if (_isRunning) {
         _startSnapshotListener(inverter.id, _startOfDay());
@@ -174,7 +256,14 @@ class SyncService {
   ///
   /// If the user is already authenticated, sync operations will begin immediately.
   void _startSubscriptions() {
-    _authSubscription = _auth.onAuthStateChange.listen(_handleAuthChange);
+    _authSubscription = _auth.onAuthStateChange.listen(
+      _handleAuthChange,
+      onError: (Object e, StackTrace s) {
+        // Required by supabase_flutter — network/token refresh errors are
+        // emitted on the stream and would otherwise become unhandled zone errors.
+        _logger.warning('Auth state change stream error', e, s);
+      },
+    );
     _connectionSubscription = _connectionManager.stream.listen(
       _handleConnectionChange,
     );
@@ -182,14 +271,20 @@ class SyncService {
 
   void _handleAuthChange(AuthState state) {
     switch (state.event) {
-      case .signedIn:
+      case AuthChangeEvent.initialSession:
+      case AuthChangeEvent.signedIn:
+        if (state.session == null) {
+          break;
+        }
         _logger.info('User authenticated, starting sync.');
         start();
         break;
-      case .signedOut:
+      case AuthChangeEvent.signedOut:
         _logger.info('User signed out, stopping sync and clearing database');
         stop();
-        _offlineService.clear();
+        _hasCompletedInitialSync = false;
+        _initialSyncAttempts = 0;
+        unawaited(_offlineService.clear());
         _onSyncChange(false);
         break;
       default:
@@ -205,9 +300,16 @@ class SyncService {
       return;
     }
     _isOnline = isOnline;
-    if (isOnline && _isRunning && _auth.currentSession != null) {
+    if (isOnline && _auth.currentSession != null) {
       _logger.info('Connection restored, restarting sync');
-      _restart();
+      // Give a fresh retry budget when connectivity returns.
+      _initialSyncAttempts = 0;
+      if (_isRunning) {
+        _restart();
+      } else if (!_hasCompletedInitialSync) {
+        // Initial sync may have failed while "running" and cleared _isRunning.
+        start();
+      }
     }
   }
 

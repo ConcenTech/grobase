@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:logging/logging.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -54,14 +56,18 @@ class OnlineDatabaseService {
   // Returns the current user's inverters for the home screen.
   Future<List<Inverter>> inverters() async {
     try {
-      final data = await _db
-          .from('inverters')
-          .select()
-          .order('created_at', ascending: false);
+      final data = await Future(() async {
+        return await _db
+            .from('inverters')
+            .select()
+            .order('created_at', ascending: false);
+      }).timeout(const Duration(seconds: 30));
 
       return data.map((item) => Inverter.fromJson(item)).toList();
     } on PostgrestException catch (e) {
       throw DatabaseException(e.message, error: e.details);
+    } on TimeoutException catch (e) {
+      throw DatabaseException('Timed out while loading systems', error: e);
     } catch (e) {
       throw DatabaseException('An unexpected error occurred', error: e);
     }

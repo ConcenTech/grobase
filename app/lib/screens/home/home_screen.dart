@@ -74,7 +74,13 @@ class HomeScreen extends ConsumerWidget {
         HomeScreenContent(inverter: inverter, snapshots: snapshots),
         if (showOverlay) ...[
           const ModalBarrier(dismissible: false, color: Color(0x66000000)),
-          WindTurbinesIndicator(status: isLoading ? .loading : .error),
+          WindTurbinesIndicator(
+            status: isLoading ? .loading : .error,
+            caption: isLoading ? null : 'Unable to sync your systems',
+            details: isLoading
+                ? null
+                : 'Please check your internet connection and try again.',
+          ),
         ],
       ],
     );
@@ -275,10 +281,15 @@ class _HomeScreenContentState extends ConsumerState<HomeScreenContent> {
 /// Stays [AsyncLoading] until sync completes and inverters are available.
 /// Emits `null` when the user has no inverters.
 final homeProvider = Provider<AsyncValue<Inverter?>>((ref) {
-  final hasSynced = ref.watch(DatabaseProviders.syncComplete);
+  final sync = ref.watch(DatabaseProviders.syncComplete);
 
-  if (!hasSynced) {
-    return const AsyncLoading();
+  switch (sync) {
+    case SyncPending():
+      return const AsyncLoading();
+    case SyncFailed(:final error, :final stackTrace):
+      return AsyncError(error, stackTrace ?? StackTrace.empty);
+    case SyncReady():
+      break;
   }
 
   final invertersRef = ref.watch(DatabaseProviders.inverters);
