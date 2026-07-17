@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../core/utils/async_status.dart';
+import '../../core/utils/auth_errors.dart';
 import '../../core/utils/validators.dart';
 import 'auth_column.dart';
 
@@ -283,11 +284,14 @@ class _RegisterAccountNotifier extends Notifier<_RegisterAccountState> {
       state = state.copyWith(status: AsyncStatus.success, email: email);
       return true;
     } on AuthException catch (e) {
-      state = state.copyWith(status: AsyncStatus.error, error: e.message);
+      state = state.copyWith(
+        status: AsyncStatus.error,
+        error: AuthErrors.userFacingMessage(e),
+      );
     } catch (e) {
       state = state.copyWith(
         status: AsyncStatus.error,
-        error: 'An unexpected error occurred',
+        error: AuthErrors.unexpected,
       );
     }
     return false;
@@ -322,18 +326,21 @@ class _RegisterAccountNotifier extends Notifier<_RegisterAccountState> {
       );
       state = state.copyWith(status: AsyncStatus.success, emailConfirmed: true);
     } on AuthException catch (e) {
-      if (e.message.contains('Email not confirmed')) {
+      if (AuthErrors.isEmailNotConfirmed(e)) {
         state = state.copyWith(
           status: AsyncStatus.success,
           emailConfirmed: false,
         );
       } else {
-        state = state.copyWith(status: AsyncStatus.error, error: e.message);
+        state = state.copyWith(
+          status: AsyncStatus.error,
+          error: AuthErrors.userFacingMessage(e),
+        );
       }
     } catch (e) {
       state = state.copyWith(
         status: AsyncStatus.error,
-        error: 'An unexpected error occurred',
+        error: AuthErrors.unexpected,
       );
     }
   }
@@ -359,11 +366,14 @@ class _RegisterAccountNotifier extends Notifier<_RegisterAccountState> {
 
       state = oldState;
     } on AuthException catch (e) {
-      state = state.copyWith(status: AsyncStatus.error, error: e.message);
+      state = state.copyWith(
+        status: AsyncStatus.error,
+        error: AuthErrors.userFacingMessage(e),
+      );
     } catch (e) {
       state = state.copyWith(
         status: AsyncStatus.error,
-        error: 'An unexpected error occurred',
+        error: AuthErrors.unexpected,
       );
     }
   }

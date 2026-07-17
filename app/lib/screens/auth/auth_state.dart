@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../core/utils/async_status.dart';
+import '../../core/utils/auth_errors.dart';
 
 class AuthStateNotifier extends Notifier<AuthState> {
   final GoTrueClient auth = Supabase.instance.client.auth;
@@ -31,11 +32,14 @@ class AuthStateNotifier extends Notifier<AuthState> {
       );
       unawaited(_waitForEmailConfirmation());
     } on AuthException catch (e) {
-      state = state.copyWith(asyncStatus: AsyncStatus.error, error: e.message);
+      state = state.copyWith(
+        asyncStatus: AsyncStatus.error,
+        error: AuthErrors.userFacingMessage(e),
+      );
     } catch (e) {
       state = state.copyWith(
         asyncStatus: AsyncStatus.error,
-        error: 'An unexpected error occurred',
+        error: AuthErrors.unexpected,
       );
     }
   }
@@ -93,11 +97,14 @@ class AuthStateNotifier extends Notifier<AuthState> {
     try {
       await auth.resend(type: OtpType.signup, email: state.email!);
     } on AuthException catch (e) {
-      state = state.copyWith(asyncStatus: AsyncStatus.error, error: e.message);
+      state = state.copyWith(
+        asyncStatus: AsyncStatus.error,
+        error: AuthErrors.userFacingMessage(e),
+      );
     } catch (e) {
       state = state.copyWith(
         asyncStatus: AsyncStatus.error,
-        error: 'An unexpected error occurred',
+        error: AuthErrors.unexpected,
       );
     }
   }
@@ -126,11 +133,14 @@ class AuthStateNotifier extends Notifier<AuthState> {
         );
       }
     } on AuthException catch (e) {
-      state = state.copyWith(asyncStatus: AsyncStatus.error, error: e.message);
+      state = state.copyWith(
+        asyncStatus: AsyncStatus.error,
+        error: AuthErrors.userFacingMessage(e),
+      );
     } catch (e) {
       state = state.copyWith(
         asyncStatus: AsyncStatus.error,
-        error: 'An unexpected error occurred',
+        error: AuthErrors.unexpected,
       );
     }
   }
