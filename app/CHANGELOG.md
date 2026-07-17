@@ -37,6 +37,7 @@ Initial beta app release
 
 ### Fixed
 - Android release builds missing INTERNET permission, blocking Supabase backend connectivity.
+- Auth screens showing raw Supabase error messages instead of clean user-facing copy.
 
 
 [0.1.1]: https://github.com/ConcenTech/grobase/compare/main...v0.1.1
