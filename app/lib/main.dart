@@ -5,9 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'core/components/solar/solar_energy_diagram_v2.dart';
 import 'routes/app_router.dart';
-import 'routes/mock_app_router.dart';
 import 'services/database/database_providers.dart';
-import 'services/database/mocks/mock_online_database_service.dart';
 import 'services/database/mocks/mock_sync_service.dart';
 import 'services/database/offline_storage.dart';
 import 'services/database/online_database_service.dart';
@@ -41,24 +39,7 @@ void main() async {
 
   runApp(
     ProviderScope(
-      overrides: kUseMocks
-          ? [
-              DatabaseProviders.onlineDatabase.overrideWithValue(
-                MockOnlineDatabaseService(),
-              ),
-              DatabaseProviders.syncService.overrideWith((ref) {
-                final service = MockSyncService(
-                  online: ref.watch(DatabaseProviders.onlineDatabase),
-                  offline: ref.watch(DatabaseProviders.offlineDatabase),
-                  onSyncChange: (complete) {
-                    DatabaseProviders.setSyncComplete(ref, complete);
-                  },
-                );
-                return service..init();
-              }),
-              appRouterProvider.overrideWithValue(MockAppRouter()),
-            ]
-          : [],
+      overrides: kUseMocks ? MockSyncService.overrides : [],
       child: const MainApp(),
     ),
   );
