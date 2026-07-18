@@ -18,13 +18,19 @@ class Inverters extends Table {
   @JsonKey('created_at')
   RealColumn get createdAt => real().map(const DateTimeConverter())();
   @JsonKey('last_seen_at')
-  RealColumn get lastSeenAt => real().map(const DateTimeConverter())();
+  RealColumn get lastSeenAt =>
+      real().nullable().map(const NullableDateTimeConverter())();
   @JsonKey('location')
   TextColumn get location => text().map(const LocationConverter())();
 }
 
 extension InvertersExtension on Inverter {
-  bool get isOnline => DateTime.now().difference(lastSeenAt).inHours < 5;
+  bool get isOnline {
+    if (lastSeenAt == null) {
+      return DateTime.now().difference(createdAt).inMinutes < 5;
+    }
+    return DateTime.now().difference(lastSeenAt!).inHours < 5;
+  }
 }
 
 class LocationConverter extends TypeConverter<Location, String>

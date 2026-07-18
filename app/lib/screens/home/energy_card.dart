@@ -14,16 +14,31 @@ class EnergyCardContainer extends StatelessWidget {
   /// Target card width in logical pixels — kept consistent across orientations.
   static const cardWidth = 200.0;
 
+  /// Minimum card width so titles (e.g. "Consumption") are not clipped.
+  static const minCardWidth = 162.0;
+
   /// width / height
   static const cardAspectRatio = 1.3;
 
   static const _cardHeight = cardWidth / cardAspectRatio;
+  static const _spacing = 6.0;
+
+  /// Columns that fit at [extent], matching [SliverGridDelegateWithMaxCrossAxisExtent].
+  static int _columnsForExtent(double available, double extent) {
+    return ((available + _spacing) / (extent + _spacing)).ceil();
+  }
+
+  /// Max columns that keep each cell at least [minCardWidth] wide.
+  static int _columnsForMinWidth(double available) {
+    if (available < minCardWidth) return 1;
+    return ((available + _spacing) / (minCardWidth + _spacing)).floor();
+  }
 
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        const padding = EdgeInsets.all(6);
+        const padding = EdgeInsets.all(_spacing);
 
         if (mainAxis == Axis.horizontal) {
           // Landscape: horizontal grid. childAspectRatio is height/width here.
@@ -46,16 +61,23 @@ class EnergyCardContainer extends StatelessWidget {
           );
         }
 
-        // Portrait: vertical grid. childAspectRatio is width/height here.
+        // Portrait: prefer ~cardWidth columns, but never narrower than minCardWidth.
+        final availableWidth = constraints.maxWidth - padding.horizontal;
+        final preferredColumns = _columnsForExtent(availableWidth, cardWidth);
+        final maxColumns = _columnsForMinWidth(availableWidth);
+        final crossAxisCount = preferredColumns
+            .clamp(1, maxColumns)
+            .clamp(1, children.length);
+
         return GridView(
           shrinkWrap: true,
           primary: false,
           padding: padding,
-          gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-            maxCrossAxisExtent: cardWidth,
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: crossAxisCount,
             childAspectRatio: cardAspectRatio,
-            crossAxisSpacing: 6,
-            mainAxisSpacing: 6,
+            crossAxisSpacing: _spacing,
+            mainAxisSpacing: _spacing,
           ),
           children: children,
         );
@@ -139,13 +161,15 @@ class EnergyCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-
     final textColor = theme.colorScheme.onInverseSurface;
+    final subtitleStyle = theme.textTheme.bodyMedium?.copyWith(
+      color: textColor,
+    );
 
     return ConstrainedBox(
       constraints: const BoxConstraints(
         maxWidth: 250,
-        minWidth: 150,
+        minWidth: EnergyCardContainer.minCardWidth,
         minHeight: 90,
       ),
       child: Card(
@@ -174,21 +198,29 @@ class EnergyCard extends StatelessWidget {
                   children: [
                     Icon(icon, color: textColor),
                     const SizedBox(width: 4),
-                    Text(
-                      title,
-                      style: theme.textTheme.titleSmall?.copyWith(
-                        color: textColor,
+                    Flexible(
+                      child: Text(
+                        title,
+                        style: theme.textTheme.titleSmall?.copyWith(
+                          color: textColor,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                   ],
                 ),
-                if (subtitle != null)
-                  Text(
-                    subtitle!,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: textColor,
-                    ),
+                // Always reserve subtitle height so power text size is consistent.
+                Text(
+                  subtitle ?? '',
+                  style: subtitleStyle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  strutStyle: StrutStyle.fromTextStyle(
+                    subtitleStyle ?? const TextStyle(),
+                    forceStrutHeight: true,
                   ),
+                ),
                 Expanded(
                   child: Align(
                     alignment: Alignment.bottomLeft,

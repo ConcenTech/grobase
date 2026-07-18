@@ -10,11 +10,15 @@ import '../../services/database/database_providers.dart';
 import '../../services/inverters_provider.dart';
 import 'new_system/new_system_wizard.dart';
 
-void _showNewSystemBottomSheet(BuildContext context) {
+void _showNewSystemBottomSheet(
+  BuildContext context, [
+  bool useRootNavigator = false,
+]) {
   showModalBottomSheet(
     context: context,
     isScrollControlled: true,
     isDismissible: false,
+    useRootNavigator: useRootNavigator,
     builder: (context) {
       return const NewSystemWizard();
     },
@@ -111,7 +115,7 @@ class NoSystemsWidget extends StatelessWidget {
                   const SizedBox(height: 16),
                   FilledButton(
                     onPressed: () {
-                      _showNewSystemBottomSheet(context);
+                      _showNewSystemBottomSheet(context, true);
                     },
                     child: const Text('Add System'),
                   ),
