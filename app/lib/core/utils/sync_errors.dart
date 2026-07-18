@@ -74,8 +74,12 @@ class SyncErrors {
       case 'PGRST301':
       case 'PGRST303':
         return sessionExpired;
-      // Insufficient privilege
+      // Insufficient privilege (Postgres), or table/function hidden from the
+      // Data API schema cache because the role has no GRANT (common on newer
+      // hosted Supabase projects without explicit table grants).
       case '42501':
+      case 'PGRST205':
+      case 'PGRST202':
         return noAccess;
       default:
         // Postgres SQLSTATE class 28 = invalid authorization
@@ -114,7 +118,10 @@ class SyncErrors {
         lower.contains('row-level security') ||
         lower.contains('rls') ||
         lower.contains('insufficient privilege') ||
-        lower.contains('not authorized')) {
+        lower.contains('not authorized') ||
+        lower.contains('schema cache') ||
+        lower.contains('could not find the table') ||
+        lower.contains('could not find the function')) {
       return noAccess;
     }
 

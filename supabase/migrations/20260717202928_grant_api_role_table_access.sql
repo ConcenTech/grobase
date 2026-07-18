@@ -1,6 +1,8 @@
 -- Align Data API privileges with RLS + edge-function clients.
 -- Hosted projects owned by postgres no longer auto-grant CRUD to
--- authenticated/service_role; without these, PostgREST returns 42501.
+-- authenticated/service_role. Without these grants PostgREST returns
+-- 42501 or PGRST205 ("table not in schema cache"), which surfaces in
+-- the app as a sync failure after login while Auth still works.
 
 -- authenticated: only what RLS policies already allow.
 grant select, update, delete on table public.inverters to authenticated;
@@ -35,10 +37,6 @@ create policy inverter_invites_insert_owner
     public.is_inverter_owner(inverter_id)
     and invited_by = auth.uid()
   );
-
-
-
-
 
 -- Keep anon off table data (reinforces initial migration).
 revoke all on table
