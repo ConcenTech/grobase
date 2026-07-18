@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'core/components/solar/solar_energy_diagram_v2.dart';
 import 'routes/app_router.dart';
+import 'services/app_logger.dart';
 import 'services/database/database_providers.dart';
 import 'services/database/mocks/mock_sync_service.dart';
 import 'services/database/offline_storage.dart';
