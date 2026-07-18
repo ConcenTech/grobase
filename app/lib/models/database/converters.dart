@@ -49,3 +49,40 @@ class DateTimeConverter extends TypeConverter<DateTime, double>
     return value.toUtc().toIso8601String();
   }
 }
+
+class NullableDateTimeConverter extends TypeConverter<DateTime?, double?>
+    with JsonTypeConverter2<DateTime?, double?, String?> {
+  const NullableDateTimeConverter();
+
+  @override
+  DateTime? fromSql(double? fromDb) {
+    if (fromDb == null) {
+      return null;
+    }
+    return DateTime.fromMillisecondsSinceEpoch((fromDb * 1000).round());
+  }
+
+  @override
+  double? toSql(DateTime? value) {
+    if (value == null) {
+      return null;
+    }
+    return value.millisecondsSinceEpoch / 1000;
+  }
+
+  @override
+  DateTime? fromJson(String? json) {
+    if (json == null) {
+      return null;
+    }
+    return DateTime.parse(json);
+  }
+
+  @override
+  String? toJson(DateTime? value) {
+    if (value == null) {
+      return null;
+    }
+    return value.toUtc().toIso8601String();
+  }
+}
