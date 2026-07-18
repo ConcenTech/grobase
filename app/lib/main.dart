@@ -37,6 +37,8 @@ void main() async {
 
   await SolarEnergyDiagramV2.precache();
 
+  AppLogger.instance.flush();
+
   runApp(
     ProviderScope(
       overrides: kUseMocks ? MockSyncService.overrides : [],
