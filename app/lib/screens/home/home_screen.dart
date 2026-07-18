@@ -8,6 +8,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../core/components/loading_indicator.dart';
 import '../../core/components/solar/solar_energy_diagram.dart';
 import '../../core/components/solar/solar_energy_diagram_v2.dart';
+import '../../core/extensions/list_extensions.dart';
 import '../../models/database/inverter.drift.dart';
 import '../../models/database/inverter_snapshot.drift.dart';
 import '../../services/database/database_providers.dart';
@@ -154,118 +155,124 @@ class _HomeScreenContentState extends ConsumerState<HomeScreenContent> {
     );
     final subtitleTextTheme = theme.textTheme.labelSmall!;
 
-    final screenSize = MediaQuery.sizeOf(context);
     final titleTextHeight = titleTextTheme.height! * titleTextTheme.fontSize!;
     final statusTextHeight =
         subtitleTextTheme.height! * subtitleTextTheme.fontSize!;
 
-    final Axis mainAxis;
-    final Size houseSize;
-    final Widget spacer;
-
-    if (screenSize.width > screenSize.height) {
-      mainAxis = Axis.horizontal;
-      final houseHeight = min(
-        screenSize.height - 16.0,
-        (screenSize.width * .65) / 2,
-      );
-
-      final houseWidth = houseHeight * 2;
-
-      houseSize = Size(
-        houseWidth,
-        houseHeight - (statusTextHeight + titleTextHeight),
-      );
-      spacer = const SizedBox(width: 16);
-    } else {
-      mainAxis = Axis.vertical;
-      houseSize = Size(screenSize.width - 16.0, 300);
-      spacer = const SizedBox.shrink();
-    }
-
     final solarEnergyData = _getLatestSolarEnergyData();
 
-    return SingleChildScrollView(
-      scrollDirection: mainAxis,
-      padding: const EdgeInsets.all(0),
-      child: Flex(
-        direction: mainAxis,
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          spacer,
-          Column(
+    // LayoutBuilder (outside the scroll view) reflects space after app bars, etc.
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final availableSize = Size(constraints.maxWidth, constraints.maxHeight);
+
+        final Axis mainAxis;
+        final Size houseSize;
+        final Widget spacer;
+
+        if (availableSize.width > availableSize.height) {
+          mainAxis = Axis.horizontal;
+          final houseHeight = min(
+            availableSize.height - 16.0,
+            (availableSize.width * .65) / 2,
+          );
+
+          final houseWidth = houseHeight * 2;
+
+          houseSize = Size(
+            houseWidth,
+            houseHeight - (statusTextHeight + titleTextHeight),
+          );
+          spacer = const SizedBox(width: 16);
+        } else {
+          mainAxis = Axis.vertical;
+          houseSize = Size(availableSize.width - 16.0, 300);
+          spacer = const SizedBox.shrink();
+        }
+
+        return SingleChildScrollView(
+          scrollDirection: mainAxis,
+          padding: const EdgeInsets.all(0),
+          child: Flex(
+            direction: mainAxis,
             mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              SizedBox.fromSize(
-                size: houseSize,
-                child: Padding(
-                  padding: const EdgeInsets.only(left: 12.0),
-                  child: SolarEnergyDiagramV2(data: solarEnergyData),
-                ),
+              spacer,
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox.fromSize(
+                    size: houseSize,
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 12.0),
+                      child: SolarEnergyDiagramV2(data: solarEnergyData),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(left: 12.0),
+                    child: Text(
+                      widget.inverter?.displayName ?? '',
+                      style: titleTextTheme,
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(left: 12.0),
+                    child: Text(
+                      _lastUpdatedText(solarEnergyData),
+                      style: subtitleTextTheme,
+                    ),
+                  ),
+                ],
               ),
-              Padding(
-                padding: const EdgeInsets.only(left: 12.0),
-                child: Text(
-                  widget.inverter?.displayName ?? '',
-                  style: titleTextTheme,
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.only(left: 12.0),
-                child: Text(
-                  _lastUpdatedText(solarEnergyData),
-                  style: subtitleTextTheme,
-                ),
+              spacer,
+              EnergyCardContainer(
+                mainAxis: mainAxis,
+                children: [
+                  EnergyCard.solar(
+                    power: solarEnergyData.solarWatts,
+                    onTap: () => showDialog(
+                      context: context,
+                      builder: (context) =>
+                          SolarChartDialog(snapshots: widget.snapshots),
+                    ),
+                  ),
+                  EnergyCard.battery(
+                    power: solarEnergyData.batteryWatts,
+                    soc: solarEnergyData.batteryLevel,
+                    onTap: () => showDialog(
+                      context: context,
+                      builder: (context) =>
+                          BatteryChartDialog(snapshots: widget.snapshots),
+                    ),
+                  ),
+                  EnergyCard.grid(
+                    power: solarEnergyData.gridWatts,
+                    onTap: () {
+                      showDialog(
+                        context: context,
+                        builder: (context) =>
+                            GridChartDialog(snapshots: widget.snapshots),
+                      );
+                    },
+                  ),
+                  EnergyCard.load(
+                    power: solarEnergyData.houseWatts,
+                    onTap: () {
+                      showDialog(
+                        context: context,
+                        builder: (context) =>
+                            LoadChartDialog(snapshots: widget.snapshots),
+                      );
+                    },
+                  ),
+                ],
               ),
             ],
           ),
-          spacer,
-          EnergyCardContainer(
-            mainAxis: mainAxis,
-            children: [
-              EnergyCard.solar(
-                power: solarEnergyData.solarWatts,
-                onTap: () => showDialog(
-                  context: context,
-                  builder: (context) =>
-                      SolarChartDialog(snapshots: widget.snapshots),
-                ),
-              ),
-              EnergyCard.battery(
-                power: solarEnergyData.batteryWatts,
-                soc: solarEnergyData.batteryLevel,
-                onTap: () => showDialog(
-                  context: context,
-                  builder: (context) =>
-                      BatteryChartDialog(snapshots: widget.snapshots),
-                ),
-              ),
-              EnergyCard.grid(
-                power: solarEnergyData.gridWatts,
-                onTap: () {
-                  showDialog(
-                    context: context,
-                    builder: (context) =>
-                        GridChartDialog(snapshots: widget.snapshots),
-                  );
-                },
-              ),
-              EnergyCard.load(
-                power: solarEnergyData.houseWatts,
-                onTap: () {
-                  showDialog(
-                    context: context,
-                    builder: (context) =>
-                        LoadChartDialog(snapshots: widget.snapshots),
-                  );
-                },
-              ),
-            ],
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 }
@@ -297,8 +304,9 @@ final homeProvider = Provider<AsyncValue<Inverter?>>((ref) {
       if (selected == null) {
         return AsyncData(inverters.first);
       }
+
       return AsyncData(
-        inverters.firstWhere((inverter) => inverter.id == selected),
+        inverters.firstWhereOrNull((inverter) => inverter.id == selected),
       );
     },
   );
