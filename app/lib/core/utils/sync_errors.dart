@@ -81,6 +81,9 @@ class SyncErrors {
       case 'PGRST205':
       case 'PGRST202':
         return noAccess;
+      // Infinite recursion in RLS policies (e.g. inverter_members).
+      case '42P17':
+        return unexpected;
       default:
         // Postgres SQLSTATE class 28 = invalid authorization
         if (code.startsWith('28')) return sessionExpired;
@@ -123,6 +126,10 @@ class SyncErrors {
         lower.contains('could not find the table') ||
         lower.contains('could not find the function')) {
       return noAccess;
+    }
+
+    if (lower.contains('infinite recursion')) {
+      return unexpected;
     }
 
     return null;

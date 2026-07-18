@@ -17,6 +17,8 @@ class Inverters extends Table {
   TextColumn get displayName => text()();
   @JsonKey('created_at')
   RealColumn get createdAt => real().map(const DateTimeConverter())();
+  // Nullable in Postgres until the first snapshot ingest. Kept non-null in
+  // Drift for now; [DatabaseJson.inverter] coerces nulls before fromJson.
   @JsonKey('last_seen_at')
   RealColumn get lastSeenAt => real().map(const DateTimeConverter())();
   @JsonKey('location')
@@ -24,7 +26,11 @@ class Inverters extends Table {
 }
 
 extension InvertersExtension on Inverter {
-  bool get isOnline => DateTime.now().difference(lastSeenAt).inHours < 5;
+  bool get isOnline {
+    // Epoch fallback from DatabaseJson means "never seen" → offline.
+    if (lastSeenAt.millisecondsSinceEpoch == 0) return false;
+    return DateTime.now().difference(lastSeenAt).inHours < 5;
+  }
 }
 
 class LocationConverter extends TypeConverter<Location, String>

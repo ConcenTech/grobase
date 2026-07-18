@@ -104,15 +104,24 @@ class SyncService {
       final inverters = await _onlineService.inverters();
       await _offlineService.setInverters(inverters);
 
-      // We only care abount inverters, snapshots can come later.
+      // Inverters are enough to unblock home/systems. Snapshot failures must
+      // not flip sync back to error after this point.
       _syncStateNotifier.setSynced();
 
       final startOfDay = _startOfDay();
 
       for (final inverter in inverters) {
-        await _syncSnapshotsForInverter(inverter.id);
-        if (_isRunning) {
-          _startSnapshotListener(inverter.id, startOfDay);
+        try {
+          await _syncSnapshotsForInverter(inverter.id);
+          if (_isRunning) {
+            _startSnapshotListener(inverter.id, startOfDay);
+          }
+        } catch (e, s) {
+          _logger.warning(
+            'Failed to sync snapshots for inverter ${inverter.id}',
+            e,
+            s,
+          );
         }
       }
     } catch (e, s) {

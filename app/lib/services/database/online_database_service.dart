@@ -10,6 +10,7 @@ import '../../models/database/inverter_snapshot.drift.dart';
 import '../../models/gateway_registration.dart';
 import '../../models/invite_link.dart';
 import '../../models/invite_preview.dart';
+import 'database_json.dart';
 
 const supabaseDebugUrl = 'http://192.168.0.51:54321';
 const supabaseDebugAnonKey = 'sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH';
@@ -59,7 +60,9 @@ class OnlineDatabaseService {
           .select()
           .order('created_at', ascending: false);
 
-      return data.map((item) => Inverter.fromJson(item)).toList();
+      return data
+          .map((item) => Inverter.fromJson(DatabaseJson.inverter(item)))
+          .toList();
     } on PostgrestException catch (e) {
       throw DatabaseException(e.message, error: e);
     } catch (e) {
@@ -76,7 +79,9 @@ class OnlineDatabaseService {
           .eq('id', inverterId)
           .maybeSingle();
 
-      return data == null ? null : Inverter.fromJson(data);
+      return data == null
+          ? null
+          : Inverter.fromJson(DatabaseJson.inverter(data));
     } on PostgrestException catch (e) {
       throw DatabaseException(e.message, error: e);
     } catch (e) {
@@ -104,7 +109,9 @@ class OnlineDatabaseService {
       }
       final data = await query.order('recorded_at', ascending: true);
 
-      return data.map((item) => InverterSnapshot.fromJson(item)).toList();
+      return data
+          .map((item) => InverterSnapshot.fromJson(DatabaseJson.snapshot(item)))
+          .toList();
     } on PostgrestException catch (e) {
       throw DatabaseException(e.message, error: e);
     } catch (e) {
@@ -126,9 +133,13 @@ class OnlineDatabaseService {
           callback: (payload) {
             switch (payload.eventType) {
               case .insert:
-                onCreate(Inverter.fromJson(payload.newRecord));
+                onCreate(
+                  Inverter.fromJson(DatabaseJson.inverter(payload.newRecord)),
+                );
               case .update:
-                onUpdate(Inverter.fromJson(payload.newRecord));
+                onUpdate(
+                  Inverter.fromJson(DatabaseJson.inverter(payload.newRecord)),
+                );
               case .delete:
                 onDelete(payload.oldRecord['id']);
               default:
@@ -164,7 +175,11 @@ class OnlineDatabaseService {
           callback: (payload) {
             switch (payload.eventType) {
               case .insert:
-                onCreate(InverterSnapshot.fromJson(payload.newRecord));
+                onCreate(
+                  InverterSnapshot.fromJson(
+                    DatabaseJson.snapshot(payload.newRecord),
+                  ),
+                );
               // case .delete:
               //   onDelete(payload.oldRecord['id']);
               default:
@@ -184,7 +199,9 @@ class OnlineDatabaseService {
   Future<List<Gateway>> gateways(String inverterId) async {
     try {
       final data = await _db.rpc('get_gateways_safe');
-      return data.map((item) => Gateway.fromJson(item)).toList();
+      return data
+          .map((item) => Gateway.fromJson(DatabaseJson.gateway(item)))
+          .toList();
     } on PostgrestException catch (e) {
       throw DatabaseException(e.message, error: e);
     } catch (e) {

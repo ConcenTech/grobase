@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Sync errors not surfaced in the UI
 - EnergyCard widgets overflow.
+- Systems failing to load from release DB when `last_seen_at` (or snapshot metrics) are null — common before the first gateway ingest; development seed always populated these fields.
 - Clearer sync error when the Data API role lacks table grants (PGRST205 / schema cache).
 
 ## [0.1.4] - 17/07/26
