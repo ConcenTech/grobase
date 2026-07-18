@@ -12,7 +12,7 @@ typedef $$InvertersTableCreateCompanionBuilder =
       required String inverterSn,
       required String displayName,
       required DateTime createdAt,
-      required DateTime lastSeenAt,
+      i0.Value<DateTime?> lastSeenAt,
       required i2.Location location,
       i0.Value<int> rowid,
     });
@@ -22,7 +22,7 @@ typedef $$InvertersTableUpdateCompanionBuilder =
       i0.Value<String> inverterSn,
       i0.Value<String> displayName,
       i0.Value<DateTime> createdAt,
-      i0.Value<DateTime> lastSeenAt,
+      i0.Value<DateTime?> lastSeenAt,
       i0.Value<i2.Location> location,
       i0.Value<int> rowid,
     });
@@ -57,7 +57,7 @@ class $$InvertersTableFilterComposer
         builder: (column) => i0.ColumnWithTypeConverterFilters(column),
       );
 
-  i0.ColumnWithTypeConverterFilters<DateTime, DateTime, double>
+  i0.ColumnWithTypeConverterFilters<DateTime?, DateTime, double>
   get lastSeenAt => $composableBuilder(
     column: $table.lastSeenAt,
     builder: (column) => i0.ColumnWithTypeConverterFilters(column),
@@ -135,7 +135,7 @@ class $$InvertersTableAnnotationComposer
   i0.GeneratedColumnWithTypeConverter<DateTime, double> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
 
-  i0.GeneratedColumnWithTypeConverter<DateTime, double> get lastSeenAt =>
+  i0.GeneratedColumnWithTypeConverter<DateTime?, double> get lastSeenAt =>
       $composableBuilder(
         column: $table.lastSeenAt,
         builder: (column) => column,
@@ -186,7 +186,7 @@ class $$InvertersTableTableManager
                 i0.Value<String> inverterSn = const i0.Value.absent(),
                 i0.Value<String> displayName = const i0.Value.absent(),
                 i0.Value<DateTime> createdAt = const i0.Value.absent(),
-                i0.Value<DateTime> lastSeenAt = const i0.Value.absent(),
+                i0.Value<DateTime?> lastSeenAt = const i0.Value.absent(),
                 i0.Value<i2.Location> location = const i0.Value.absent(),
                 i0.Value<int> rowid = const i0.Value.absent(),
               }) => i1.InvertersCompanion(
@@ -204,7 +204,7 @@ class $$InvertersTableTableManager
                 required String inverterSn,
                 required String displayName,
                 required DateTime createdAt,
-                required DateTime lastSeenAt,
+                i0.Value<DateTime?> lastSeenAt = const i0.Value.absent(),
                 required i2.Location location,
                 i0.Value<int> rowid = const i0.Value.absent(),
               }) => i1.InvertersCompanion.insert(
@@ -294,14 +294,14 @@ class $InvertersTable extends i3.Inverters
         requiredDuringInsert: true,
       ).withConverter<DateTime>(i1.$InvertersTable.$convertercreatedAt);
   @override
-  late final i0.GeneratedColumnWithTypeConverter<DateTime, double> lastSeenAt =
+  late final i0.GeneratedColumnWithTypeConverter<DateTime?, double> lastSeenAt =
       i0.GeneratedColumn<double>(
         'last_seen_at',
         aliasedName,
-        false,
+        true,
         type: i0.DriftSqlType.double,
-        requiredDuringInsert: true,
-      ).withConverter<DateTime>(i1.$InvertersTable.$converterlastSeenAt);
+        requiredDuringInsert: false,
+      ).withConverter<DateTime?>(i1.$InvertersTable.$converterlastSeenAt);
   @override
   late final i0.GeneratedColumnWithTypeConverter<i2.Location, String> location =
       i0.GeneratedColumn<String>(
@@ -387,7 +387,7 @@ class $InvertersTable extends i3.Inverters
         attachedDatabase.typeMapping.read(
           i0.DriftSqlType.double,
           data['${effectivePrefix}last_seen_at'],
-        )!,
+        ),
       ),
       location: i1.$InvertersTable.$converterlocation.fromSql(
         attachedDatabase.typeMapping.read(
@@ -405,8 +405,8 @@ class $InvertersTable extends i3.Inverters
 
   static i0.JsonTypeConverter2<DateTime, double, String> $convertercreatedAt =
       const i4.DateTimeConverter();
-  static i0.JsonTypeConverter2<DateTime, double, String> $converterlastSeenAt =
-      const i4.DateTimeConverter();
+  static i0.JsonTypeConverter2<DateTime?, double?, String?>
+  $converterlastSeenAt = const i4.NullableDateTimeConverter();
   static i0.JsonTypeConverter2<i2.Location, String, Map<String, dynamic>>
   $converterlocation = const i3.LocationConverter();
 }
@@ -416,14 +416,14 @@ class Inverter extends i0.DataClass implements i0.Insertable<i1.Inverter> {
   final String inverterSn;
   final String displayName;
   final DateTime createdAt;
-  final DateTime lastSeenAt;
+  final DateTime? lastSeenAt;
   final i2.Location location;
   const Inverter({
     required this.id,
     required this.inverterSn,
     required this.displayName,
     required this.createdAt,
-    required this.lastSeenAt,
+    this.lastSeenAt,
     required this.location,
   });
   @override
@@ -437,7 +437,7 @@ class Inverter extends i0.DataClass implements i0.Insertable<i1.Inverter> {
         i1.$InvertersTable.$convertercreatedAt.toSql(createdAt),
       );
     }
-    {
+    if (!nullToAbsent || lastSeenAt != null) {
       map['last_seen_at'] = i0.Variable<double>(
         i1.$InvertersTable.$converterlastSeenAt.toSql(lastSeenAt),
       );
@@ -456,7 +456,9 @@ class Inverter extends i0.DataClass implements i0.Insertable<i1.Inverter> {
       inverterSn: i0.Value(inverterSn),
       displayName: i0.Value(displayName),
       createdAt: i0.Value(createdAt),
-      lastSeenAt: i0.Value(lastSeenAt),
+      lastSeenAt: lastSeenAt == null && nullToAbsent
+          ? const i0.Value.absent()
+          : i0.Value(lastSeenAt),
       location: i0.Value(location),
     );
   }
@@ -474,7 +476,7 @@ class Inverter extends i0.DataClass implements i0.Insertable<i1.Inverter> {
         serializer.fromJson<String>(json['created_at']),
       ),
       lastSeenAt: i1.$InvertersTable.$converterlastSeenAt.fromJson(
-        serializer.fromJson<String>(json['last_seen_at']),
+        serializer.fromJson<String?>(json['last_seen_at']),
       ),
       location: i1.$InvertersTable.$converterlocation.fromJson(
         serializer.fromJson<Map<String, dynamic>>(json['location']),
@@ -491,7 +493,7 @@ class Inverter extends i0.DataClass implements i0.Insertable<i1.Inverter> {
       'created_at': serializer.toJson<String>(
         i1.$InvertersTable.$convertercreatedAt.toJson(createdAt),
       ),
-      'last_seen_at': serializer.toJson<String>(
+      'last_seen_at': serializer.toJson<String?>(
         i1.$InvertersTable.$converterlastSeenAt.toJson(lastSeenAt),
       ),
       'location': serializer.toJson<Map<String, dynamic>>(
@@ -505,14 +507,14 @@ class Inverter extends i0.DataClass implements i0.Insertable<i1.Inverter> {
     String? inverterSn,
     String? displayName,
     DateTime? createdAt,
-    DateTime? lastSeenAt,
+    i0.Value<DateTime?> lastSeenAt = const i0.Value.absent(),
     i2.Location? location,
   }) => i1.Inverter(
     id: id ?? this.id,
     inverterSn: inverterSn ?? this.inverterSn,
     displayName: displayName ?? this.displayName,
     createdAt: createdAt ?? this.createdAt,
-    lastSeenAt: lastSeenAt ?? this.lastSeenAt,
+    lastSeenAt: lastSeenAt.present ? lastSeenAt.value : this.lastSeenAt,
     location: location ?? this.location,
   );
   Inverter copyWithCompanion(i1.InvertersCompanion data) {
@@ -565,7 +567,7 @@ class InvertersCompanion extends i0.UpdateCompanion<i1.Inverter> {
   final i0.Value<String> inverterSn;
   final i0.Value<String> displayName;
   final i0.Value<DateTime> createdAt;
-  final i0.Value<DateTime> lastSeenAt;
+  final i0.Value<DateTime?> lastSeenAt;
   final i0.Value<i2.Location> location;
   final i0.Value<int> rowid;
   const InvertersCompanion({
@@ -582,14 +584,13 @@ class InvertersCompanion extends i0.UpdateCompanion<i1.Inverter> {
     required String inverterSn,
     required String displayName,
     required DateTime createdAt,
-    required DateTime lastSeenAt,
+    this.lastSeenAt = const i0.Value.absent(),
     required i2.Location location,
     this.rowid = const i0.Value.absent(),
   }) : id = i0.Value(id),
        inverterSn = i0.Value(inverterSn),
        displayName = i0.Value(displayName),
        createdAt = i0.Value(createdAt),
-       lastSeenAt = i0.Value(lastSeenAt),
        location = i0.Value(location);
   static i0.Insertable<i1.Inverter> custom({
     i0.Expression<String>? id,
@@ -616,7 +617,7 @@ class InvertersCompanion extends i0.UpdateCompanion<i1.Inverter> {
     i0.Value<String>? inverterSn,
     i0.Value<String>? displayName,
     i0.Value<DateTime>? createdAt,
-    i0.Value<DateTime>? lastSeenAt,
+    i0.Value<DateTime?>? lastSeenAt,
     i0.Value<i2.Location>? location,
     i0.Value<int>? rowid,
   }) {
