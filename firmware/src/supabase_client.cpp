@@ -1,7 +1,10 @@
 #// Minimal Supabase client for ESP32: WiFi connection, password grant
 #// authentication, and REST `inverter_snapshots` insertion.
 #include "supabase_client.h"
-#if DEBUG_MODE
+#ifndef USE_INSECURE_HTTP
+#define USE_INSECURE_HTTP 0
+#endif
+#if USE_INSECURE_HTTP
 #include <WiFiClient.h>
 #else
 #include <WiFiClientSecure.h>
@@ -76,7 +79,7 @@ static bool httpPostJsonWithDeviceAuth(const String &url,
                                       const String &deviceSecret,
                                       int *outStatus,
                                       String *outBody) {
-  #if DEBUG_MODE
+  #if USE_INSECURE_HTTP
     DEBUG_PRINTLN("Supabase client: using insecure WiFiClient for testing");
     WiFiClient client;
   #else
