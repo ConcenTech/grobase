@@ -19,7 +19,8 @@ class OfflineDatabaseService {
 
       final q = _db.inverterSnapshots.select()
         ..where((e) => e.recordedAt.isBiggerOrEqualValue(today))
-        ..where((e) => e.inverterId.equals(inverterId));
+        ..where((e) => e.inverterId.equals(inverterId))
+        ..orderBy([(e) => OrderingTerm.asc(e.recordedAt)]);
 
       return q
           .watch() //
@@ -139,8 +140,21 @@ class OfflineDatabaseService {
   }
 
   Future<void> addSnapshots(List<InverterSnapshot> snapshots) async {
+    if (snapshots.isEmpty) {
+      return;
+    }
+
     try {
-      await _db.inverterSnapshots.insertAll(snapshots);
+      // Local table has no primary key yet, so replace-by-id to avoid duplicates
+      // when REST gap-fill overlaps a row already received via Realtime.
+      await _db.transaction(() async {
+        for (final snapshot in snapshots) {
+          await (_db.inverterSnapshots.delete()
+                ..where((e) => e.id.equals(snapshot.id)))
+              .go();
+          await _db.inverterSnapshots.insertOne(snapshot);
+        }
+      });
     } catch (e, s) {
       _logger.severe('Failed to add snapshots', e, s);
       rethrow;

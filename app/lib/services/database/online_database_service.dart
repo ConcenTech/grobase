@@ -104,7 +104,13 @@ class OnlineDatabaseService {
       }
       final data = await query.order('recorded_at', ascending: true);
 
-      return data.map((item) => InverterSnapshot.fromJson(item)).toList();
+      return data
+          .map(
+            (item) => InverterSnapshot.fromJson(
+              normalizeInverterSnapshotRecord(item),
+            ),
+          )
+          .toList();
     } on PostgrestException catch (e) {
       throw DatabaseException(e.message, error: e);
     } catch (e) {
@@ -153,7 +159,7 @@ class OnlineDatabaseService {
     return _db
         .channel('snapshots:$inverterId')
         .onPostgresChanges(
-          event: PostgresChangeEvent.all,
+          event: PostgresChangeEvent.insert,
           schema: 'public',
           table: 'inverter_snapshots',
           filter: PostgresChangeFilter(
@@ -162,13 +168,17 @@ class OnlineDatabaseService {
             value: inverterId,
           ),
           callback: (payload) {
-            switch (payload.eventType) {
-              case .insert:
-                onCreate(InverterSnapshot.fromJson(payload.newRecord));
-              // case .delete:
-              //   onDelete(payload.oldRecord['id']);
-              default:
-                break;
+            try {
+              final snapshot = InverterSnapshot.fromJson(
+                normalizeInverterSnapshotRecord(payload.newRecord),
+              );
+              onCreate(snapshot);
+            } catch (e, s) {
+              _logger.severe(
+                'Failed to parse realtime inverter_snapshots insert',
+                e,
+                s,
+              );
             }
           },
         )
@@ -178,6 +188,59 @@ class OnlineDatabaseService {
             _logger.warning(object);
           }
         });
+  }
+
+  /// Normalizes Realtime/PostgREST row payloads for Drift [InverterSnapshot.fromJson].
+  ///
+  /// Realtime may send `bigint` ids as strings, and Postgres columns are nullable
+  /// while the local Drift model currently requires non-null values.
+  static Map<String, dynamic> normalizeInverterSnapshotRecord(
+    Map<String, dynamic> record,
+  ) {
+    final normalized = Map<String, dynamic>.from(record);
+
+    final id = normalized['id'];
+    if (id is String) {
+      normalized['id'] = int.parse(id);
+    } else if (id is num) {
+      normalized['id'] = id.toInt();
+    }
+
+    normalized['gateway_id'] ??= '';
+
+    const numericKeys = [
+      'battery_soc_percent',
+      'battery_voltage_v',
+      'battery_current_a',
+      'battery_charge_power_w',
+      'battery_discharge_power_w',
+      'battery_charge_energy_today_kwh',
+      'battery_discharge_energy_today_kwh',
+      'grid_active_power_w',
+      'grid_frequency_hz',
+      'grid_voltage_v',
+      'grid_current_a',
+      'grid_export_power_w',
+      'grid_export_energy_today_kwh',
+      'grid_import_energy_today_kwh',
+      'grid_charge_power_w',
+      'solar_energy_today_kwh',
+      'solar_power_w',
+      'home_load_power_w',
+    ];
+
+    for (final key in numericKeys) {
+      final value = normalized[key];
+      if (value == null) {
+        normalized[key] = 0.0;
+      } else if (value is num) {
+        normalized[key] = value.toDouble();
+      } else if (value is String) {
+        normalized[key] = double.parse(value);
+      }
+    }
+
+    return normalized;
   }
 
   // Returns all the gateways for the authenticated user.

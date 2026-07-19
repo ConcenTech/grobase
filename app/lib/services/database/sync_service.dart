@@ -150,7 +150,17 @@ class SyncService {
     _snapshotChangesChannels[inverterId] = _onlineService.snapshotChanges(
       inverterId: inverterId,
       start: start,
-      onCreate: (snapshot) => _offlineService.addSnapshots([snapshot]),
+      onCreate: (snapshot) {
+        unawaited(
+          _offlineService.addSnapshots([snapshot]).catchError((Object e, StackTrace s) {
+            _logger.severe(
+              'Failed to persist realtime snapshot for $inverterId',
+              e,
+              s,
+            );
+          }),
+        );
+      },
       // onDelete: (id) => _offlineService.removeSnapshot(id),
     );
   }
