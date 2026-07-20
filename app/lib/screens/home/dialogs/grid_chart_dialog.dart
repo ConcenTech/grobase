@@ -16,15 +16,12 @@ class GridChartDialog extends StatefulWidget {
 class _GridChartDialogState extends State<GridChartDialog> {
   static const _powerStepW = 500.0;
 
-  List<FlSpot> _importSpots = [];
-  List<FlSpot> _exportSpots = [];
+  List<FlSpot> _spots = [];
 
   double _powerMinY = -_powerStepW;
   double _powerMaxY = _powerStepW;
 
   late LineChartData _chartData;
-
-  bool _isCombined = true;
 
   @override
   void initState() {
@@ -66,26 +63,19 @@ class _GridChartDialogState extends State<GridChartDialog> {
   }
 
   void _rebuildSnapshotDerived() {
-    if (_isCombined) {
-      _rebuildSnapshotDerivedCombined();
-    } else {
-      _rebuildSnapshotDerivedSeperate();
-    }
-  }
-
-  void _rebuildSnapshotDerivedCombined() {
     final spots = <FlSpot>[];
     var minPower = double.infinity;
     var maxPower = double.negativeInfinity;
 
     for (final snapshot in widget.snapshots) {
       final x = _hoursOfDay(snapshot.recordedAt);
-      final power = snapshot.gridActivePower - snapshot.gridExportPower;
+      // gridActivePower is the total power from the grid, including export.
+      final power = snapshot.gridActivePower;
       spots.add(FlSpot(x, power));
       if (power < minPower) minPower = power;
       if (power > maxPower) maxPower = power;
     }
-    _importSpots = spots;
+    _spots = spots;
 
     if (spots.isEmpty) {
       _powerMinY = -_powerStepW;
@@ -99,31 +89,6 @@ class _GridChartDialogState extends State<GridChartDialog> {
       minY -= _powerStepW;
       maxY += _powerStepW;
     }
-    _powerMinY = minY;
-    _powerMaxY = maxY;
-  }
-
-  void _rebuildSnapshotDerivedSeperate() {
-    final importSpots = <FlSpot>[];
-    final exportSpots = <FlSpot>[];
-
-    var minPower = double.infinity;
-    var maxPower = double.negativeInfinity;
-
-    for (final snapshot in widget.snapshots) {
-      final x = _hoursOfDay(snapshot.recordedAt);
-      final importPower = snapshot.gridActivePower;
-      final exportPower = -snapshot.gridExportPower;
-      importSpots.add(FlSpot(x, importPower));
-      exportSpots.add(FlSpot(x, exportPower));
-      if (importPower > maxPower) maxPower = importPower;
-      if (exportPower < minPower) minPower = exportPower;
-    }
-    _importSpots = importSpots;
-    _exportSpots = exportSpots;
-
-    var minY = (minPower / _powerStepW).floorToDouble() * _powerStepW;
-    var maxY = (maxPower / _powerStepW).ceilToDouble() * _powerStepW;
 
     _powerMinY = minY;
     _powerMaxY = maxY;
@@ -133,7 +98,6 @@ class _GridChartDialogState extends State<GridChartDialog> {
     final colorScheme = Theme.of(context).colorScheme;
     final touchDotColor = colorScheme.onPrimaryFixedVariant;
     final primary = colorScheme.primary;
-    final secondary = colorScheme.primary;
 
     _chartData = _buildChartData(
       minY: _powerMinY,
@@ -157,17 +121,8 @@ class _GridChartDialogState extends State<GridChartDialog> {
           isStrokeCapRound: true,
           isStrokeJoinRound: true,
           dotData: const FlDotData(show: false),
-          spots: _importSpots,
+          spots: _spots,
         ),
-        if (!_isCombined)
-          LineChartBarData(
-            color: secondary,
-            barWidth: 3,
-            isStrokeCapRound: true,
-            isStrokeJoinRound: true,
-            dotData: const FlDotData(show: false),
-            spots: _exportSpots,
-          ),
       ],
       touchDotColor: touchDotColor,
       tooltipBuilder: (spot) => LineTooltipItem(
