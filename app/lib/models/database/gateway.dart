@@ -21,6 +21,9 @@ class Gateways extends Table {
   RealColumn get createdAt => real().map(const DateTimeConverter())();
   @JsonKey('retired_at')
   RealColumn get retiredAt => real().map(const DateTimeConverter())();
+
+  @override
+  Set<Column> get primaryKey => {id};
 }
 
 enum GatewayStatus {

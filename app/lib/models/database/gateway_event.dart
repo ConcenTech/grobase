@@ -20,6 +20,9 @@ class GatewayEvents extends Table {
   RealColumn get recordedAt => real().map(const DateTimeConverter())();
   @JsonKey('ingested_at')
   RealColumn get ingestedAt => real().map(const DateTimeConverter())();
+
+  @override
+  Set<Column> get primaryKey => {id};
 }
 
 enum GatewayEventLevel {

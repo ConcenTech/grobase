@@ -7,7 +7,7 @@ import 'package:grobase/models/database/converters.dart' as i3;
 
 typedef $$GatewayEventsTableCreateCompanionBuilder =
     i1.GatewayEventsCompanion Function({
-      required int id,
+      i0.Value<int> id,
       required String gatewayId,
       required String inverterId,
       required i2.GatewayEventLevel level,
@@ -16,7 +16,6 @@ typedef $$GatewayEventsTableCreateCompanionBuilder =
       required Map<String, dynamic> metadata,
       required DateTime recordedAt,
       required DateTime ingestedAt,
-      i0.Value<int> rowid,
     });
 typedef $$GatewayEventsTableUpdateCompanionBuilder =
     i1.GatewayEventsCompanion Function({
@@ -29,7 +28,6 @@ typedef $$GatewayEventsTableUpdateCompanionBuilder =
       i0.Value<Map<String, dynamic>> metadata,
       i0.Value<DateTime> recordedAt,
       i0.Value<DateTime> ingestedAt,
-      i0.Value<int> rowid,
     });
 
 class $$GatewayEventsTableFilterComposer
@@ -247,7 +245,6 @@ class $$GatewayEventsTableTableManager
                     const i0.Value.absent(),
                 i0.Value<DateTime> recordedAt = const i0.Value.absent(),
                 i0.Value<DateTime> ingestedAt = const i0.Value.absent(),
-                i0.Value<int> rowid = const i0.Value.absent(),
               }) => i1.GatewayEventsCompanion(
                 id: id,
                 gatewayId: gatewayId,
@@ -258,11 +255,10 @@ class $$GatewayEventsTableTableManager
                 metadata: metadata,
                 recordedAt: recordedAt,
                 ingestedAt: ingestedAt,
-                rowid: rowid,
               ),
           createCompanionCallback:
               ({
-                required int id,
+                i0.Value<int> id = const i0.Value.absent(),
                 required String gatewayId,
                 required String inverterId,
                 required i2.GatewayEventLevel level,
@@ -271,7 +267,6 @@ class $$GatewayEventsTableTableManager
                 required Map<String, dynamic> metadata,
                 required DateTime recordedAt,
                 required DateTime ingestedAt,
-                i0.Value<int> rowid = const i0.Value.absent(),
               }) => i1.GatewayEventsCompanion.insert(
                 id: id,
                 gatewayId: gatewayId,
@@ -282,7 +277,6 @@ class $$GatewayEventsTableTableManager
                 metadata: metadata,
                 recordedAt: recordedAt,
                 ingestedAt: ingestedAt,
-                rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), i0.BaseReferences(db, table, e)))
@@ -327,7 +321,7 @@ class $GatewayEventsTable extends i2.GatewayEvents
     aliasedName,
     false,
     type: i0.DriftSqlType.int,
-    requiredDuringInsert: true,
+    requiredDuringInsert: false,
   );
   static const i0.VerificationMeta _gatewayIdMeta = const i0.VerificationMeta(
     'gatewayId',
@@ -438,8 +432,6 @@ class $GatewayEventsTable extends i2.GatewayEvents
     final data = instance.toColumns(true);
     if (data.containsKey('id')) {
       context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
-    } else if (isInserting) {
-      context.missing(_idMeta);
     }
     if (data.containsKey('gateway_id')) {
       context.handle(
@@ -477,7 +469,7 @@ class $GatewayEventsTable extends i2.GatewayEvents
   }
 
   @override
-  Set<i0.GeneratedColumn> get $primaryKey => const {};
+  Set<i0.GeneratedColumn> get $primaryKey => {id};
   @override
   i1.GatewayEvent map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
@@ -758,7 +750,6 @@ class GatewayEventsCompanion extends i0.UpdateCompanion<i1.GatewayEvent> {
   final i0.Value<Map<String, dynamic>> metadata;
   final i0.Value<DateTime> recordedAt;
   final i0.Value<DateTime> ingestedAt;
-  final i0.Value<int> rowid;
   const GatewayEventsCompanion({
     this.id = const i0.Value.absent(),
     this.gatewayId = const i0.Value.absent(),
@@ -769,10 +760,9 @@ class GatewayEventsCompanion extends i0.UpdateCompanion<i1.GatewayEvent> {
     this.metadata = const i0.Value.absent(),
     this.recordedAt = const i0.Value.absent(),
     this.ingestedAt = const i0.Value.absent(),
-    this.rowid = const i0.Value.absent(),
   });
   GatewayEventsCompanion.insert({
-    required int id,
+    this.id = const i0.Value.absent(),
     required String gatewayId,
     required String inverterId,
     required i2.GatewayEventLevel level,
@@ -781,9 +771,7 @@ class GatewayEventsCompanion extends i0.UpdateCompanion<i1.GatewayEvent> {
     required Map<String, dynamic> metadata,
     required DateTime recordedAt,
     required DateTime ingestedAt,
-    this.rowid = const i0.Value.absent(),
-  }) : id = i0.Value(id),
-       gatewayId = i0.Value(gatewayId),
+  }) : gatewayId = i0.Value(gatewayId),
        inverterId = i0.Value(inverterId),
        level = i0.Value(level),
        code = i0.Value(code),
@@ -801,7 +789,6 @@ class GatewayEventsCompanion extends i0.UpdateCompanion<i1.GatewayEvent> {
     i0.Expression<String>? metadata,
     i0.Expression<double>? recordedAt,
     i0.Expression<double>? ingestedAt,
-    i0.Expression<int>? rowid,
   }) {
     return i0.RawValuesInsertable({
       if (id != null) 'id': id,
@@ -813,7 +800,6 @@ class GatewayEventsCompanion extends i0.UpdateCompanion<i1.GatewayEvent> {
       if (metadata != null) 'metadata': metadata,
       if (recordedAt != null) 'recorded_at': recordedAt,
       if (ingestedAt != null) 'ingested_at': ingestedAt,
-      if (rowid != null) 'rowid': rowid,
     });
   }
 
@@ -827,7 +813,6 @@ class GatewayEventsCompanion extends i0.UpdateCompanion<i1.GatewayEvent> {
     i0.Value<Map<String, dynamic>>? metadata,
     i0.Value<DateTime>? recordedAt,
     i0.Value<DateTime>? ingestedAt,
-    i0.Value<int>? rowid,
   }) {
     return i1.GatewayEventsCompanion(
       id: id ?? this.id,
@@ -839,7 +824,6 @@ class GatewayEventsCompanion extends i0.UpdateCompanion<i1.GatewayEvent> {
       metadata: metadata ?? this.metadata,
       recordedAt: recordedAt ?? this.recordedAt,
       ingestedAt: ingestedAt ?? this.ingestedAt,
-      rowid: rowid ?? this.rowid,
     );
   }
 
@@ -881,9 +865,6 @@ class GatewayEventsCompanion extends i0.UpdateCompanion<i1.GatewayEvent> {
         i1.$GatewayEventsTable.$converteringestedAt.toSql(ingestedAt.value),
       );
     }
-    if (rowid.present) {
-      map['rowid'] = i0.Variable<int>(rowid.value);
-    }
     return map;
   }
 
@@ -898,8 +879,7 @@ class GatewayEventsCompanion extends i0.UpdateCompanion<i1.GatewayEvent> {
           ..write('message: $message, ')
           ..write('metadata: $metadata, ')
           ..write('recordedAt: $recordedAt, ')
-          ..write('ingestedAt: $ingestedAt, ')
-          ..write('rowid: $rowid')
+          ..write('ingestedAt: $ingestedAt')
           ..write(')'))
         .toString();
   }
