@@ -158,7 +158,9 @@ static String buildSnapshotJson(const InverterSnapshot *s,
   appendJsonNumber(j, "battery_discharge_power_w", s->battery_discharge_power_w, 1);
   appendJsonNumber(j, "battery_charge_energy_today_kwh", s->battery_charge_energy_today_kwh, 1);
   appendJsonNumber(j, "battery_discharge_energy_today_kwh", s->battery_discharge_energy_today_kwh, 1);
-  appendJsonNumber(j, "grid_active_power_w", s->grid_pac_w, 1);
+  // grid_active_power_w is grid import (PactouserTotal). Pac is inverter output
+  // and must not be used here — the app treats active − export as net grid power.
+  appendJsonNumber(j, "grid_active_power_w", s->power_to_user_w, 1);
   appendJsonNumber(j, "grid_frequency_hz", s->grid_frequency_hz, 2);
   appendJsonNumber(j, "grid_voltage_v", s->grid_voltage_v, 1);
   appendJsonNumber(j, "grid_current_a", s->grid_current_a, 1);
@@ -166,8 +168,8 @@ static String buildSnapshotJson(const InverterSnapshot *s,
   appendJsonNumber(j, "grid_export_energy_today_kwh", s->energy_to_grid_today_kwh, 1);
   appendJsonNumber(j, "grid_import_energy_today_kwh", s->ac_charge_energy_today_kwh, 1);
   appendJsonNumber(j, "grid_charge_power_w", s->ac_charge_power_spa_w, 1);
-  appendJsonNumber(j, "solar_energy_today_kwh", s->pv_energy_today_kwh, 1);
-  appendJsonNumber(j, "solar_power_w", s->power_to_user_w, 1);
+  appendJsonNumber(j, "solar_energy_today_kwh", s->eextra_today_kwh, 1);
+  appendJsonNumber(j, "solar_power_w", s->extra_ac_power_w, 1);
   appendJsonNumber(j, "home_load_power_w", s->local_load_power_w, 1);
 
   j += "}";

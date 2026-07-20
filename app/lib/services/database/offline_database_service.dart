@@ -147,6 +147,19 @@ class OfflineDatabaseService {
     }
   }
 
+  /// Inserts or updates snapshots by primary key so relaunch sync can refresh
+  /// today's rows without failing on duplicates already stored offline.
+  Future<void> upsertSnapshots(List<InverterSnapshot> snapshots) async {
+    try {
+      await _db.batch((batch) {
+        batch.insertAllOnConflictUpdate(_db.inverterSnapshots, snapshots);
+      });
+    } catch (e, s) {
+      _logger.severe('Failed to upsert snapshots', e, s);
+      rethrow;
+    }
+  }
+
   // Future<void> removeSnapshot(String snapshotId) async {
   //   try {
   //     await _db.inverterSnapshots.deleteWhere((e) => e.id.equals(snapshotId));

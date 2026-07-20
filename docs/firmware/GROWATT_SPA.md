@@ -10,7 +10,9 @@ Hardware & Modbus:
 - Modbus slave ID: 1
 - SN read: FC `0x03`, registers 23–27 (5 registers → 10 ASCII chars)
 - Telemetry: FC `0x04` input registers in blocks (see below)
-- Solar energy today: FC `0x04` registers **2053–2054** (`Eac today`, SPA "Today generate energy"), not 1149–1150
+- Solar power: FC `0x04` registers **1131–1132** (`ExtraACPower`, connected PV inverter)
+- Solar energy today: FC `0x04` registers **1133–1134** (`Eextra today`), not Eac today (2053–2054) or EPVAll (1149–1150)
+- Grid import power upload: **1021–1022** (`PactouserTotal`), not Pac (2035–2036)
 - Battery voltage for upload: prefer **2097** (`BatVolt_DSP`) or **1013** (`Vbat`) over **1087** (`BMS_BatteryVolt`, SPH6K)
 
 Register blocks used by firmware v1 (prototype ranges):
@@ -25,12 +27,24 @@ Register blocks used by firmware v1 (prototype ranges):
 Decoding rules:
 
 - Per-register big-endian (high byte first).
-- 32-bit values: high register then low register: `u32 = (hi << 16) | lo`.
-- Scaling per-profile mapping; helper functions `u16_scaled` and `u32_scaled` used in `profile_growatt.cpp`.
+- 32-bit values: high register then low register: `(hi << 16) | lo`.
+- Use **signed** decode (`i32` / `i16`) for values that can be negative:
+  - Pac (2035–2036) — signed `i32` @ 0.1 W
+  - BMS battery current (1088) — signed `i16` @ 0.01 A
+- Energy counters and one-way magnitudes use unsigned `u32` / `u16`.
+- Scaling helpers: `u16_scaled`, `i16_scaled`, `u32_scaled`, `i32_scaled` in `profile_growatt.cpp`.
 
-Snapshot output:
+Snapshot upload mapping (JSON → `inverter_snapshots`):
 
-Firmware fills an `InverterSnapshot` structure and prints JSON for debug; fields include battery power/energy, SOC, grid power/voltage/current, PV energy, and local load power. See `firmware/src/profile_growatt.cpp` and `firmware/src/inverter_snapshot.cpp`.
+| Column | Source |
+| --- | --- |
+| `solar_power_w` | ExtraACPower (1131–1132) |
+| `solar_energy_today_kwh` | Eextra today (1133–1134) |
+| `grid_active_power_w` | PactouserTotal import (1021–1022) |
+| `grid_export_power_w` | Pactogrid total (1029–1030) |
+| `home_load_power_w` | PLocalLoad total (1037–1038) |
+
+The app computes net grid as `grid_active_power_w − grid_export_power_w` (positive = importing).
 
 Notes:
 

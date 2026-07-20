@@ -31,6 +31,8 @@ struct InverterSnapshot {
   float ac_charge_power_spa_w;
 
   float pv_energy_today_kwh;
+  float extra_ac_power_w;
+  float eextra_today_kwh;
   float power_to_user_w;
   float local_load_power_w;
 };

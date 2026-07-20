@@ -10,9 +10,20 @@ static float u16_scaled(uint16_t v, float scale) {
   return (float)v * scale;
 }
 
+static float i16_scaled(uint16_t v, float scale) {
+  return (float)(int16_t)v * scale;
+}
+
 static float u32_scaled(uint16_t hi, uint16_t lo, float scale) {
   uint32_t v = ((uint32_t)hi << 16) | lo;
   return (float)v * scale;
+}
+
+// Signed 32-bit values are stored across two registers as two's complement.
+// Decoding as unsigned produces huge positives (e.g. -1000 W → 429495.7 kW).
+static float i32_scaled(uint16_t hi, uint16_t lo, float scale) {
+  uint32_t v = ((uint32_t)hi << 16) | lo;
+  return (float)(int32_t)v * scale;
 }
 
 void profileGrowattFill(InverterSnapshot *out,
@@ -39,7 +50,8 @@ void profileGrowattFill(InverterSnapshot *out,
   out->soc_1014 = u16_scaled(regAt(R1009_START, r1009, 1014), 1.0f);
   out->bms_soc = u16_scaled(regAt(R1086_START, r1086, 1086), 1.0f);
   out->bms_battery_volt = u16_scaled(regAt(R1086_START, r1086, 1087), 0.1f);
-  out->bms_battery_curr = u16_scaled(regAt(R1086_START, r1086, 1088), 0.1f);
+  // BMS current is signed; scale is 0.01 A (discharge negative).
+  out->bms_battery_curr = i16_scaled(regAt(R1086_START, r1086, 1088), 0.01f);
   out->vbat_dsp = u16_scaled(regAt(R2097_START, r2097, 2097), 0.1f);
 
   out->battery_discharge_energy_today_kwh =
@@ -47,8 +59,9 @@ void profileGrowattFill(InverterSnapshot *out,
   out->battery_charge_energy_today_kwh =
     u32_scaled(regAt(R1009_START, r1009, 1056), regAt(R1009_START, r1009, 1057), 0.1f);
 
+  // Pac can be signed on SPA; unsigned decode overflows to ~429495 kW.
   out->grid_pac_w =
-    u32_scaled(regAt(R2035_START, r2035, 2035), regAt(R2035_START, r2035, 2036), 0.1f);
+    i32_scaled(regAt(R2035_START, r2035, 2035), regAt(R2035_START, r2035, 2036), 0.1f);
   out->grid_frequency_hz = u16_scaled(regAt(R2035_START, r2035, 2037), 0.01f);
   out->grid_voltage_v = u16_scaled(regAt(R2035_START, r2035, 2038), 0.1f);
   out->grid_current_a = u16_scaled(regAt(R2035_START, r2035, 2039), 0.1f);
@@ -68,8 +81,13 @@ void profileGrowattFill(InverterSnapshot *out,
   out->ac_charge_power_spa_w =
     u32_scaled(regAt(R2112_START, r2112, 2116), regAt(R2112_START, r2112, 2117), 1.0f);
 
-  // SPA: "Today generate energy" (2053-2054), not EPVAll_Today (1149-1150).
-  out->pv_energy_today_kwh = out->eac_today_kwh;
+  // SPA: solar comes from the connected PV inverter (Extra AC Power), not
+  // PactouserTotal (grid import) or Eac today (includes battery inverter output).
+  out->extra_ac_power_w =
+    u32_scaled(regAt(R1124_START, r1124, 1131), regAt(R1124_START, r1124, 1132), 0.1f);
+  out->eextra_today_kwh =
+    u32_scaled(regAt(R1124_START, r1124, 1133), regAt(R1124_START, r1124, 1134), 0.1f);
+  out->pv_energy_today_kwh = out->eextra_today_kwh;
 
   out->power_to_user_w =
     u32_scaled(regAt(R1009_START, r1009, 1021), regAt(R1009_START, r1009, 1022), 0.1f);

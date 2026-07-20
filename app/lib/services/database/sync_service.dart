@@ -104,13 +104,17 @@ class SyncService {
       final inverters = await _onlineService.inverters();
       await _offlineService.setInverters(inverters);
 
-      // We only care abount inverters, snapshots can come later.
-      _syncStateNotifier.setSynced();
-
       final startOfDay = _startOfDay();
 
+      // Fetch today's snapshots before subscribing so the home UI has
+      // current data on launch (same pattern as inverter list sync).
       for (final inverter in inverters) {
         await _syncSnapshotsForInverter(inverter.id);
+      }
+
+      _syncStateNotifier.setSynced();
+
+      for (final inverter in inverters) {
         if (_isRunning) {
           _startSnapshotListener(inverter.id, startOfDay);
         }
@@ -123,21 +127,13 @@ class SyncService {
 
   Future<void> _syncSnapshotsForInverter(String inverterId) async {
     final startOfDay = _startOfDay();
-    final timestamp = await _offlineService.getInverterLastSnapshotTime(
-      inverterId,
-    );
-
-    final latest = timestamp == null || timestamp.isBefore(startOfDay)
-        ? startOfDay
-        : timestamp;
-
     final snapshots = await _onlineService.snapshots(
       inverterId: inverterId,
-      start: latest,
+      start: startOfDay,
     );
 
     if (snapshots.isNotEmpty) {
-      await _offlineService.addSnapshots(snapshots);
+      await _offlineService.upsertSnapshots(snapshots);
     }
   }
 
@@ -150,7 +146,7 @@ class SyncService {
     _snapshotChangesChannels[inverterId] = _onlineService.snapshotChanges(
       inverterId: inverterId,
       start: start,
-      onCreate: (snapshot) => _offlineService.addSnapshots([snapshot]),
+      onCreate: (snapshot) => _offlineService.upsertSnapshots([snapshot]),
       // onDelete: (id) => _offlineService.removeSnapshot(id),
     );
   }
