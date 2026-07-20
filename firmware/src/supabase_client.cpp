@@ -143,7 +143,11 @@ static String buildSnapshotJson(const InverterSnapshot *s,
                               const String &inverterId,
                               const String &recordedAt) {
   String j;
+#if MODBUS_DEBUG
+  j.reserve(900 + s->modbus_debug_metadata.length() + 32);
+#else
   j.reserve(900);
+#endif
   j += "{";
   j += "\"inverter_id\":\"" + jsonEscape(inverterId.c_str()) + "\"";
   j += ",\"recorded_at\":\"" + jsonEscape(recordedAt.c_str()) + "\"";
@@ -172,6 +176,13 @@ static String buildSnapshotJson(const InverterSnapshot *s,
   appendJsonNumber(j, "solar_energy_today_kwh", s->pv_energy_today_kwh, 1);
   appendJsonNumber(j, "solar_power_w", s->pv_power_w, 1);
   appendJsonNumber(j, "home_load_power_w", s->system_power_w, 1);
+
+#if MODBUS_DEBUG
+  if (s->modbus_debug_metadata.length() > 0) {
+    j += ",\"metadata\":";
+    j += s->modbus_debug_metadata;
+  }
+#endif
 
   j += "}";
   return j;

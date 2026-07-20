@@ -1,7 +1,7 @@
 import { withSupabase } from "@supabase/server";
 import { SupabaseClient } from "@supabase/supabase-js";
 
-import { Database } from "../../database.types.ts";
+import { Database, Json } from "../../database.types.ts";
 import { deviceAuth } from "../_shared/device_auth.ts";
 import { jsonError, parseJsonBody, toTrimmedString } from "../_shared/http.ts";
 
@@ -26,6 +26,7 @@ type SnapshotPayload = {
   solar_energy_today_kwh?: number | null;
   solar_power_w?: number | null;
   home_load_power_w?: number | null;
+  metadata?: Json | null;
 };
 
 function toOptionalNumber(value: unknown): number | null | undefined {
@@ -41,6 +42,21 @@ function toOptionalNumber(value: unknown): number | null | undefined {
     return value;
   }
 
+  return undefined;
+}
+
+function toOptionalMetadata(
+  value: unknown,
+): SnapshotPayload["metadata"] {
+  if (value === undefined) {
+    return undefined;
+  }
+  if (value === null) {
+    return null;
+  }
+  if (typeof value === "object") {
+    return value as SnapshotPayload["metadata"];
+  }
   return undefined;
 }
 
@@ -75,6 +91,7 @@ function snapshotInsertFromBody(body: SnapshotPayload, gatewayId: string) {
     solar_energy_today_kwh: toOptionalNumber(body.solar_energy_today_kwh),
     solar_power_w: toOptionalNumber(body.solar_power_w),
     home_load_power_w: toOptionalNumber(body.home_load_power_w),
+    metadata: toOptionalMetadata(body.metadata),
   };
 }
 

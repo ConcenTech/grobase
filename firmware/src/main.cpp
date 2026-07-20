@@ -250,6 +250,18 @@ void processRunning() {
   fillInverterSnapshot(&snapshot, r1009, r1086, r1124, r2035, r2097, r2112);
   printInverterSnapshotJson(&snapshot);
 
+#if MODBUS_DEBUG
+  {
+    String dump;
+    if (readModbusDebugDumpJson(dump)) {
+      snapshot.modbus_debug_metadata = dump;
+      DEBUG_PRINTLN("Modbus debug dump captured for metadata");
+    } else {
+      DEBUG_PRINTLN("Modbus debug dump failed (continuing without metadata)");
+    }
+  }
+#endif
+
   if (!supabaseInsertSnapshot(&snapshot)) {
     DEBUG_PRINTLN("{\"error\":\"supabase_upload_failed\"}");
     setStatusLed(StatusLed::CLOUD_UNREACHABLE);
