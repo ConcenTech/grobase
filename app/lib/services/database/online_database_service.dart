@@ -144,42 +144,6 @@ class OnlineDatabaseService {
         });
   }
 
-  RealtimeChannel snapshotChanges({
-    required String inverterId,
-    DateTime? start,
-    required void Function(InverterSnapshot user) onCreate,
-    // required void Function(String id) onDelete,
-  }) {
-    return _db
-        .channel('snapshots:$inverterId')
-        .onPostgresChanges(
-          event: PostgresChangeEvent.all,
-          schema: 'public',
-          table: 'inverter_snapshots',
-          filter: PostgresChangeFilter(
-            type: .eq,
-            column: 'inverter_id',
-            value: inverterId,
-          ),
-          callback: (payload) {
-            switch (payload.eventType) {
-              case .insert:
-                onCreate(InverterSnapshot.fromJson(payload.newRecord));
-              // case .delete:
-              //   onDelete(payload.oldRecord['id']);
-              default:
-                break;
-            }
-          },
-        )
-        .subscribe((status, object) {
-          _logger.info('Snapshot changes subscription status: $status');
-          if (status == RealtimeSubscribeStatus.channelError) {
-            _logger.warning(object);
-          }
-        });
-  }
-
   // Returns all the gateways for the authenticated user.
   Future<List<Gateway>> gateways(String inverterId) async {
     try {

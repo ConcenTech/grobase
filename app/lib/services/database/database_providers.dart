@@ -2,7 +2,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../models/database/app_database.dart';
-import '../../models/database/inverter.drift.dart';
 import '../connectivity/connection_provider.dart';
 import 'offline_database_service.dart';
 import 'offline_storage.dart';
@@ -50,15 +49,15 @@ abstract class DatabaseProviders {
     (ref) => ref.watch(offlineDatabase).inverters(),
   );
 
-  /// A stream of todays inverter snapshots for the given inverter.
+  /// A stream of todays inverter snapshots for the given inverter id.
   static final inverterSnapshots = StreamProvider.autoDispose.family(
-    (ref, Inverter inverter) =>
-        ref.watch(offlineDatabase).todaysInverterSnapshots(inverter.id),
+    (ref, String inverterId) =>
+        ref.watch(offlineDatabase).todaysInverterSnapshots(inverterId),
   );
 
   static final latestInverterSnapshot = StreamProvider.autoDispose.family(
-    (ref, Inverter inverter) =>
-        ref.watch(offlineDatabase).latestInverterSnapshot(inverter.id),
+    (ref, String inverterId) =>
+        ref.watch(offlineDatabase).latestInverterSnapshot(inverterId),
   );
 }
 

@@ -53,7 +53,7 @@ class HomeScreen extends ConsumerWidget {
 
     AsyncValue<List<InverterSnapshot>>? snapshotsRef;
     if (inverter != null) {
-      final provider = DatabaseProviders.inverterSnapshots(inverter);
+      final provider = DatabaseProviders.inverterSnapshots(inverter.id);
       snapshotsRef = ref.watch(provider);
 
       ref.listen(provider, (_, next) {

@@ -81,15 +81,6 @@ class MockOnlineDatabaseService extends OnlineDatabaseService {
   }
 
   @override
-  RealtimeChannel snapshotChanges({
-    required String inverterId,
-    DateTime? start,
-    required void Function(InverterSnapshot user) onCreate,
-  }) {
-    return RealtimeChannel('topic', MockRealtimeClient());
-  }
-
-  @override
   Future<List<Gateway>> gateways(String inverterId) async => const [];
 
   @override
