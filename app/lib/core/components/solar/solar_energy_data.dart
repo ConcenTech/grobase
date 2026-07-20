@@ -24,12 +24,11 @@ class SolarEnergyData {
 
   factory SolarEnergyData.fromInverterSnapshot(InverterSnapshot snapshot) {
     final batteryPower = snapshot.chargePower - snapshot.dischargePower;
-    final gridPower = snapshot.gridActivePower - snapshot.gridExportPower;
     return SolarEnergyData(
       solarWatts: snapshot.solarPower,
       houseWatts: snapshot.homeLoadPower,
       batteryWatts: batteryPower,
-      gridWatts: gridPower,
+      gridWatts: snapshot.gridActivePower,
       batteryLevel: snapshot.batteryStateOfCharge.round(),
       lastSeenAt: snapshot.recordedAt,
     );
