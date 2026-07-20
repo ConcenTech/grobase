@@ -249,7 +249,7 @@ bool readAppRegisters(uint16_t *r1009,
 	modbusMockFillAppRegisters(r1009, r1086, r1124, r2035, r2097, r2112);
 	return true;
 #endif
-	if (!readRange04Chunked(R1009_START, R1009_COUNT, r1009)) return false;
+  if (!readRange04Chunked(R1009_START, R1009_COUNT, r1009)) return false;
 	if (!readRange04Chunked(R1086_START, R1086_COUNT, r1086)) return false;
 	if (!readRange04Chunked(R1124_START, R1124_COUNT, r1124)) return false;
 	if (!readRange04Chunked(R2035_START, R2035_COUNT, r2035)) return false;
@@ -257,3 +257,90 @@ bool readAppRegisters(uint16_t *r1009,
 	if (!readRange04Chunked(R2112_START, R2112_COUNT, r2112)) return false;
 	return true;
 }
+
+#if MODBUS_DEBUG
+// SPA FC04 ranges from Growatt protocol (Storage power / generation / SPA).
+static const uint16_t DBG_R1000_START = 1000;
+static const uint16_t DBG_R1000_COUNT = 44;  // 1000–1043
+static const uint16_t DBG_R1044_START = 1044;
+static const uint16_t DBG_R1044_COUNT = 23;  // 1044–1066
+static const uint16_t DBG_R1125_START = 1125;
+static const uint16_t DBG_R1125_COUNT = 125; // 1125–1249
+static const uint16_t DBG_R2000_START = 2000;
+static const uint16_t DBG_R2000_COUNT = 125; // 2000–2124
+
+static void appendRegsJsonArray(String &j, const uint16_t *regs, uint16_t count) {
+	j += '[';
+	for (uint16_t i = 0; i < count; i++) {
+		if (i) j += ',';
+		j += String(regs[i]);
+	}
+	j += ']';
+}
+
+static bool appendDebugRange(String &j,
+														 bool &first,
+														 uint16_t start,
+														 uint16_t count,
+														 uint16_t *buf,
+														 String &err) {
+	if (!readRange04Chunked(start, count, buf)) {
+		if (err.length() == 0) {
+			err = "read_failed_start_" + String(start);
+		}
+		return false;
+	}
+	if (!first) j += ',';
+	first = false;
+	j += '"';
+	j += String(start);
+	j += "\":";
+	appendRegsJsonArray(j, buf, count);
+	return true;
+}
+
+bool readModbusDebugDumpJson(String &outJson) {
+	static uint16_t r1000[DBG_R1000_COUNT];
+	static uint16_t r1044[DBG_R1044_COUNT];
+	static uint16_t r1125[DBG_R1125_COUNT];
+	static uint16_t r2000[DBG_R2000_COUNT];
+
+	outJson = "";
+	outJson.reserve(4096);
+	outJson += "{\"modbus_fc04\":{";
+
+	bool first = true;
+	String err;
+
+#if MOCK_INVERTER
+	for (uint16_t i = 0; i < DBG_R1000_COUNT; i++) r1000[i] = 0;
+	for (uint16_t i = 0; i < DBG_R1044_COUNT; i++) r1044[i] = 0;
+	for (uint16_t i = 0; i < DBG_R1125_COUNT; i++) r1125[i] = 0;
+	for (uint16_t i = 0; i < DBG_R2000_COUNT; i++) r2000[i] = 0;
+	outJson += "\"1000\":";
+	appendRegsJsonArray(outJson, r1000, DBG_R1000_COUNT);
+	outJson += ",\"1044\":";
+	appendRegsJsonArray(outJson, r1044, DBG_R1044_COUNT);
+	outJson += ",\"1125\":";
+	appendRegsJsonArray(outJson, r1125, DBG_R1125_COUNT);
+	outJson += ",\"2000\":";
+	appendRegsJsonArray(outJson, r2000, DBG_R2000_COUNT);
+	(void)first;
+#else
+	(void)appendDebugRange(outJson, first, DBG_R1000_START, DBG_R1000_COUNT, r1000, err);
+	(void)appendDebugRange(outJson, first, DBG_R1044_START, DBG_R1044_COUNT, r1044, err);
+	(void)appendDebugRange(outJson, first, DBG_R1125_START, DBG_R1125_COUNT, r1125, err);
+	(void)appendDebugRange(outJson, first, DBG_R2000_START, DBG_R2000_COUNT, r2000, err);
+#endif
+
+	outJson += '}';
+	if (err.length() > 0) {
+		outJson += ",\"error\":\"";
+		outJson += err;
+		outJson += '"';
+	}
+	outJson += '}';
+	return true;
+}
+#endif
+

@@ -7,7 +7,7 @@ import 'package:grobase/models/database/converters.dart' as i3;
 
 typedef $$InverterSnapshotsTableCreateCompanionBuilder =
     i1.InverterSnapshotsCompanion Function({
-      required int id,
+      i0.Value<int> id,
       required String inverterId,
       required String gatewayId,
       required DateTime recordedAt,
@@ -30,7 +30,6 @@ typedef $$InverterSnapshotsTableCreateCompanionBuilder =
       required double solarEnergyToday,
       required double solarPower,
       required double homeLoadPower,
-      i0.Value<int> rowid,
     });
 typedef $$InverterSnapshotsTableUpdateCompanionBuilder =
     i1.InverterSnapshotsCompanion Function({
@@ -57,7 +56,6 @@ typedef $$InverterSnapshotsTableUpdateCompanionBuilder =
       i0.Value<double> solarEnergyToday,
       i0.Value<double> solarPower,
       i0.Value<double> homeLoadPower,
-      i0.Value<int> rowid,
     });
 
 class $$InverterSnapshotsTableFilterComposer
@@ -500,7 +498,6 @@ class $$InverterSnapshotsTableTableManager
                 i0.Value<double> solarEnergyToday = const i0.Value.absent(),
                 i0.Value<double> solarPower = const i0.Value.absent(),
                 i0.Value<double> homeLoadPower = const i0.Value.absent(),
-                i0.Value<int> rowid = const i0.Value.absent(),
               }) => i1.InverterSnapshotsCompanion(
                 id: id,
                 inverterId: inverterId,
@@ -525,11 +522,10 @@ class $$InverterSnapshotsTableTableManager
                 solarEnergyToday: solarEnergyToday,
                 solarPower: solarPower,
                 homeLoadPower: homeLoadPower,
-                rowid: rowid,
               ),
           createCompanionCallback:
               ({
-                required int id,
+                i0.Value<int> id = const i0.Value.absent(),
                 required String inverterId,
                 required String gatewayId,
                 required DateTime recordedAt,
@@ -552,7 +548,6 @@ class $$InverterSnapshotsTableTableManager
                 required double solarEnergyToday,
                 required double solarPower,
                 required double homeLoadPower,
-                i0.Value<int> rowid = const i0.Value.absent(),
               }) => i1.InverterSnapshotsCompanion.insert(
                 id: id,
                 inverterId: inverterId,
@@ -577,7 +572,6 @@ class $$InverterSnapshotsTableTableManager
                 solarEnergyToday: solarEnergyToday,
                 solarPower: solarPower,
                 homeLoadPower: homeLoadPower,
-                rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), i0.BaseReferences(db, table, e)))
@@ -622,7 +616,7 @@ class $InverterSnapshotsTable extends i2.InverterSnapshots
     aliasedName,
     false,
     type: i0.DriftSqlType.int,
-    requiredDuringInsert: true,
+    requiredDuringInsert: false,
   );
   static const i0.VerificationMeta _inverterIdMeta = const i0.VerificationMeta(
     'inverterId',
@@ -909,8 +903,6 @@ class $InverterSnapshotsTable extends i2.InverterSnapshots
     final data = instance.toColumns(true);
     if (data.containsKey('id')) {
       context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
-    } else if (isInserting) {
-      context.missing(_idMeta);
     }
     if (data.containsKey('inverter_id')) {
       context.handle(
@@ -1127,7 +1119,7 @@ class $InverterSnapshotsTable extends i2.InverterSnapshots
   }
 
   @override
-  Set<i0.GeneratedColumn> get $primaryKey => const {};
+  Set<i0.GeneratedColumn> get $primaryKey => {id};
   @override
   i1.InverterSnapshot map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
@@ -1681,7 +1673,6 @@ class InverterSnapshotsCompanion
   final i0.Value<double> solarEnergyToday;
   final i0.Value<double> solarPower;
   final i0.Value<double> homeLoadPower;
-  final i0.Value<int> rowid;
   const InverterSnapshotsCompanion({
     this.id = const i0.Value.absent(),
     this.inverterId = const i0.Value.absent(),
@@ -1706,10 +1697,9 @@ class InverterSnapshotsCompanion
     this.solarEnergyToday = const i0.Value.absent(),
     this.solarPower = const i0.Value.absent(),
     this.homeLoadPower = const i0.Value.absent(),
-    this.rowid = const i0.Value.absent(),
   });
   InverterSnapshotsCompanion.insert({
-    required int id,
+    this.id = const i0.Value.absent(),
     required String inverterId,
     required String gatewayId,
     required DateTime recordedAt,
@@ -1732,9 +1722,7 @@ class InverterSnapshotsCompanion
     required double solarEnergyToday,
     required double solarPower,
     required double homeLoadPower,
-    this.rowid = const i0.Value.absent(),
-  }) : id = i0.Value(id),
-       inverterId = i0.Value(inverterId),
+  }) : inverterId = i0.Value(inverterId),
        gatewayId = i0.Value(gatewayId),
        recordedAt = i0.Value(recordedAt),
        ingestedAt = i0.Value(ingestedAt),
@@ -1780,7 +1768,6 @@ class InverterSnapshotsCompanion
     i0.Expression<double>? solarEnergyToday,
     i0.Expression<double>? solarPower,
     i0.Expression<double>? homeLoadPower,
-    i0.Expression<int>? rowid,
   }) {
     return i0.RawValuesInsertable({
       if (id != null) 'id': id,
@@ -1810,7 +1797,6 @@ class InverterSnapshotsCompanion
       if (solarEnergyToday != null) 'solar_energy_today': solarEnergyToday,
       if (solarPower != null) 'solar_power': solarPower,
       if (homeLoadPower != null) 'home_load_power': homeLoadPower,
-      if (rowid != null) 'rowid': rowid,
     });
   }
 
@@ -1838,7 +1824,6 @@ class InverterSnapshotsCompanion
     i0.Value<double>? solarEnergyToday,
     i0.Value<double>? solarPower,
     i0.Value<double>? homeLoadPower,
-    i0.Value<int>? rowid,
   }) {
     return i1.InverterSnapshotsCompanion(
       id: id ?? this.id,
@@ -1866,7 +1851,6 @@ class InverterSnapshotsCompanion
       solarEnergyToday: solarEnergyToday ?? this.solarEnergyToday,
       solarPower: solarPower ?? this.solarPower,
       homeLoadPower: homeLoadPower ?? this.homeLoadPower,
-      rowid: rowid ?? this.rowid,
     );
   }
 
@@ -1954,9 +1938,6 @@ class InverterSnapshotsCompanion
     if (homeLoadPower.present) {
       map['home_load_power'] = i0.Variable<double>(homeLoadPower.value);
     }
-    if (rowid.present) {
-      map['rowid'] = i0.Variable<int>(rowid.value);
-    }
     return map;
   }
 
@@ -1985,8 +1966,7 @@ class InverterSnapshotsCompanion
           ..write('gridChargePower: $gridChargePower, ')
           ..write('solarEnergyToday: $solarEnergyToday, ')
           ..write('solarPower: $solarPower, ')
-          ..write('homeLoadPower: $homeLoadPower, ')
-          ..write('rowid: $rowid')
+          ..write('homeLoadPower: $homeLoadPower')
           ..write(')'))
         .toString();
   }

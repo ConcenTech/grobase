@@ -293,7 +293,7 @@ class $InverterMembersTable extends i2.InverterMembers
   }
 
   @override
-  Set<i0.GeneratedColumn> get $primaryKey => const {};
+  Set<i0.GeneratedColumn> get $primaryKey => {inverterId, userId};
   @override
   i1.InverterMember map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';

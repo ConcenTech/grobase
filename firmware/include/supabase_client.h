@@ -1,7 +1,12 @@
-#// Public API: lightweight Supabase client interface used by the firmware.
 #pragma once
 
 #include "inverter_snapshot.h"
+
+#ifndef MODBUS_DEBUG
+#define MODBUS_DEBUG 0
+#endif
+
+#// Public API: lightweight Supabase client interface used by the firmware.
 
 // Connect WiFi and obtain initial Supabase session (password grant).
 bool supabaseBegin();

@@ -41,13 +41,17 @@ static void fill_sample_tables(uint16_t *r1009,
   r1009[1057 - 1009] = 0x0064; // 10.0 kWh
 
   r1086[0] = 80;
-  r1086[1] = 260;
-  r1086[2] = 123;
+  r1086[1] = 5300;    // 53.00 V (0.01 V)
+  r1086[2] = 0xFE46;  // -4.5 A signed (0.01 A)
 
   r1124[1124 - 1124] = 0x0000;
-  r1124[1125 - 1124] = 0x000A;
+  r1124[1125 - 1124] = 0x0046; // 7.0 kWh (0.1 kWh)
   r1124[1128 - 1124] = 0x0000;
   r1124[1129 - 1124] = 0x0014;
+  r1124[1131 - 1124] = 0x0000;
+  r1124[1132 - 1124] = 0x0BB8; // 300.0 W (ExtraACPower / PV)
+  r1124[1145 - 1124] = 0x0000;
+  r1124[1146 - 1124] = 0x1D4C; // 750.0 W (PSystem)
   r1124[1149 - 1124] = 0x0000;
   r1124[1150 - 1124] = 0x001E;
 
@@ -85,25 +89,48 @@ void test_profile_growatt_fill_maps_expected_fields() {
   TEST_ASSERT_EQUAL_FLOAT(25.0f, snapshot.vbat);
   TEST_ASSERT_EQUAL_FLOAT(50.0f, snapshot.soc_1014);
   TEST_ASSERT_EQUAL_FLOAT(80.0f, snapshot.bms_soc);
-  TEST_ASSERT_EQUAL_FLOAT(26.0f, snapshot.bms_battery_volt);
-  TEST_ASSERT_EQUAL_FLOAT(12.3f, snapshot.bms_battery_curr);
+  TEST_ASSERT_EQUAL_FLOAT(53.0f, snapshot.bms_battery_volt);
+  TEST_ASSERT_EQUAL_FLOAT(-4.5f, snapshot.bms_battery_curr);
   TEST_ASSERT_EQUAL_FLOAT(25.1f, snapshot.vbat_dsp);
+  TEST_ASSERT_EQUAL_FLOAT(10.0f, snapshot.eac_today_kwh);
+  TEST_ASSERT_EQUAL_FLOAT(10.0f, snapshot.pv_energy_today_kwh);
+  TEST_ASSERT_EQUAL_FLOAT(300.0f, snapshot.pv_power_w);
   TEST_ASSERT_EQUAL_FLOAT(40.0f, snapshot.power_to_user_w);
   TEST_ASSERT_EQUAL_FLOAT(50.0f, snapshot.local_load_power_w);
+  TEST_ASSERT_EQUAL_FLOAT(750.0f, snapshot.system_power_w);
   TEST_ASSERT_EQUAL_FLOAT(100.0f, snapshot.grid_pac_w);
   TEST_ASSERT_EQUAL_FLOAT(50.00f, snapshot.grid_frequency_hz);
   TEST_ASSERT_EQUAL_FLOAT(230.0f, snapshot.grid_voltage_v);
   TEST_ASSERT_EQUAL_FLOAT(12.3f, snapshot.grid_current_a);
-  TEST_ASSERT_EQUAL_FLOAT(10.0f, snapshot.eac_today_kwh);
-  TEST_ASSERT_EQUAL_FLOAT(10.0f, snapshot.pv_energy_today_kwh);
+  TEST_ASSERT_EQUAL_FLOAT(7.0f, snapshot.ac_charge_energy_today_kwh);
   TEST_ASSERT_EQUAL_FLOAT(7.7f, snapshot.ea_charge_today_kwh);
   TEST_ASSERT_EQUAL_FLOAT(1000.0f, snapshot.ac_charge_power_spa_w);
+}
+
+void test_profile_growatt_pac_signed_negative() {
+  uint16_t r1009[51];
+  uint16_t r1086[3];
+  uint16_t r1124[27];
+  uint16_t r2035[20];
+  uint16_t r2097[1];
+  uint16_t r2112[6];
+  fill_sample_tables(r1009, r1086, r1124, r2035, r2097, r2112);
+
+  // Live capture: FFFF FEE9 → -279 → -27.9 W
+  r2035[2035 - 2035] = 0xFFFF;
+  r2035[2036 - 2035] = 0xFEE9;
+
+  InverterSnapshot snapshot = {};
+  profileGrowattFill(&snapshot, r1009, r1086, r1124, r2035, r2097, r2112);
+
+  TEST_ASSERT_EQUAL_FLOAT(-27.9f, snapshot.grid_pac_w);
 }
 
 int main(int argc, char **argv) {
   UNITY_BEGIN();
 
   RUN_TEST(test_profile_growatt_fill_maps_expected_fields);
+  RUN_TEST(test_profile_growatt_pac_signed_negative);
 
   return UNITY_END();
 }

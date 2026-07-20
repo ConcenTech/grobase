@@ -237,6 +237,7 @@ export type Database = {
           id: number
           ingested_at: string
           inverter_id: string
+          metadata: Json | null
           recorded_at: string
           solar_energy_today_kwh: number | null
           solar_power_w: number | null
@@ -262,6 +263,7 @@ export type Database = {
           id?: never
           ingested_at?: string
           inverter_id: string
+          metadata?: Json | null
           recorded_at: string
           solar_energy_today_kwh?: number | null
           solar_power_w?: number | null
@@ -287,6 +289,7 @@ export type Database = {
           id?: never
           ingested_at?: string
           inverter_id?: string
+          metadata?: Json | null
           recorded_at?: string
           solar_energy_today_kwh?: number | null
           solar_power_w?: number | null

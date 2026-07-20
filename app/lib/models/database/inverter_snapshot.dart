@@ -49,4 +49,7 @@ class InverterSnapshots extends Table {
   RealColumn get solarPower => real()();
   @JsonKey('home_load_power_w')
   RealColumn get homeLoadPower => real()();
+
+  @override
+  Set<Column> get primaryKey => {id};
 }

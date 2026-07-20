@@ -40,7 +40,6 @@ class SyncService {
   StreamSubscription<bool>? _connectionSubscription;
 
   RealtimeChannel? _inverterChangesChannel;
-  final Map<String, RealtimeChannel> _snapshotChangesChannels = {};
 
   void init() {
     _offlineService.getInverterCount().then((count) {
@@ -107,13 +106,8 @@ class SyncService {
       // We only care abount inverters, snapshots can come later.
       _syncStateNotifier.setSynced();
 
-      final startOfDay = _startOfDay();
-
       for (final inverter in inverters) {
         await _syncSnapshotsForInverter(inverter.id);
-        if (_isRunning) {
-          _startSnapshotListener(inverter.id, startOfDay);
-        }
       }
     } catch (e, s) {
       _logger.severe('Failed to get initial sync state', e, s);
@@ -141,34 +135,32 @@ class SyncService {
     }
   }
 
-  /// Starts listening for snapshot changes for a given inverter.
-  void _startSnapshotListener(String inverterId, DateTime start) {
-    if (!_isRunning || _snapshotChangesChannels.containsKey(inverterId)) {
-      return;
-    }
-
-    _snapshotChangesChannels[inverterId] = _onlineService.snapshotChanges(
-      inverterId: inverterId,
-      start: start,
-      onCreate: (snapshot) => _offlineService.addSnapshots([snapshot]),
-      // onDelete: (id) => _offlineService.removeSnapshot(id),
-    );
-  }
-
-  /// Stops listening for snapshot changes for a given inverter.
-  void _stopSnapshotListener(String inverterId) {
-    _snapshotChangesChannels.remove(inverterId)?.unsubscribe();
-  }
-
   Future<void> _handleInverterCreated(Inverter inverter) async {
     try {
       await _offlineService.addInverter(inverter);
       await _syncSnapshotsForInverter(inverter.id);
-      if (_isRunning) {
-        _startSnapshotListener(inverter.id, _startOfDay());
-      }
     } catch (e, s) {
       _logger.severe('Failed to sync new inverter', e, s);
+      _syncStateNotifier.setError(SyncErrors.userFacingMessage(e));
+    }
+  }
+
+  Future<void> _handleInverterUpdated(Inverter inverter) async {
+    try {
+      await _offlineService.upsertInverter(inverter);
+      await _syncSnapshotsForInverter(inverter.id);
+    } catch (e, s) {
+      _logger.severe('Failed to sync updated inverter', e, s);
+      _syncStateNotifier.setError(SyncErrors.userFacingMessage(e));
+    }
+  }
+
+  Future<void> _handleInverterDeleted(String inverterId) async {
+    try {
+      await _offlineService.removeInverter(inverterId);
+      await _offlineService.removeSnapshots(inverterId);
+    } catch (e, s) {
+      _logger.severe('Failed to sync deleted inverter', e, s);
       _syncStateNotifier.setError(SyncErrors.userFacingMessage(e));
     }
   }
@@ -221,11 +213,8 @@ class SyncService {
     _logger.info('Listening for database changes.');
     _inverterChangesChannel = _onlineService.inverterChanges(
       onCreate: (inverter) => unawaited(_handleInverterCreated(inverter)),
-      onUpdate: (inverter) => _offlineService.upsertInverter(inverter),
-      onDelete: (id) {
-        _stopSnapshotListener(id);
-        _offlineService.removeInverter(id);
-      },
+      onUpdate: (inverter) => unawaited(_handleInverterUpdated(inverter)),
+      onDelete: (id) => unawaited(_handleInverterDeleted(id)),
     );
   }
 
@@ -233,10 +222,6 @@ class SyncService {
     _logger.info('Closing database subscriptions');
     _inverterChangesChannel?.unsubscribe();
     _inverterChangesChannel = null;
-    for (final channel in _snapshotChangesChannels.values) {
-      channel.unsubscribe();
-    }
-    _snapshotChangesChannels.clear();
   }
 
   /// Restarts sync operations by stopping and then starting sync.

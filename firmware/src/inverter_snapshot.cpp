@@ -39,7 +39,9 @@ void printInverterSnapshotJson(const InverterSnapshot *s) {
   DEBUG_PRINTF("\"EAChargeToday_kWh\":%.1f,", s->ea_charge_today_kwh);
   DEBUG_PRINTF("\"ACChargePower_SPA_W\":%.1f,", s->ac_charge_power_spa_w);
   DEBUG_PRINTF("\"PVEnergyToday_kWh\":%.1f,", s->pv_energy_today_kwh);
+  DEBUG_PRINTF("\"PVPower_W\":%.1f,", s->pv_power_w);
   DEBUG_PRINTF("\"PowerToUser_W\":%.1f,", s->power_to_user_w);
-  DEBUG_PRINTF("\"LocalLoadPower_W\":%.1f", s->local_load_power_w);
+  DEBUG_PRINTF("\"LocalLoadPower_W\":%.1f,", s->local_load_power_w);
+  DEBUG_PRINTF("\"SystemPower_W\":%.1f", s->system_power_w);
   DEBUG_PRINTLN("}");
 }

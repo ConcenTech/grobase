@@ -6,14 +6,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.8] - 20/07/26
+
+### Fixed
+- Primary keys not set on database classes.
+- gridActivePower tracks import and export.
+
+### Added
+- removeSnapshots method added to offline databse.
+SyncService now removes snapshots for inverters that have been removed.
+- Session token checks.
+OnlineDatabaseService now checks the session token is valid before making any database calls.
+
+### Updated
+- Bumped dependancies to latest versions
+
 ## [0.1.7] - 18/07/26
 
-## Fixed
+### Fixed
 - Missing AppLogger import in main.dart
 
 ## [0.1.6] - 18/07/26
 
-## Fixed
+### Fixed
 - Inverter.lastSeenAt should be nullable
 - EnergyCard has inconsistend value text size.
 - EnergyCard has a minimum width that can allow clipping of the title text.
@@ -68,3 +83,4 @@ Initial beta app release
 [0.1.5]: https://github.com/ConcenTech/grobase/compare/v0.1.4...v0.1.5
 [0.1.6]: https://github.com/ConcenTech/grobase/compare/v0.1.5...v0.1.6
 [0.1.7]: https://github.com/ConcenTech/grobase/compare/v0.1.6...v0.1.7
+[0.1.8]: https://github.com/ConcenTech/grobase/compare/v0.1.7...v0.1.8

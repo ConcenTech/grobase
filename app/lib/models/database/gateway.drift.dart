@@ -467,7 +467,7 @@ class $GatewaysTable extends i2.Gateways
   }
 
   @override
-  Set<i0.GeneratedColumn> get $primaryKey => const {};
+  Set<i0.GeneratedColumn> get $primaryKey => {id};
   @override
   i1.Gateway map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';

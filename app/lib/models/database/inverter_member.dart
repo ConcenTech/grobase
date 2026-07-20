@@ -11,6 +11,9 @@ class InverterMembers extends Table {
   TextColumn get role => text().map(const InverterMemberRoleConverter())();
   @JsonKey('created_at')
   RealColumn get createdAt => real().map(const DateTimeConverter())();
+
+  @override
+  Set<Column> get primaryKey => {inverterId, userId};
 }
 
 enum InverterMemberRole {

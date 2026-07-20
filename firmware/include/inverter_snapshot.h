@@ -1,6 +1,11 @@
+#pragma once
+
+#ifndef MODBUS_DEBUG
+#define MODBUS_DEBUG 0
+#endif
+
 #// Defines the `InverterSnapshot` data structure and helpers to
 #// populate/print it from Modbus register tables.
-#pragma once
 
 #include <Arduino.h>
 
@@ -31,8 +36,17 @@ struct InverterSnapshot {
   float ac_charge_power_spa_w;
 
   float pv_energy_today_kwh;
+  /// ExtraACPower (1131–1132): AC power from the SPA-connected PV inverter.
+  float pv_power_w;
   float power_to_user_w;
   float local_load_power_w;
+  /// PSystem (1145–1146): system/house load power.
+  float system_power_w;
+
+#if MODBUS_DEBUG
+  /// Pre-built JSON object for inverter_snapshots.metadata (empty if unused).
+  String modbus_debug_metadata;
+#endif
 };
 
 void fillInverterSnapshot(InverterSnapshot *out,

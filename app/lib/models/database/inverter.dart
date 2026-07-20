@@ -22,6 +22,9 @@ class Inverters extends Table {
       real().nullable().map(const NullableDateTimeConverter())();
   @JsonKey('location')
   TextColumn get location => text().map(const LocationConverter())();
+
+  @override
+  Set<Column> get primaryKey => {id};
 }
 
 extension InvertersExtension on Inverter {

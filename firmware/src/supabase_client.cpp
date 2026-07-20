@@ -1,7 +1,10 @@
 #// Minimal Supabase client for ESP32: WiFi connection, password grant
 #// authentication, and REST `inverter_snapshots` insertion.
 #include "supabase_client.h"
-#if DEBUG_MODE
+#ifndef USE_INSECURE_HTTP
+#define USE_INSECURE_HTTP 0
+#endif
+#if USE_INSECURE_HTTP
 #include <WiFiClient.h>
 #else
 #include <WiFiClientSecure.h>
@@ -76,7 +79,7 @@ static bool httpPostJsonWithDeviceAuth(const String &url,
                                       const String &deviceSecret,
                                       int *outStatus,
                                       String *outBody) {
-  #if DEBUG_MODE
+  #if USE_INSECURE_HTTP
     DEBUG_PRINTLN("Supabase client: using insecure WiFiClient for testing");
     WiFiClient client;
   #else
@@ -140,7 +143,11 @@ static String buildSnapshotJson(const InverterSnapshot *s,
                               const String &inverterId,
                               const String &recordedAt) {
   String j;
+#if MODBUS_DEBUG
+  j.reserve(900 + s->modbus_debug_metadata.length() + 32);
+#else
   j.reserve(900);
+#endif
   j += "{";
   j += "\"inverter_id\":\"" + jsonEscape(inverterId.c_str()) + "\"";
   j += ",\"recorded_at\":\"" + jsonEscape(recordedAt.c_str()) + "\"";
@@ -167,8 +174,15 @@ static String buildSnapshotJson(const InverterSnapshot *s,
   appendJsonNumber(j, "grid_import_energy_today_kwh", s->ac_charge_energy_today_kwh, 1);
   appendJsonNumber(j, "grid_charge_power_w", s->ac_charge_power_spa_w, 1);
   appendJsonNumber(j, "solar_energy_today_kwh", s->pv_energy_today_kwh, 1);
-  appendJsonNumber(j, "solar_power_w", s->power_to_user_w, 1);
-  appendJsonNumber(j, "home_load_power_w", s->local_load_power_w, 1);
+  appendJsonNumber(j, "solar_power_w", s->pv_power_w, 1);
+  appendJsonNumber(j, "home_load_power_w", s->system_power_w, 1);
+
+#if MODBUS_DEBUG
+  if (s->modbus_debug_metadata.length() > 0) {
+    j += ",\"metadata\":";
+    j += s->modbus_debug_metadata;
+  }
+#endif
 
   j += "}";
   return j;
