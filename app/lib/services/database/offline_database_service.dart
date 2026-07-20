@@ -111,6 +111,17 @@ class OfflineDatabaseService {
     }
   }
 
+  Future<void> removeSnapshots(String inverterId) async {
+    try {
+      await _db.inverterSnapshots.deleteWhere(
+        (e) => e.inverterId.equals(inverterId),
+      );
+    } catch (e, s) {
+      _logger.severe('Failed to remove snapshots', e, s);
+      rethrow;
+    }
+  }
+
   Future<void> updateInverter(Inverter inverter) async {
     try {
       await _db.inverters.insertOnConflictUpdate(inverter);
