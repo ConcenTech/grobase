@@ -31,8 +31,12 @@ struct InverterSnapshot {
   float ac_charge_power_spa_w;
 
   float pv_energy_today_kwh;
+  /// ExtraACPower (1131–1132): AC power from the SPA-connected PV inverter.
+  float pv_power_w;
   float power_to_user_w;
   float local_load_power_w;
+  /// PSystem (1145–1146): system/house load power.
+  float system_power_w;
 };
 
 void fillInverterSnapshot(InverterSnapshot *out,
