@@ -51,9 +51,21 @@ class OnlineDatabaseService {
   /// Base Supabase URL for provisioning the gateway firmware.
   String get supabaseUrl => _db.rest.url.replaceFirst(RegExp(r'/rest/v1$'), '');
 
+  Future<void> _ensureValidToken() async {
+    final session = _db.auth.currentSession;
+    if (session == null) {
+      // Unable to resolve session, likely not authenticated.
+      throw DatabaseException('Not authenticated');
+    }
+    if (session.isExpired) {
+      await _db.auth.refreshSession();
+    }
+  }
+
   // Returns the current user's inverters for the home screen.
   Future<List<Inverter>> inverters() async {
     try {
+      await _ensureValidToken();
       final data = await _db
           .from('inverters')
           .select()
@@ -91,6 +103,7 @@ class OnlineDatabaseService {
     DateTime? end,
   }) async {
     try {
+      await _ensureValidToken();
       var query = _db
           .from('inverter_snapshots')
           .select()
