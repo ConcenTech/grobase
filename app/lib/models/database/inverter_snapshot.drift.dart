@@ -19,7 +19,7 @@ typedef $$InverterSnapshotsTableCreateCompanionBuilder =
       required double dischargePower,
       required double chargeEnergyToday,
       required double dischargeEnergyToday,
-      required double gridActivePower,
+      required double gridImportPower,
       required double gridFrequency,
       required double gridVoltage,
       required double gridCurrent,
@@ -45,7 +45,7 @@ typedef $$InverterSnapshotsTableUpdateCompanionBuilder =
       i0.Value<double> dischargePower,
       i0.Value<double> chargeEnergyToday,
       i0.Value<double> dischargeEnergyToday,
-      i0.Value<double> gridActivePower,
+      i0.Value<double> gridImportPower,
       i0.Value<double> gridFrequency,
       i0.Value<double> gridVoltage,
       i0.Value<double> gridCurrent,
@@ -129,8 +129,8 @@ class $$InverterSnapshotsTableFilterComposer
     builder: (column) => i0.ColumnFilters(column),
   );
 
-  i0.ColumnFilters<double> get gridActivePower => $composableBuilder(
-    column: $table.gridActivePower,
+  i0.ColumnFilters<double> get gridImportPower => $composableBuilder(
+    column: $table.gridImportPower,
     builder: (column) => i0.ColumnFilters(column),
   );
 
@@ -254,8 +254,8 @@ class $$InverterSnapshotsTableOrderingComposer
     builder: (column) => i0.ColumnOrderings(column),
   );
 
-  i0.ColumnOrderings<double> get gridActivePower => $composableBuilder(
-    column: $table.gridActivePower,
+  i0.ColumnOrderings<double> get gridImportPower => $composableBuilder(
+    column: $table.gridImportPower,
     builder: (column) => i0.ColumnOrderings(column),
   );
 
@@ -377,8 +377,8 @@ class $$InverterSnapshotsTableAnnotationComposer
     builder: (column) => column,
   );
 
-  i0.GeneratedColumn<double> get gridActivePower => $composableBuilder(
-    column: $table.gridActivePower,
+  i0.GeneratedColumn<double> get gridImportPower => $composableBuilder(
+    column: $table.gridImportPower,
     builder: (column) => column,
   );
 
@@ -485,7 +485,7 @@ class $$InverterSnapshotsTableTableManager
                 i0.Value<double> dischargePower = const i0.Value.absent(),
                 i0.Value<double> chargeEnergyToday = const i0.Value.absent(),
                 i0.Value<double> dischargeEnergyToday = const i0.Value.absent(),
-                i0.Value<double> gridActivePower = const i0.Value.absent(),
+                i0.Value<double> gridImportPower = const i0.Value.absent(),
                 i0.Value<double> gridFrequency = const i0.Value.absent(),
                 i0.Value<double> gridVoltage = const i0.Value.absent(),
                 i0.Value<double> gridCurrent = const i0.Value.absent(),
@@ -511,7 +511,7 @@ class $$InverterSnapshotsTableTableManager
                 dischargePower: dischargePower,
                 chargeEnergyToday: chargeEnergyToday,
                 dischargeEnergyToday: dischargeEnergyToday,
-                gridActivePower: gridActivePower,
+                gridImportPower: gridImportPower,
                 gridFrequency: gridFrequency,
                 gridVoltage: gridVoltage,
                 gridCurrent: gridCurrent,
@@ -537,7 +537,7 @@ class $$InverterSnapshotsTableTableManager
                 required double dischargePower,
                 required double chargeEnergyToday,
                 required double dischargeEnergyToday,
-                required double gridActivePower,
+                required double gridImportPower,
                 required double gridFrequency,
                 required double gridVoltage,
                 required double gridCurrent,
@@ -561,7 +561,7 @@ class $$InverterSnapshotsTableTableManager
                 dischargePower: dischargePower,
                 chargeEnergyToday: chargeEnergyToday,
                 dischargeEnergyToday: dischargeEnergyToday,
-                gridActivePower: gridActivePower,
+                gridImportPower: gridImportPower,
                 gridFrequency: gridFrequency,
                 gridVoltage: gridVoltage,
                 gridCurrent: gridCurrent,
@@ -740,12 +740,12 @@ class $InverterSnapshotsTable extends i2.InverterSnapshots
         type: i0.DriftSqlType.double,
         requiredDuringInsert: true,
       );
-  static const i0.VerificationMeta _gridActivePowerMeta =
-      const i0.VerificationMeta('gridActivePower');
+  static const i0.VerificationMeta _gridImportPowerMeta =
+      const i0.VerificationMeta('gridImportPower');
   @override
-  late final i0.GeneratedColumn<double> gridActivePower =
+  late final i0.GeneratedColumn<double> gridImportPower =
       i0.GeneratedColumn<double>(
-        'grid_active_power',
+        'grid_import_power',
         aliasedName,
         false,
         type: i0.DriftSqlType.double,
@@ -877,7 +877,7 @@ class $InverterSnapshotsTable extends i2.InverterSnapshots
     dischargePower,
     chargeEnergyToday,
     dischargeEnergyToday,
-    gridActivePower,
+    gridImportPower,
     gridFrequency,
     gridVoltage,
     gridCurrent,
@@ -997,16 +997,16 @@ class $InverterSnapshotsTable extends i2.InverterSnapshots
     } else if (isInserting) {
       context.missing(_dischargeEnergyTodayMeta);
     }
-    if (data.containsKey('grid_active_power')) {
+    if (data.containsKey('grid_import_power')) {
       context.handle(
-        _gridActivePowerMeta,
-        gridActivePower.isAcceptableOrUnknown(
-          data['grid_active_power']!,
-          _gridActivePowerMeta,
+        _gridImportPowerMeta,
+        gridImportPower.isAcceptableOrUnknown(
+          data['grid_import_power']!,
+          _gridImportPowerMeta,
         ),
       );
     } else if (isInserting) {
-      context.missing(_gridActivePowerMeta);
+      context.missing(_gridImportPowerMeta);
     }
     if (data.containsKey('grid_frequency')) {
       context.handle(
@@ -1176,9 +1176,9 @@ class $InverterSnapshotsTable extends i2.InverterSnapshots
         i0.DriftSqlType.double,
         data['${effectivePrefix}discharge_energy_today'],
       )!,
-      gridActivePower: attachedDatabase.typeMapping.read(
+      gridImportPower: attachedDatabase.typeMapping.read(
         i0.DriftSqlType.double,
-        data['${effectivePrefix}grid_active_power'],
+        data['${effectivePrefix}grid_import_power'],
       )!,
       gridFrequency: attachedDatabase.typeMapping.read(
         i0.DriftSqlType.double,
@@ -1248,10 +1248,14 @@ class InverterSnapshot extends i0.DataClass
   final double dischargePower;
   final double chargeEnergyToday;
   final double dischargeEnergyToday;
-  final double gridActivePower;
+
+  /// Site grid import (Pactouser), watts ≥ 0.
+  final double gridImportPower;
   final double gridFrequency;
   final double gridVoltage;
   final double gridCurrent;
+
+  /// Site grid export (Pactogrid), watts ≥ 0.
   final double gridExportPower;
   final double gridExportEnergyToday;
   final double gridImportEnergyToday;
@@ -1272,7 +1276,7 @@ class InverterSnapshot extends i0.DataClass
     required this.dischargePower,
     required this.chargeEnergyToday,
     required this.dischargeEnergyToday,
-    required this.gridActivePower,
+    required this.gridImportPower,
     required this.gridFrequency,
     required this.gridVoltage,
     required this.gridCurrent,
@@ -1307,7 +1311,7 @@ class InverterSnapshot extends i0.DataClass
     map['discharge_power'] = i0.Variable<double>(dischargePower);
     map['charge_energy_today'] = i0.Variable<double>(chargeEnergyToday);
     map['discharge_energy_today'] = i0.Variable<double>(dischargeEnergyToday);
-    map['grid_active_power'] = i0.Variable<double>(gridActivePower);
+    map['grid_import_power'] = i0.Variable<double>(gridImportPower);
     map['grid_frequency'] = i0.Variable<double>(gridFrequency);
     map['grid_voltage'] = i0.Variable<double>(gridVoltage);
     map['grid_current'] = i0.Variable<double>(gridCurrent);
@@ -1339,7 +1343,7 @@ class InverterSnapshot extends i0.DataClass
       dischargePower: i0.Value(dischargePower),
       chargeEnergyToday: i0.Value(chargeEnergyToday),
       dischargeEnergyToday: i0.Value(dischargeEnergyToday),
-      gridActivePower: i0.Value(gridActivePower),
+      gridImportPower: i0.Value(gridImportPower),
       gridFrequency: i0.Value(gridFrequency),
       gridVoltage: i0.Value(gridVoltage),
       gridCurrent: i0.Value(gridCurrent),
@@ -1383,7 +1387,7 @@ class InverterSnapshot extends i0.DataClass
       dischargeEnergyToday: serializer.fromJson<double>(
         json['battery_discharge_energy_today_kwh'],
       ),
-      gridActivePower: serializer.fromJson<double>(json['grid_active_power_w']),
+      gridImportPower: serializer.fromJson<double>(json['grid_import_power_w']),
       gridFrequency: serializer.fromJson<double>(json['grid_frequency_hz']),
       gridVoltage: serializer.fromJson<double>(json['grid_voltage_v']),
       gridCurrent: serializer.fromJson<double>(json['grid_current_a']),
@@ -1426,7 +1430,7 @@ class InverterSnapshot extends i0.DataClass
       'battery_discharge_energy_today_kwh': serializer.toJson<double>(
         dischargeEnergyToday,
       ),
-      'grid_active_power_w': serializer.toJson<double>(gridActivePower),
+      'grid_import_power_w': serializer.toJson<double>(gridImportPower),
       'grid_frequency_hz': serializer.toJson<double>(gridFrequency),
       'grid_voltage_v': serializer.toJson<double>(gridVoltage),
       'grid_current_a': serializer.toJson<double>(gridCurrent),
@@ -1457,7 +1461,7 @@ class InverterSnapshot extends i0.DataClass
     double? dischargePower,
     double? chargeEnergyToday,
     double? dischargeEnergyToday,
-    double? gridActivePower,
+    double? gridImportPower,
     double? gridFrequency,
     double? gridVoltage,
     double? gridCurrent,
@@ -1481,7 +1485,7 @@ class InverterSnapshot extends i0.DataClass
     dischargePower: dischargePower ?? this.dischargePower,
     chargeEnergyToday: chargeEnergyToday ?? this.chargeEnergyToday,
     dischargeEnergyToday: dischargeEnergyToday ?? this.dischargeEnergyToday,
-    gridActivePower: gridActivePower ?? this.gridActivePower,
+    gridImportPower: gridImportPower ?? this.gridImportPower,
     gridFrequency: gridFrequency ?? this.gridFrequency,
     gridVoltage: gridVoltage ?? this.gridVoltage,
     gridCurrent: gridCurrent ?? this.gridCurrent,
@@ -1527,9 +1531,9 @@ class InverterSnapshot extends i0.DataClass
       dischargeEnergyToday: data.dischargeEnergyToday.present
           ? data.dischargeEnergyToday.value
           : this.dischargeEnergyToday,
-      gridActivePower: data.gridActivePower.present
-          ? data.gridActivePower.value
-          : this.gridActivePower,
+      gridImportPower: data.gridImportPower.present
+          ? data.gridImportPower.value
+          : this.gridImportPower,
       gridFrequency: data.gridFrequency.present
           ? data.gridFrequency.value
           : this.gridFrequency,
@@ -1578,7 +1582,7 @@ class InverterSnapshot extends i0.DataClass
           ..write('dischargePower: $dischargePower, ')
           ..write('chargeEnergyToday: $chargeEnergyToday, ')
           ..write('dischargeEnergyToday: $dischargeEnergyToday, ')
-          ..write('gridActivePower: $gridActivePower, ')
+          ..write('gridImportPower: $gridImportPower, ')
           ..write('gridFrequency: $gridFrequency, ')
           ..write('gridVoltage: $gridVoltage, ')
           ..write('gridCurrent: $gridCurrent, ')
@@ -1607,7 +1611,7 @@ class InverterSnapshot extends i0.DataClass
     dischargePower,
     chargeEnergyToday,
     dischargeEnergyToday,
-    gridActivePower,
+    gridImportPower,
     gridFrequency,
     gridVoltage,
     gridCurrent,
@@ -1635,7 +1639,7 @@ class InverterSnapshot extends i0.DataClass
           other.dischargePower == this.dischargePower &&
           other.chargeEnergyToday == this.chargeEnergyToday &&
           other.dischargeEnergyToday == this.dischargeEnergyToday &&
-          other.gridActivePower == this.gridActivePower &&
+          other.gridImportPower == this.gridImportPower &&
           other.gridFrequency == this.gridFrequency &&
           other.gridVoltage == this.gridVoltage &&
           other.gridCurrent == this.gridCurrent &&
@@ -1662,7 +1666,7 @@ class InverterSnapshotsCompanion
   final i0.Value<double> dischargePower;
   final i0.Value<double> chargeEnergyToday;
   final i0.Value<double> dischargeEnergyToday;
-  final i0.Value<double> gridActivePower;
+  final i0.Value<double> gridImportPower;
   final i0.Value<double> gridFrequency;
   final i0.Value<double> gridVoltage;
   final i0.Value<double> gridCurrent;
@@ -1686,7 +1690,7 @@ class InverterSnapshotsCompanion
     this.dischargePower = const i0.Value.absent(),
     this.chargeEnergyToday = const i0.Value.absent(),
     this.dischargeEnergyToday = const i0.Value.absent(),
-    this.gridActivePower = const i0.Value.absent(),
+    this.gridImportPower = const i0.Value.absent(),
     this.gridFrequency = const i0.Value.absent(),
     this.gridVoltage = const i0.Value.absent(),
     this.gridCurrent = const i0.Value.absent(),
@@ -1711,7 +1715,7 @@ class InverterSnapshotsCompanion
     required double dischargePower,
     required double chargeEnergyToday,
     required double dischargeEnergyToday,
-    required double gridActivePower,
+    required double gridImportPower,
     required double gridFrequency,
     required double gridVoltage,
     required double gridCurrent,
@@ -1733,7 +1737,7 @@ class InverterSnapshotsCompanion
        dischargePower = i0.Value(dischargePower),
        chargeEnergyToday = i0.Value(chargeEnergyToday),
        dischargeEnergyToday = i0.Value(dischargeEnergyToday),
-       gridActivePower = i0.Value(gridActivePower),
+       gridImportPower = i0.Value(gridImportPower),
        gridFrequency = i0.Value(gridFrequency),
        gridVoltage = i0.Value(gridVoltage),
        gridCurrent = i0.Value(gridCurrent),
@@ -1757,7 +1761,7 @@ class InverterSnapshotsCompanion
     i0.Expression<double>? dischargePower,
     i0.Expression<double>? chargeEnergyToday,
     i0.Expression<double>? dischargeEnergyToday,
-    i0.Expression<double>? gridActivePower,
+    i0.Expression<double>? gridImportPower,
     i0.Expression<double>? gridFrequency,
     i0.Expression<double>? gridVoltage,
     i0.Expression<double>? gridCurrent,
@@ -1784,7 +1788,7 @@ class InverterSnapshotsCompanion
       if (chargeEnergyToday != null) 'charge_energy_today': chargeEnergyToday,
       if (dischargeEnergyToday != null)
         'discharge_energy_today': dischargeEnergyToday,
-      if (gridActivePower != null) 'grid_active_power': gridActivePower,
+      if (gridImportPower != null) 'grid_import_power': gridImportPower,
       if (gridFrequency != null) 'grid_frequency': gridFrequency,
       if (gridVoltage != null) 'grid_voltage': gridVoltage,
       if (gridCurrent != null) 'grid_current': gridCurrent,
@@ -1813,7 +1817,7 @@ class InverterSnapshotsCompanion
     i0.Value<double>? dischargePower,
     i0.Value<double>? chargeEnergyToday,
     i0.Value<double>? dischargeEnergyToday,
-    i0.Value<double>? gridActivePower,
+    i0.Value<double>? gridImportPower,
     i0.Value<double>? gridFrequency,
     i0.Value<double>? gridVoltage,
     i0.Value<double>? gridCurrent,
@@ -1838,7 +1842,7 @@ class InverterSnapshotsCompanion
       dischargePower: dischargePower ?? this.dischargePower,
       chargeEnergyToday: chargeEnergyToday ?? this.chargeEnergyToday,
       dischargeEnergyToday: dischargeEnergyToday ?? this.dischargeEnergyToday,
-      gridActivePower: gridActivePower ?? this.gridActivePower,
+      gridImportPower: gridImportPower ?? this.gridImportPower,
       gridFrequency: gridFrequency ?? this.gridFrequency,
       gridVoltage: gridVoltage ?? this.gridVoltage,
       gridCurrent: gridCurrent ?? this.gridCurrent,
@@ -1901,8 +1905,8 @@ class InverterSnapshotsCompanion
         dischargeEnergyToday.value,
       );
     }
-    if (gridActivePower.present) {
-      map['grid_active_power'] = i0.Variable<double>(gridActivePower.value);
+    if (gridImportPower.present) {
+      map['grid_import_power'] = i0.Variable<double>(gridImportPower.value);
     }
     if (gridFrequency.present) {
       map['grid_frequency'] = i0.Variable<double>(gridFrequency.value);
@@ -1956,7 +1960,7 @@ class InverterSnapshotsCompanion
           ..write('dischargePower: $dischargePower, ')
           ..write('chargeEnergyToday: $chargeEnergyToday, ')
           ..write('dischargeEnergyToday: $dischargeEnergyToday, ')
-          ..write('gridActivePower: $gridActivePower, ')
+          ..write('gridImportPower: $gridImportPower, ')
           ..write('gridFrequency: $gridFrequency, ')
           ..write('gridVoltage: $gridVoltage, ')
           ..write('gridCurrent: $gridCurrent, ')

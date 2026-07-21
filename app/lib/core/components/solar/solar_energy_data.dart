@@ -24,11 +24,13 @@ class SolarEnergyData {
 
   factory SolarEnergyData.fromInverterSnapshot(InverterSnapshot snapshot) {
     final batteryPower = snapshot.chargePower - snapshot.dischargePower;
+    // grid_import = Pactouser (≥ 0), grid_export = Pactogrid (≥ 0).
+    final gridWatts = snapshot.gridImportPower - snapshot.gridExportPower;
     return SolarEnergyData(
       solarWatts: snapshot.solarPower,
       houseWatts: snapshot.homeLoadPower,
       batteryWatts: batteryPower,
-      gridWatts: snapshot.gridActivePower,
+      gridWatts: gridWatts,
       batteryLevel: snapshot.batteryStateOfCharge.round(),
       lastSeenAt: snapshot.recordedAt,
     );

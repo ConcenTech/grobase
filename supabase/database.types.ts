@@ -225,7 +225,7 @@ export type Database = {
           battery_soc_percent: number | null
           battery_voltage_v: number | null
           gateway_id: string | null
-          grid_active_power_w: number | null
+          grid_import_power_w: number | null
           grid_charge_power_w: number | null
           grid_current_a: number | null
           grid_export_energy_today_kwh: number | null
@@ -251,7 +251,7 @@ export type Database = {
           battery_soc_percent?: number | null
           battery_voltage_v?: number | null
           gateway_id?: string | null
-          grid_active_power_w?: number | null
+          grid_import_power_w?: number | null
           grid_charge_power_w?: number | null
           grid_current_a?: number | null
           grid_export_energy_today_kwh?: number | null
@@ -277,7 +277,7 @@ export type Database = {
           battery_soc_percent?: number | null
           battery_voltage_v?: number | null
           gateway_id?: string | null
-          grid_active_power_w?: number | null
+          grid_import_power_w?: number | null
           grid_charge_power_w?: number | null
           grid_current_a?: number | null
           grid_export_energy_today_kwh?: number | null

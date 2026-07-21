@@ -18,7 +18,7 @@ static void fill_sample_tables(uint16_t *r1009,
   for (int i = 0; i < 3; ++i) r1086[i] = 0;
   for (int i = 0; i < 27; ++i) r1124[i] = 0;
   for (int i = 0; i < 20; ++i) r2035[i] = 0;
-  for (int i = 0; i < 1; ++i) r2097[i] = 0;
+  for (int i = 0; i < 7; ++i) r2097[i] = 0;
   for (int i = 0; i < 6; ++i) r2112[i] = 0;
 
   r1009[1009 - 1009] = 0x0000;
@@ -48,10 +48,6 @@ static void fill_sample_tables(uint16_t *r1009,
   r1124[1125 - 1124] = 0x0046; // 7.0 kWh (0.1 kWh)
   r1124[1128 - 1124] = 0x0000;
   r1124[1129 - 1124] = 0x0014;
-  r1124[1131 - 1124] = 0x0000;
-  r1124[1132 - 1124] = 0x0BB8; // 300.0 W (ExtraACPower / PV)
-  r1124[1145 - 1124] = 0x0000;
-  r1124[1146 - 1124] = 0x1D4C; // 750.0 W (PSystem)
   r1124[1149 - 1124] = 0x0000;
   r1124[1150 - 1124] = 0x001E;
 
@@ -63,7 +59,9 @@ static void fill_sample_tables(uint16_t *r1009,
   r2035[2053 - 2035] = 0x0000;
   r2035[2054 - 2035] = 0x0064;  // 10.0 kWh
 
-  r2097[0] = 251; // 25.1 V
+  r2097[2097 - 2097] = 251; // 25.1 V
+  r2097[2102 - 2097] = 0x0000;
+  r2097[2103 - 2097] = 0x0BB8; // 300.0 W (ExtraACPower / PV)
 
   r2112[2112 - 2112] = 0x0000;
   r2112[2113 - 2112] = 0x004D;  // 7.7 kWh
@@ -76,7 +74,7 @@ void test_profile_growatt_fill_maps_expected_fields() {
   uint16_t r1086[3];
   uint16_t r1124[27];
   uint16_t r2035[20];
-  uint16_t r2097[1];
+  uint16_t r2097[7];
   uint16_t r2112[6];
   fill_sample_tables(r1009, r1086, r1124, r2035, r2097, r2112);
 
@@ -96,8 +94,7 @@ void test_profile_growatt_fill_maps_expected_fields() {
   TEST_ASSERT_EQUAL_FLOAT(10.0f, snapshot.pv_energy_today_kwh);
   TEST_ASSERT_EQUAL_FLOAT(300.0f, snapshot.pv_power_w);
   TEST_ASSERT_EQUAL_FLOAT(40.0f, snapshot.power_to_user_w);
-  TEST_ASSERT_EQUAL_FLOAT(50.0f, snapshot.local_load_power_w);
-  TEST_ASSERT_EQUAL_FLOAT(750.0f, snapshot.system_power_w);
+  TEST_ASSERT_EQUAL_FLOAT(50.0f, snapshot.home_load_power_w);
   TEST_ASSERT_EQUAL_FLOAT(100.0f, snapshot.grid_pac_w);
   TEST_ASSERT_EQUAL_FLOAT(50.00f, snapshot.grid_frequency_hz);
   TEST_ASSERT_EQUAL_FLOAT(230.0f, snapshot.grid_voltage_v);
@@ -112,7 +109,7 @@ void test_profile_growatt_pac_signed_negative() {
   uint16_t r1086[3];
   uint16_t r1124[27];
   uint16_t r2035[20];
-  uint16_t r2097[1];
+  uint16_t r2097[7];
   uint16_t r2112[6];
   fill_sample_tables(r1009, r1086, r1124, r2035, r2097, r2112);
 

@@ -23,10 +23,12 @@ struct InverterSnapshot {
   float battery_discharge_energy_today_kwh;
   float battery_charge_energy_today_kwh;
 
+  /// SPA AC-port power (2035–36 Pac), signed. Not site grid import/export.
   float grid_pac_w;
   float grid_frequency_hz;
   float grid_voltage_v;
   float grid_current_a;
+  /// Pactogrid (1029–30): power exported to the utility grid.
   float power_to_grid_w;
   float energy_to_grid_today_kwh;
   float ac_charge_energy_today_kwh;
@@ -36,12 +38,13 @@ struct InverterSnapshot {
   float ac_charge_power_spa_w;
 
   float pv_energy_today_kwh;
-  /// ExtraACPower (1131–1132): AC power from the SPA-connected PV inverter.
+  /// ExtraACPower (2102–2103): AC power from the SPA-connected PV inverter.
+  /// (1131–1132 is the same doc field but reads 0 on live SPA hardware.)
   float pv_power_w;
+  /// Pactouser (1021–22): power imported from the utility grid to the house.
   float power_to_user_w;
-  float local_load_power_w;
-  /// PSystem (1145–1146): system/house load power.
-  float system_power_w;
+  /// PLocalLoad (1037–38): whole-house load (grid + solar + battery contribution).
+  float home_load_power_w;
 
 #if MODBUS_DEBUG
   /// Pre-built JSON object for inverter_snapshots.metadata (empty if unused).

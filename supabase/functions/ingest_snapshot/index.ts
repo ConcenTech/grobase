@@ -15,7 +15,7 @@ type SnapshotPayload = {
   battery_discharge_power_w?: number | null;
   battery_charge_energy_today_kwh?: number | null;
   battery_discharge_energy_today_kwh?: number | null;
-  grid_active_power_w?: number | null;
+  grid_import_power_w?: number | null;
   grid_frequency_hz?: number | null;
   grid_voltage_v?: number | null;
   grid_current_a?: number | null;
@@ -76,7 +76,7 @@ function snapshotInsertFromBody(body: SnapshotPayload, gatewayId: string) {
     battery_discharge_energy_today_kwh: toOptionalNumber(
       body.battery_discharge_energy_today_kwh,
     ),
-    grid_active_power_w: toOptionalNumber(body.grid_active_power_w),
+    grid_import_power_w: toOptionalNumber(body.grid_import_power_w),
     grid_frequency_hz: toOptionalNumber(body.grid_frequency_hz),
     grid_voltage_v: toOptionalNumber(body.grid_voltage_v),
     grid_current_a: toOptionalNumber(body.grid_current_a),
