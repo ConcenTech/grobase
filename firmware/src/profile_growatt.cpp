@@ -83,15 +83,15 @@ void profileGrowattFill(InverterSnapshot *out,
 
   // SPA: "Today generate energy" (2053-2054), not EPVAll_Today (1149-1150).
   out->pv_energy_today_kwh = out->eac_today_kwh;
-  // SPA CT2: ExtraACPower from the connected PV inverter (not Pactouser).
+  // SPA CT2: ExtraACPower from the connected PV inverter.
+  // Live dumps: 1131–1132 stay 0; 2102–2103 carry the real value (same doc name).
   out->pv_power_w =
-    u32_scaled(regAt(R1124_START, r1124, 1131), regAt(R1124_START, r1124, 1132), 0.1f);
+    u32_scaled(regAt(R2097_START, r2097, 2102), regAt(R2097_START, r2097, 2103), 0.1f);
 
   out->power_to_user_w =
     u32_scaled(regAt(R1009_START, r1009, 1021), regAt(R1009_START, r1009, 1022), 0.1f);
-  out->local_load_power_w =
+  // House load: matches solar + import − export − charge + discharge on live SPA.
+  // PSystem (1145–46) is not house load (tracks PV when exporting).
+  out->home_load_power_w =
     u32_scaled(regAt(R1009_START, r1009, 1037), regAt(R1009_START, r1009, 1038), 0.1f);
-  // SPA: whole-system load (preferred for home_load), not INV-only PLocalLoad.
-  out->system_power_w =
-    u32_scaled(regAt(R1124_START, r1124, 1145), regAt(R1124_START, r1124, 1146), 0.1f);
 }

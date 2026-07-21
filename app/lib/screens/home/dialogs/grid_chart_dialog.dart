@@ -69,8 +69,8 @@ class _GridChartDialogState extends State<GridChartDialog> {
 
     for (final snapshot in widget.snapshots) {
       final x = _hoursOfDay(snapshot.recordedAt);
-      // gridActivePower is the total power from the grid, including export.
-      final power = snapshot.gridActivePower;
+      // Signed site grid: import (Pactouser) − export (Pactogrid).
+      final power = snapshot.gridImportPower - snapshot.gridExportPower;
       spots.add(FlSpot(x, power));
       if (power < minPower) minPower = power;
       if (power > maxPower) maxPower = power;

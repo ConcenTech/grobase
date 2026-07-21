@@ -27,8 +27,8 @@ class InverterSnapshots extends Table {
   RealColumn get chargeEnergyToday => real()();
   @JsonKey('battery_discharge_energy_today_kwh')
   RealColumn get dischargeEnergyToday => real()();
-  @JsonKey('grid_active_power_w')
-  RealColumn get gridActivePower => real()();
+  @JsonKey('grid_import_power_w')
+  RealColumn get gridImportPower => real()();
   @JsonKey('grid_frequency_hz')
   RealColumn get gridFrequency => real()();
   @JsonKey('grid_voltage_v')

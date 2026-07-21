@@ -137,7 +137,7 @@ begin
     battery_discharge_power_w,
     battery_charge_energy_today_kwh,
     battery_discharge_energy_today_kwh,
-    grid_active_power_w,
+    grid_import_power_w,
     grid_frequency_hz,
     grid_voltage_v,
     grid_current_a,
@@ -288,7 +288,7 @@ begin
     battery_soc_percent, battery_voltage_v, battery_current_a,
     battery_charge_power_w, battery_discharge_power_w,
     battery_charge_energy_today_kwh, battery_discharge_energy_today_kwh,
-    grid_active_power_w, grid_frequency_hz, grid_voltage_v, grid_current_a,
+    grid_import_power_w, grid_frequency_hz, grid_voltage_v, grid_current_a,
     grid_export_power_w, grid_export_energy_today_kwh, grid_import_energy_today_kwh,
     grid_charge_power_w, solar_energy_today_kwh, solar_power_w, home_load_power_w
   ) values (
@@ -330,7 +330,7 @@ begin
     battery_soc_percent, battery_voltage_v, battery_current_a,
     battery_charge_power_w, battery_discharge_power_w,
     battery_charge_energy_today_kwh, battery_discharge_energy_today_kwh,
-    grid_active_power_w, grid_frequency_hz, grid_voltage_v, grid_current_a,
+    grid_import_power_w, grid_frequency_hz, grid_voltage_v, grid_current_a,
     grid_export_power_w, grid_export_energy_today_kwh, grid_import_energy_today_kwh,
     grid_charge_power_w, solar_energy_today_kwh, solar_power_w, home_load_power_w
   ) values (

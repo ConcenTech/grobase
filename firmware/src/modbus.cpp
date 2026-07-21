@@ -235,7 +235,7 @@ static const uint16_t R1124_COUNT = 27;
 static const uint16_t R2035_START = 2035;
 static const uint16_t R2035_COUNT = 20;
 static const uint16_t R2097_START = 2097;
-static const uint16_t R2097_COUNT = 1;
+static const uint16_t R2097_COUNT = 7; // 2097 BatVolt_DSP … 2102–2103 ExtraACPower
 static const uint16_t R2112_START = 2112;
 static const uint16_t R2112_COUNT = 6;
 
