@@ -173,7 +173,7 @@ class SystemsListWidget extends StatelessWidget {
                           icon: MdiIcons.transmissionTower, //
                           value: latest == null
                               ? null
-                              : ((latest.gridActivePower -
+                              : ((latest.gridImportPower -
                                             latest.gridExportPower) /
                                         100)
                                     .toStringAsFixed(1),
