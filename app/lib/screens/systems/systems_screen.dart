@@ -161,7 +161,9 @@ class SystemsListWidget extends StatelessWidget {
                 Consumer(
                   builder: (context, ref, child) {
                     final latest = ref
-                        .watch(DatabaseProviders.latestInverterSnapshot(system))
+                        .watch(
+                          DatabaseProviders.latestInverterSnapshot(system.id),
+                        )
                         .whenOrNull(data: (data) => data);
 
                     return Row(
