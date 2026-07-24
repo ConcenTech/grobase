@@ -151,7 +151,10 @@ class OfflineDatabaseService {
 
   Future<void> addSnapshots(List<InverterSnapshot> snapshots) async {
     try {
-      await _db.inverterSnapshots.insertAll(snapshots);
+      await _db.inverterSnapshots.insertAll(
+        snapshots,
+        mode: InsertMode.insertOrIgnore,
+      );
     } catch (e, s) {
       _logger.severe('Failed to add snapshots', e, s);
       rethrow;
