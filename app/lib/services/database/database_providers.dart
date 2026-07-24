@@ -52,13 +52,16 @@ abstract class DatabaseProviders {
 
   /// A stream of todays inverter snapshots for the given inverter.
   static final inverterSnapshots = StreamProvider.autoDispose.family(
-    (ref, Inverter inverter) =>
-        ref.watch(offlineDatabase).todaysInverterSnapshots(inverter.id),
+    // User String inverterId instead of inverter object to avoid provider
+    // rebuilds when the inverter object changes.
+    (ref, String inverterId) =>
+        ref.watch(offlineDatabase).todaysInverterSnapshots(inverterId),
   );
 
   static final latestInverterSnapshot = StreamProvider.autoDispose.family(
-    (ref, Inverter inverter) =>
-        ref.watch(offlineDatabase).latestInverterSnapshot(inverter.id),
+    // Same issue as above.
+    (ref, String inverterId) =>
+        ref.watch(offlineDatabase).latestInverterSnapshot(inverterId),
   );
 }
 
