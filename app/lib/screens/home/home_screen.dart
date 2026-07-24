@@ -53,7 +53,7 @@ class HomeScreen extends ConsumerWidget {
 
     AsyncValue<List<InverterSnapshot>>? snapshotsRef;
     if (inverter != null) {
-      final provider = DatabaseProviders.inverterSnapshots(inverter);
+      final provider = DatabaseProviders.inverterSnapshots(inverter.id);
       snapshotsRef = ref.watch(provider);
 
       ref.listen(provider, (_, next) {
@@ -66,8 +66,9 @@ class HomeScreen extends ConsumerWidget {
     final snapshots = snapshotsRef?.value ?? <InverterSnapshot>[];
     final isLoading =
         inverterRef.isLoading || (snapshotsRef?.isLoading ?? false);
+    final hasData = inverterRef.hasValue && (snapshotsRef?.hasValue ?? false);
     final hasError = inverterRef.hasError || (snapshotsRef?.hasError ?? false);
-    final showOverlay = isLoading || hasError;
+    final showOverlay = (isLoading && !hasData) || hasError;
 
     return Stack(
       fit: StackFit.expand,
