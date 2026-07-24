@@ -27,21 +27,30 @@ class OnlineDatabaseService {
   /// Base Supabase URL for provisioning the gateway firmware.
   String get supabaseUrl => _db.rest.url.replaceFirst(RegExp(r'/rest/v1$'), '');
 
-  Future<void> _ensureValidToken() async {
+  Future<void> _ensureValidSession() async {
     final session = _db.auth.currentSession;
     if (session == null) {
       // Unable to resolve session, likely not authenticated.
       throw DatabaseException('Not authenticated');
     }
     if (session.isExpired) {
+      _logger.info('Session expired, refreshing');
       await _db.auth.refreshSession();
+
+      final newSessionIsValid = !(_db.auth.currentSession?.isExpired ?? true);
+      if (!newSessionIsValid) {
+        _logger.severe('Failed to refresh session');
+        throw DatabaseException('Failed to refresh session');
+      } else {
+        _logger.info('Session refreshed');
+      }
     }
   }
 
   // Returns the current user's inverters for the home screen.
   Future<List<Inverter>> inverters() async {
     try {
-      await _ensureValidToken();
+      await _ensureValidSession();
       final data = await _db
           .from('inverters')
           .select()
@@ -58,6 +67,7 @@ class OnlineDatabaseService {
   // Returns one inverter row for dashboard/settings screens.
   Future<Inverter?> getInverterById(String inverterId) async {
     try {
+      await _ensureValidSession();
       final data = await _db
           .from('inverters')
           .select()
@@ -79,17 +89,17 @@ class OnlineDatabaseService {
     DateTime? end,
   }) async {
     try {
-      await _ensureValidToken();
+      await _ensureValidSession();
       var query = _db
           .from('inverter_snapshots')
           .select()
           .eq('inverter_id', inverterId);
       if (start != null) {
-        query = query.gte('recorded_at', start.toIso8601String());
+        query = query.gt('recorded_at', start.toUtc().toIso8601String());
       }
 
       if (end != null) {
-        query = query.lte('recorded_at', end.toIso8601String());
+        query = query.lte('recorded_at', end.toUtc().toIso8601String());
       }
       final data = await query.order('recorded_at', ascending: true);
 
@@ -101,11 +111,12 @@ class OnlineDatabaseService {
     }
   }
 
-  RealtimeChannel inverterChanges({
+  Future<RealtimeChannel> inverterChanges({
     required void Function(Inverter user) onCreate,
     required void Function(Inverter user) onUpdate,
     required void Function(String id) onDelete,
-  }) {
+  }) async {
+    await _ensureValidSession();
     return _db
         .channel('inverters')
         .onPostgresChanges(
@@ -133,12 +144,14 @@ class OnlineDatabaseService {
         });
   }
 
-  RealtimeChannel snapshotChanges({
+  Future<RealtimeChannel> snapshotChanges({
     required String inverterId,
     DateTime? start,
     required void Function(InverterSnapshot user) onCreate,
     // required void Function(String id) onDelete,
-  }) {
+  }) async {
+    await _ensureValidSession();
+
     return _db
         .channel('snapshots:$inverterId')
         .onPostgresChanges(
@@ -172,6 +185,7 @@ class OnlineDatabaseService {
   // Returns all the gateways for the authenticated user.
   Future<List<Gateway>> gateways(String inverterId) async {
     try {
+      await _ensureValidSession();
       final data = await _db.rpc('get_gateways_safe');
       return data.map((item) => Gateway.fromJson(item)).toList();
     } on PostgrestException catch (e) {
@@ -184,6 +198,7 @@ class OnlineDatabaseService {
   // Returns owner-only operational events for the inverter event log screen.
   Future<List<GatewayEvent>> gatewayEvents(String inverterId) async {
     try {
+      await _ensureValidSession();
       final data = await _db
           .from('gateway_events')
           .select()
@@ -200,6 +215,7 @@ class OnlineDatabaseService {
   // Returns the owner-only member list for managing viewers.
   Future<List<InverterMember>> inverterMembers(String inverterId) async {
     try {
+      await _ensureValidSession();
       final data = await _db
           .from('inverter_members')
           .select()
@@ -219,6 +235,7 @@ class OnlineDatabaseService {
     required String userId,
   }) async {
     try {
+      await _ensureValidSession();
       await _db
           .from('inverter_members')
           .delete()
@@ -236,6 +253,7 @@ class OnlineDatabaseService {
   // Creates a single-use viewer invite link via the create_invite_link edge function.
   Future<InviteLink> createInviteLink(String inverterId) async {
     try {
+      await _ensureValidSession();
       final res = await _db.functions.invoke(
         'create_invite_link',
         body: {'inverter_id': inverterId},
@@ -260,6 +278,7 @@ class OnlineDatabaseService {
 
   Future<InvitePreview> getInvitePreview(String token) async {
     try {
+      await _ensureValidSession();
       final res = await _db.functions.invoke(
         'get_invite_preview',
         body: {'token': token},
@@ -283,6 +302,7 @@ class OnlineDatabaseService {
   // Accepts an invite after auth and grants viewer access.
   Future<void> acceptInvite(String token) async {
     try {
+      await _ensureValidSession();
       final res = await _db.functions.invoke(
         'accept_invite',
         body: {'invite_token': token},
@@ -308,6 +328,7 @@ class OnlineDatabaseService {
     GatewayRegistrationRequest request,
   ) async {
     try {
+      await _ensureValidSession();
       final res = await _db.functions.invoke(
         'register_gateway',
         body: request.toJson(),

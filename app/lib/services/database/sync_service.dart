@@ -209,12 +209,12 @@ class SyncService {
     }
   }
 
-  void _startListeningForDbChanges() {
+  void _startListeningForDbChanges() async {
     if (!_isRunning) {
       return;
     }
     _logger.info('Listening for database changes.');
-    _inverterChangesChannel = _onlineService.inverterChanges(
+    _inverterChangesChannel = await _onlineService.inverterChanges(
       onCreate: (inverter) => unawaited(_handleInverterCreated(inverter)),
       onUpdate: (inverter) => unawaited(_handleInverterUpdated(inverter)),
       onDelete: (id) => unawaited(_handleInverterDeleted(id)),
