@@ -3,6 +3,7 @@ import 'package:logging/logging.dart' show Level;
 import 'package:realtime_client/src/message.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../core/Env/env.dart';
 import '../../../models/database/gateway.drift.dart';
 import '../../../models/database/gateway_event.drift.dart';
 import '../../../models/database/inverter.drift.dart';
@@ -24,7 +25,7 @@ class MockOnlineDatabaseService extends OnlineDatabaseService {
   final OfflineMockDataset _dataset;
 
   @override
-  String get supabaseUrl => supabaseDebugUrl;
+  String get supabaseUrl => Env.supabaseUrl;
 
   @override
   Future<List<Inverter>> inverters() async =>
@@ -72,20 +73,20 @@ class MockOnlineDatabaseService extends OnlineDatabaseService {
   }
 
   @override
-  RealtimeChannel inverterChanges({
+  Future<RealtimeChannel> inverterChanges({
     required void Function(Inverter user) onCreate,
     required void Function(Inverter user) onUpdate,
     required void Function(String id) onDelete,
-  }) {
+  }) async {
     return RealtimeChannel('topic', MockRealtimeClient());
   }
 
   @override
-  RealtimeChannel snapshotChanges({
+  Future<RealtimeChannel> snapshotChanges({
     required String inverterId,
     DateTime? start,
     required void Function(InverterSnapshot user) onCreate,
-  }) {
+  }) async {
     return RealtimeChannel('topic', MockRealtimeClient());
   }
 
@@ -200,9 +201,9 @@ class MockRealtimeClient extends RealtimeClient {
   @override
   RealtimeChannel channel(
     String topic, [
-    RealtimeChannelConfig params = const RealtimeChannelConfig(),
+    RealtimeChannelConfig config = const RealtimeChannelConfig(),
   ]) {
-    return RealtimeChannel(topic, this, params: params);
+    return RealtimeChannel(topic, this, params: config);
   }
 
   @override

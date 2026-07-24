@@ -124,12 +124,12 @@ class SyncService {
     final latest = timestamp == null || timestamp.isBefore(startOfDay)
         ? startOfDay
         : timestamp;
-
+    _logger.info('Syncing snapshots for inverter $inverterId from $latest');
     final snapshots = await _onlineService.snapshots(
       inverterId: inverterId,
       start: latest,
     );
-
+    _logger.info('New snapshots: ${snapshots.length}');
     if (snapshots.isNotEmpty) {
       await _offlineService.addSnapshots(snapshots);
     }
@@ -137,6 +137,7 @@ class SyncService {
 
   Future<void> _handleInverterCreated(Inverter inverter) async {
     try {
+      _logger.info('Inverter created: ${inverter.id}');
       await _offlineService.addInverter(inverter);
       await _syncSnapshotsForInverter(inverter.id);
     } catch (e, s) {
@@ -146,6 +147,7 @@ class SyncService {
   }
 
   Future<void> _handleInverterUpdated(Inverter inverter) async {
+    _logger.info('Inverter updated: ${inverter.id}');
     try {
       await _offlineService.upsertInverter(inverter);
       await _syncSnapshotsForInverter(inverter.id);
@@ -157,6 +159,7 @@ class SyncService {
 
   Future<void> _handleInverterDeleted(String inverterId) async {
     try {
+      _logger.info('Inverter deleted: $inverterId');
       await _offlineService.removeInverter(inverterId);
       await _offlineService.removeSnapshots(inverterId);
     } catch (e, s) {
@@ -206,12 +209,12 @@ class SyncService {
     }
   }
 
-  void _startListeningForDbChanges() {
+  void _startListeningForDbChanges() async {
     if (!_isRunning) {
       return;
     }
     _logger.info('Listening for database changes.');
-    _inverterChangesChannel = _onlineService.inverterChanges(
+    _inverterChangesChannel = await _onlineService.inverterChanges(
       onCreate: (inverter) => unawaited(_handleInverterCreated(inverter)),
       onUpdate: (inverter) => unawaited(_handleInverterUpdated(inverter)),
       onDelete: (id) => unawaited(_handleInverterDeleted(id)),

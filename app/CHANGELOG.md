@@ -6,6 +6,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.10] - 24/07/26
+
+### Fixed
+- Moved environment strings into Env class, added compile time checks to ensure they are set with --dart-define.
+- Providers rebuilding unnessesarily.
+Provider.family requires a stable key to prevent rebuilds. Inverter uses equality on all parameters meaning updates cause equality to fail so prefer inverter.id instead.
+- Session tokens are expired when resuming app.
+RealtimeChannels now refresh token if expired before opening the channel.
+- Home screen overlay flickers when provider is loading.
+
+### Added
+- Weather service
+
 ## [0.1.9] - 21/07/26
 
 ### Fixed
