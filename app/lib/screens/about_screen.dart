@@ -18,6 +18,9 @@ class AboutScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // TODO: MET Norway attribution
+    // TODO: Freepik attribution
+
     return const Placeholder();
   }
 }
