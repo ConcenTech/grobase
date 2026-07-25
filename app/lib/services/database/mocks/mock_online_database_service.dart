@@ -3,7 +3,7 @@ import 'package:logging/logging.dart' show Level;
 import 'package:realtime_client/src/message.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../../../core/Env/env.dart';
+import '../../../core/env/env.dart';
 import '../../../models/database/gateway.drift.dart';
 import '../../../models/database/gateway_event.drift.dart';
 import '../../../models/database/inverter.drift.dart';

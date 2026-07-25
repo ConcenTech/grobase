@@ -1,7 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:logging/logging.dart';
 
-import '../../core/Env/env.dart';
+import '../../core/env/env.dart';
 import '../../models/location.dart';
 import '../../models/weather/weather_cache_entry.dart';
 import '../../models/weather/weather_data.dart';
