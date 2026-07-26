@@ -31,13 +31,19 @@ class WeatherService {
 
   /// Fetches current weather for [location], using a persistent 30-minute cache.
   Future<WeatherData> getCurrentWeather(Location location) {
+    _logger.info(
+      'Fetching weather for ${location.latitude},${location.longitude}',
+    );
     final key = OfflineStorage.weatherCacheKey(
       location.latitude,
       location.longitude,
     );
 
     final existing = _inFlight[key];
-    if (existing != null) return existing;
+    if (existing != null) {
+      _logger.info('Weather already in flight for $key');
+      return existing;
+    }
 
     final future = _getCurrentWeather(location, key);
     _inFlight[key] = future;
@@ -48,7 +54,7 @@ class WeatherService {
     final cached = _storage.getWeatherCache(key);
     if (cached != null &&
         DateTime.now().difference(cached.fetchedAt) < _cacheTtl) {
-      _logger.fine('Weather cache hit for $key');
+      _logger.info('Weather cache hit for $key');
       return cached.data;
     }
 
@@ -73,6 +79,7 @@ class WeatherService {
         key,
         WeatherCacheEntry(fetchedAt: DateTime.now(), data: data),
       );
+      _logger.info('Weather fetched for $key');
       return data;
     } catch (e, s) {
       _logger.severe(

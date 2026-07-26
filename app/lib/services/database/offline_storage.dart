@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../models/database/inverter.drift.dart';
 import '../../models/weather/weather_cache_entry.dart';
+import '../../theme/app_theme_preference.dart';
 
 final _logger = Logger('OfflineStorage');
 
@@ -78,6 +79,31 @@ class OfflineStorage {
       await _prefs.setString(key, jsonEncode(entry.toJson()));
     } catch (e, s) {
       _logger.severe('Failed to set weather cache for $key', e, s);
+      rethrow;
+    }
+  }
+
+  static const _themePreferenceKey = 'theme_preference';
+
+  AppThemePreference getThemePreference() {
+    try {
+      final raw = _prefs.getString(_themePreferenceKey);
+      return AppThemePreference.values.firstWhere(
+        (e) => e.name == raw,
+        orElse: () => AppThemePreference.appDefault,
+      );
+    } catch (e, s) {
+      _logger.severe('Failed to get theme preference', e, s);
+      return AppThemePreference.appDefault;
+    }
+  }
+
+  Future<void> setThemePreference(AppThemePreference preference) async {
+    try {
+      await _prefs.setString(_themePreferenceKey, preference.name);
+      _logger.info('Theme preference set to ${preference.name}');
+    } catch (e, s) {
+      _logger.severe('Failed to set theme preference', e, s);
       rethrow;
     }
   }

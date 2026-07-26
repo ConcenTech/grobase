@@ -25,6 +25,7 @@ class AppRouter {
   GoTrueClient get _auth => Supabase.instance.client.auth;
 
   static final navigatorKey = GlobalKey<NavigatorState>();
+  static final routerKey = GlobalKey();
 
   late final StreamSubscription<AuthState> _authSubscription;
 

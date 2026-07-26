@@ -10,6 +10,7 @@ import 'services/database/database_providers.dart';
 import 'services/database/mocks/mock_sync_service.dart';
 import 'services/database/offline_storage.dart';
 import 'services/database/online_database_service.dart';
+import 'services/theme_provider.dart';
 import 'theme/theme.dart';
 
 // Title font: Montserrat, weight: 600
@@ -54,13 +55,15 @@ class MainApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(appRouterProvider);
+    final themeMode = ref.watch(themeModeProvider);
 
     ref.listen(DatabaseProviders.syncService, (_, _) {});
 
     return MaterialApp.router(
+      key: AppRouter.routerKey,
       debugShowCheckedModeBanner: false,
       title: 'Grobase',
-      themeMode: ThemeMode.system,
+      themeMode: themeMode,
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,
       routerConfig: router.router,
