@@ -5,10 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../services/weather_provider.dart';
-
-/// High-level weather state for sky and weather effects.
-enum WeatherCondition { clear, partlyCloudy, cloudy, rain, snow }
+import '../../../models/weather/weather_data.dart';
+import '../../../services/weather/weather_providers.dart';
 
 /// Continuously-interpolatable description of the sky. Every field can be
 /// linearly blended so weather changes animate as smooth cross-fades.
@@ -42,6 +40,13 @@ class WeatherParams {
 
   static double _l(double a, double b, double t) => a + (b - a) * t;
 
+  /// Maps mm/h onto a 0–1 intensity curve.
+  /// ~5 mm/h reads as full strength; lighter rates stay subtle.
+  static double _precipIntensity(double mmPerHour) {
+    if (mmPerHour <= 0) return 0;
+    return (mmPerHour / 5).clamp(0.0, 1.0);
+  }
+
   static WeatherParams lerp(WeatherParams a, WeatherParams b, double t) {
     return WeatherParams(
       skyTop: Color.lerp(a.skyTop, b.skyTop, t)!,
@@ -55,24 +60,10 @@ class WeatherParams {
     );
   }
 
-  factory WeatherParams.forCondition(WeatherCondition condition, bool night) {
-    double cover;
-    var snow = 0.0;
-    var rain = 0.0;
-    switch (condition) {
-      case WeatherCondition.clear:
-        cover = 0.0;
-      case WeatherCondition.partlyCloudy:
-        cover = 0.4;
-      case WeatherCondition.cloudy:
-        cover = 0.92;
-      case WeatherCondition.rain:
-        cover = 0.95;
-        rain = 1.0;
-      case WeatherCondition.snow:
-        cover = 0.85;
-        snow = 1.0;
-    }
+  factory WeatherParams.fromData(WeatherData data, bool night) {
+    final cover = (data.clouds / 100).clamp(0.0, 1.0);
+    final snow = _precipIntensity(data.snow);
+    final rain = _precipIntensity(data.rain);
 
     final Color skyTop;
     final Color skyBottom;
@@ -146,7 +137,7 @@ class _SkyBackgroundState extends ConsumerState<SkyBackground>
   void didChangeDependencies() {
     super.didChangeDependencies();
     _weather.sync(
-      condition: ref.read(weatherProvider),
+      data: ref.read(WeatherProviders.weatherNotifier),
       isNight: Theme.of(context).brightness == Brightness.dark,
       initialised: _initialised,
       onInitialised: () => _initialised = true,
@@ -161,9 +152,9 @@ class _SkyBackgroundState extends ConsumerState<SkyBackground>
 
   @override
   Widget build(BuildContext context) {
-    ref.listen(weatherProvider, (_, _) {
+    ref.listen(WeatherProviders.weatherNotifier, (_, next) {
       _weather.sync(
-        condition: ref.read(weatherProvider),
+        data: next,
         isNight: Theme.of(context).brightness == Brightness.dark,
         initialised: true,
       );
@@ -252,7 +243,7 @@ class _WeatherEffectsBackgroundState
   void didChangeDependencies() {
     super.didChangeDependencies();
     _weather.sync(
-      condition: ref.read(weatherProvider),
+      data: ref.read(WeatherProviders.weatherNotifier),
       isNight: Theme.of(context).brightness == Brightness.dark,
       initialised: _initialised,
       onInitialised: () => _initialised = true,
@@ -269,9 +260,9 @@ class _WeatherEffectsBackgroundState
 
   @override
   Widget build(BuildContext context) {
-    ref.listen(weatherProvider, (_, _) {
+    ref.listen(WeatherProviders.weatherNotifier, (_, next) {
       _weather.sync(
-        condition: ref.read(weatherProvider),
+        data: next,
         isNight: Theme.of(context).brightness == Brightness.dark,
         initialised: true,
       );
@@ -333,7 +324,7 @@ class _WeatherEffectsForegroundState
   void didChangeDependencies() {
     super.didChangeDependencies();
     _weather.sync(
-      condition: ref.read(weatherProvider),
+      data: ref.read(WeatherProviders.weatherNotifier),
       isNight: Theme.of(context).brightness == Brightness.dark,
       initialised: _initialised,
       onInitialised: () => _initialised = true,
@@ -350,9 +341,9 @@ class _WeatherEffectsForegroundState
 
   @override
   Widget build(BuildContext context) {
-    ref.listen(weatherProvider, (_, _) {
+    ref.listen(WeatherProviders.weatherNotifier, (_, next) {
       _weather.sync(
-        condition: ref.read(weatherProvider),
+        data: next,
         isNight: Theme.of(context).brightness == Brightness.dark,
         initialised: true,
       );
@@ -387,7 +378,7 @@ class _WeatherTransition {
   final AnimationController _trans;
   late WeatherParams _from;
   late WeatherParams _to;
-  WeatherCondition _condition = WeatherCondition.clear;
+  WeatherData? _data;
   bool _isNight = false;
 
   Listenable get animation => _trans;
@@ -398,25 +389,25 @@ class _WeatherTransition {
   void dispose() => _trans.dispose();
 
   void sync({
-    required WeatherCondition condition,
+    required WeatherData data,
     required bool isNight,
     required bool initialised,
     VoidCallback? onInitialised,
   }) {
     if (!initialised) {
-      _condition = condition;
+      _data = data;
       _isNight = isNight;
-      _from = _to = WeatherParams.forCondition(condition, isNight);
+      _from = _to = WeatherParams.fromData(data, isNight);
       onInitialised?.call();
       return;
     }
 
-    if (condition == _condition && isNight == _isNight) return;
+    if (data == _data && isNight == _isNight) return;
 
     final curve = Curves.easeInOut.transform(_trans.value);
     _from = WeatherParams.lerp(_from, _to, curve);
-    _to = WeatherParams.forCondition(condition, isNight);
-    _condition = condition;
+    _to = WeatherParams.fromData(data, isNight);
+    _data = data;
     _isNight = isNight;
     _trans.forward(from: 0);
   }
@@ -441,7 +432,8 @@ class _Cloud {
     return _Cloud(
       baseX: r.nextDouble(),
       y: 0.05 + r.nextDouble() * 0.42,
-      scale: 0.1 + r.nextDouble() * 0.08,
+      // ~35% smaller than the previous 0.10–0.18 range.
+      scale: 0.065 + r.nextDouble() * 0.052,
       // Nearly static: a barely-perceptible drift.
       speed: 0.0015 + r.nextDouble() * 0.0025,
       appearAt: i / count * 0.85,
@@ -601,12 +593,16 @@ class _WeatherEffectsBackgroundPainter extends CustomPainter {
   }
 
   void _paintClouds(Canvas canvas, Size size, double short) {
+    final cover = params.cloudCover;
+    // Opacity and slight scale grow with cover so clouds intensify past zero.
+    final intensity = (0.55 + cover * 0.45).clamp(0.0, 1.0);
+
     for (final cloud in clouds) {
       final alpha =
-          (((params.cloudCover - cloud.appearAt) / 0.2).clamp(0.0, 1.0)) * 0.95;
+          (((cover - cloud.appearAt) / 0.2).clamp(0.0, 1.0)) * 0.95 * intensity;
       if (alpha < 0.02) continue;
 
-      final s = short * cloud.scale;
+      final s = short * cloud.scale * (0.9 + cover * 0.2);
       final span = size.width + s * 6;
       var x = (cloud.baseX * span + clock * cloud.speed * size.width) % span;
       if (x < 0) x += span;
@@ -652,6 +648,12 @@ class _WeatherEffectsForegroundPainter extends CustomPainter {
   final double clock;
   final List<_Flake> flakes;
 
+  /// Particle stride: sparse just above zero, dense at full intensity.
+  static int _strideFor(double intensity) {
+    if (intensity <= 0) return 999;
+    return math.max(1, (4.5 - intensity * 3.5).round());
+  }
+
   @override
   void paint(Canvas canvas, Size size) {
     final short = size.shortestSide;
@@ -661,32 +663,38 @@ class _WeatherEffectsForegroundPainter extends CustomPainter {
 
   void _paintSnow(Canvas canvas, Size size, double short) {
     final paint = Paint()..color = Colors.white;
-    // Use a thinned-out subset of flakes so snow stays gentle.
-    for (var i = 0; i < flakes.length; i += 3) {
+    final intensity = params.snow;
+    final stride = _strideFor(intensity);
+
+    for (var i = 0; i < flakes.length; i += stride) {
       final f = flakes[i];
+      // Fall speed must stay constant — tying it to intensity makes particles
+      // jump ahead while weather is lerping up.
       final y = (f.baseY + clock * f.fallSpeed) % 1.0;
       final x = f.x + f.swayAmp * math.sin(clock * f.swaySpeed + f.phase);
       // Smaller flakes read as further away, so fade them a little more.
       final depth = ((f.size - 0.008) / 0.01).clamp(0.0, 1.0);
-      final a = (params.snow * (0.16 + depth * 0.16)).clamp(0.0, 1.0);
+      final a = (intensity * (0.18 + depth * 0.22)).clamp(0.0, 1.0);
       canvas.drawCircle(
         Offset(x * size.width, y * size.height),
-        short * f.size * 0.45,
+        short * f.size * (0.4 + intensity * 0.15),
         paint..color = Colors.white.withValues(alpha: a),
       );
     }
   }
 
   void _paintRain(Canvas canvas, Size size, double short) {
+    final intensity = params.rain;
+    final stride = _strideFor(intensity);
     final paint = Paint()
       ..strokeCap = StrokeCap.round
-      ..strokeWidth = short * 0.004
-      ..color = const Color(
-        0xFFBBD3E6,
-      ).withValues(alpha: (params.rain * 0.18).clamp(0.0, 1.0));
-    final len = short * 0.045;
-    // Thinned-out subset keeps the rain light rather than a downpour.
-    for (var i = 0; i < flakes.length; i += 3) {
+      ..strokeWidth = short * (0.003 + intensity * 0.0025)
+      ..color = const Color(0xFFBBD3E6).withValues(
+        alpha: (intensity * (0.14 + intensity * 0.12)).clamp(0.0, 1.0),
+      );
+    final len = short * (0.035 + intensity * 0.025);
+
+    for (var i = 0; i < flakes.length; i += stride) {
       final f = flakes[i];
       final speed = f.fallSpeed * 4 + 0.6;
       final y = (f.baseY + clock * speed) % 1.0;

@@ -9,7 +9,6 @@ export 'solar_energy_data.dart'
     show SolarEnergyData, SolarDiagramPalette, SolarDiagramTheme, EnergyNode;
 export 'weather_background.dart'
     show
-        WeatherCondition,
         SkyBackground,
         WeatherEffectsBackground,
         WeatherEffectsForeground;
