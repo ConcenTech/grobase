@@ -41,7 +41,7 @@ class ConnectingToDeviceWidget extends StatelessWidget {
             .connecting => 'Connecting to $device. \n',
             .connected =>
               'Connected to $device \n'
-                  'Configuring device.',
+                  'Configuring gateway.',
             .error =>
               'Failed to connect to $device. \n'
                   '${error ?? 'An unknown error occurred.'}',

@@ -32,7 +32,7 @@ class SearchingForDevicesWidget extends StatelessWidget {
           const SizedBox(height: 16),
           if (devices.isEmpty)
             Text(
-              'Searching for devices...',
+              'Searching for gateways...',
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodyLarge,
             )
@@ -44,7 +44,7 @@ class SearchingForDevicesWidget extends StatelessWidget {
                 final device = devices.elementAt(index);
                 return Card(
                   child: ListTile(
-                    title: Text(device.isEmpty ? 'Unknown Device' : device),
+                    title: Text(device.isEmpty ? 'Unknown Gateway' : device),
                     subtitle: const Text('GroBase-Setup'),
                     trailing: ElevatedButton(
                       onPressed: () => onDeviceSelected(device),

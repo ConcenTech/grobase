@@ -255,7 +255,7 @@ class ProvisioningService extends Notifier<ProvisioningState> {
         state = ProvisioningDeviceError(
           device,
           error:
-              'Provisioning device is not in advertising state. ${gatewayStatus.status.humanised}',
+              'Gateway is not in advertising state. ${gatewayStatus.status.humanised}',
           retryState: const ProvisioningScanning({}),
         );
         return;
@@ -272,7 +272,7 @@ class ProvisioningService extends Notifier<ProvisioningState> {
         state = ProvisioningDeviceError(
           device,
           error:
-              'Provisioning device returned an invalid inverter serial number. $inverterSn',
+              'Gateway returned an invalid inverter serial number. $inverterSn',
           retryState: const ProvisioningScanning({}),
         );
         return;
@@ -352,7 +352,7 @@ class ProvisioningService extends Notifier<ProvisioningState> {
       );
       state = ProvisioningDeviceError(
         device,
-        error: 'Failed to send WiFi credentials to device',
+        error: 'Failed to send WiFi credentials to gateway',
         retryState: ProvisioningDeviceIdentityRead(
           currentState.device,
           hardwareId: currentState.hardwareId,

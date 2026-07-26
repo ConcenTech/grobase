@@ -15,7 +15,7 @@ class ProvisioningErrorWidget extends StatelessWidget {
   const ProvisioningErrorWidget.permissions({super.key, required this.onRetry})
     : error =
           'Bluetooth and location permissions are required '
-          'to search for devices.',
+          'to search for gateways.',
       details =
           'Please enable these permissions in your device settings '
           'and try again.';

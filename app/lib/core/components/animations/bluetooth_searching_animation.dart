@@ -12,7 +12,7 @@ class BluetoothSearchingAnimation extends StatefulWidget {
 
 /// A Widget that contains a circle bluetooth icon, with semi-transparant
 /// circles that radiate outwards from the center, to indicate that the app is
-/// searching for devices.
+/// searching for gateways.
 ///
 /// The circles should animate outwards, and fade out as they move away from the center. The animation should repeat indefinitely.
 class _BluetoothSearchingAnimationState
