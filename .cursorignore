@@ -1,0 +1,58 @@
+# Add directories or file patterns to ignore during indexing (e.g. foo/ or *.csv)
+# ============================================
+# Flutter
+# ============================================
+
+app/.dart_tool/
+app/build/
+app/.flutter-plugins
+app/.flutter-plugins-dependencies
+app/.packages
+
+app/**/.g.dart
+app/**/.freezed.dart
+app/**/.gr.dart
+app/**/.mocks.dart
+app/**/.drift.dart
+app/**/.gen.dart
+app/**/.pb.dart
+
+# Platform builds
+app/android/.gradle/
+app/android/build/
+app/android/app/build/
+
+app/ios/Pods/
+app/ios/build/
+
+app/windows/build/
+app/linux/build/
+app/macos/build/
+
+# ============================================
+# PlatformIO
+# ============================================
+
+firmware/.pio/
+firmware/.vscode/
+firmware/build/
+
+# ============================================
+# Supabase
+# ============================================
+
+supabase/.temp/
+supabase/.branches/
+
+# ============================================
+# Git
+# ============================================
+
+.git/
+
+# ============================================
+# Logs / Coverage
+# ============================================
+
+**/*.log
+coverage/
