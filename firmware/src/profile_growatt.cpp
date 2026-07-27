@@ -7,6 +7,8 @@ static uint16_t regAt(uint16_t tableStartReg, const uint16_t *buf, uint16_t tabl
 }
 
 static float u16_scaled(uint16_t v, float scale) {
+  // Growatt uses 0xFFFF as an unavailable/invalid sentinel.
+  if (v == SENTINEL_VALUE) return 0.0f;
   return (float)v * scale;
 }
 
@@ -15,6 +17,9 @@ static float i16_scaled(uint16_t v, float scale) {
 }
 
 static float u32_scaled(uint16_t hi, uint16_t lo, float scale) {
+  // All-ones (0xFFFF/0xFFFF) is an unavailable sentinel; do not decode as
+  // UINT32_MAX * scale (float32 → ~429496736).
+  if (hi == SENTINEL_VALUE && lo == SENTINEL_VALUE) return 0.0f;
   uint32_t v = ((uint32_t)hi << 16) | lo;
   return (float)v * scale;
 }

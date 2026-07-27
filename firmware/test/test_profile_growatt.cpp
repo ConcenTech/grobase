@@ -123,11 +123,34 @@ void test_profile_growatt_pac_signed_negative() {
   TEST_ASSERT_EQUAL_FLOAT(-27.9f, snapshot.grid_pac_w);
 }
 
+void test_profile_growatt_ffff_sentinel_is_zero() {
+  uint16_t r1009[51];
+  uint16_t r1086[3];
+  uint16_t r1124[27];
+  uint16_t r2035[20];
+  uint16_t r2097[7];
+  uint16_t r2112[6];
+  fill_sample_tables(r1009, r1086, r1124, r2035, r2097, r2112);
+
+  // ExtraACPower unavailable: would otherwise become ~429496736 W as float32.
+  r2097[2102 - 2097] = SENTINEL_VALUE;
+  r2097[2103 - 2097] = SENTINEL_VALUE;
+  // Unsigned u16 sentinel (e.g. grid voltage unavailable).
+  r2035[2038 - 2035] = SENTINEL_VALUE;
+
+  InverterSnapshot snapshot = {};
+  profileGrowattFill(&snapshot, r1009, r1086, r1124, r2035, r2097, r2112);
+
+  TEST_ASSERT_EQUAL_FLOAT(0.0f, snapshot.pv_power_w);
+  TEST_ASSERT_EQUAL_FLOAT(0.0f, snapshot.grid_voltage_v);
+}
+
 int main(int argc, char **argv) {
   UNITY_BEGIN();
 
   RUN_TEST(test_profile_growatt_fill_maps_expected_fields);
   RUN_TEST(test_profile_growatt_pac_signed_negative);
+  RUN_TEST(test_profile_growatt_ffff_sentinel_is_zero);
 
   return UNITY_END();
 }
