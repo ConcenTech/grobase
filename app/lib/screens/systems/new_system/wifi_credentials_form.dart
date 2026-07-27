@@ -1,7 +1,6 @@
-import 'dart:math';
-
 import 'package:flutter/material.dart';
 
+import '../../../core/components/bottom_sheet_container.dart';
 import '../../../core/utils/validators.dart';
 
 class WifiCredentialsForm extends StatefulWidget {
@@ -34,48 +33,36 @@ class _WifiCredentialsFormState extends State<WifiCredentialsForm> {
   Widget build(BuildContext context) {
     return Form(
       key: _formKey,
-      child: Padding(
-        padding: EdgeInsets.only(
-          left: 16.0,
-          right: 16.0,
-          top: 24,
-          bottom: max(MediaQuery.of(context).viewInsets.bottom, 16),
-        ),
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            spacing: 8.0,
-            children: [
-              const Text(
-                'Please enter your WiFi credentials to connect your '
-                'new system.',
-              ),
-              TextFormField(
-                decoration: const InputDecoration(
-                  labelText: 'SSID',
-                  border: OutlineInputBorder(),
-                ),
-                validator: Validators.required,
-                textInputAction: TextInputAction.next,
-                onSaved: (value) => _ssid = value,
-              ),
-              TextFormField(
-                decoration: const InputDecoration(
-                  labelText: 'Password',
-                  border: OutlineInputBorder(),
-                ),
-                validator: Validators.required,
-                textInputAction: TextInputAction.done,
-                obscureText: true,
-                onSaved: (value) => _password = value,
-                onFieldSubmitted: (_) => _save(),
-              ),
-              const SizedBox(height: 16),
-              ElevatedButton(onPressed: _save, child: const Text('Connect')),
-            ],
+      child: BottomSheetContainer(
+        spacing: 8.0,
+        children: [
+          const Text(
+            'Please enter your WiFi credentials to connect your '
+            'new system.',
           ),
-        ),
+          TextFormField(
+            decoration: const InputDecoration(
+              labelText: 'SSID',
+              border: OutlineInputBorder(),
+            ),
+            validator: Validators.required,
+            textInputAction: TextInputAction.next,
+            onSaved: (value) => _ssid = value,
+          ),
+          TextFormField(
+            decoration: const InputDecoration(
+              labelText: 'Password',
+              border: OutlineInputBorder(),
+            ),
+            validator: Validators.required,
+            textInputAction: TextInputAction.done,
+            obscureText: true,
+            onSaved: (value) => _password = value,
+            onFieldSubmitted: (_) => _save(),
+          ),
+          const SizedBox(height: 16),
+          ElevatedButton(onPressed: _save, child: const Text('Connect')),
+        ],
       ),
     );
   }

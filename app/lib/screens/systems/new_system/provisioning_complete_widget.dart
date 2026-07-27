@@ -1,8 +1,7 @@
-import 'dart:math';
-
 import 'package:flutter/material.dart';
 
 import '../../../core/components/animations/node_searching_animation.dart';
+import '../../../core/components/bottom_sheet_container.dart';
 
 class ProvisioningCompleteWidget extends StatelessWidget {
   const ProvisioningCompleteWidget({super.key, required this.onComplete});
@@ -13,38 +12,27 @@ class ProvisioningCompleteWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Padding(
-      padding: EdgeInsets.only(
-        left: 16.0,
-        right: 16.0,
-        top: 24,
-        bottom: max(MediaQuery.of(context).viewInsets.bottom, 16),
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(
-            'Your system has been successfully connected',
-            style: theme.textTheme.bodyLarge,
-            textAlign: TextAlign.center,
+    return BottomSheetContainer(
+      children: [
+        Text(
+          'Your system has been successfully connected',
+          style: theme.textTheme.bodyLarge,
+          textAlign: TextAlign.center,
+        ),
+        const NodeConnectivityWidget(
+          icon: Icons.solar_power,
+          type: .receiving,
+          isActive: false,
+        ),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: ElevatedButton(
+            onPressed: onComplete,
+            child: const Text('Finish'),
           ),
-          const NodeConnectivityWidget(
-            icon: Icons.solar_power,
-            type: .receiving,
-            isActive: false,
-          ),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: ElevatedButton(
-              onPressed: onComplete,
-              child: const Text('Finish'),
-            ),
-          ),
-          const SizedBox(height: 22),
-        ],
-      ),
+        ),
+        const SizedBox(height: 22),
+      ],
     );
   }
 }
