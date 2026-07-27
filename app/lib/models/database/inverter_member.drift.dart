@@ -10,6 +10,7 @@ typedef $$InverterMembersTableCreateCompanionBuilder =
       required String inverterId,
       required String userId,
       required i2.InverterMemberRole role,
+      required String email,
       required DateTime createdAt,
       i0.Value<int> rowid,
     });
@@ -18,6 +19,7 @@ typedef $$InverterMembersTableUpdateCompanionBuilder =
       i0.Value<String> inverterId,
       i0.Value<String> userId,
       i0.Value<i2.InverterMemberRole> role,
+      i0.Value<String> email,
       i0.Value<DateTime> createdAt,
       i0.Value<int> rowid,
     });
@@ -51,6 +53,11 @@ class $$InverterMembersTableFilterComposer
     builder: (column) => i0.ColumnWithTypeConverterFilters(column),
   );
 
+  i0.ColumnFilters<String> get email => $composableBuilder(
+    column: $table.email,
+    builder: (column) => i0.ColumnFilters(column),
+  );
+
   i0.ColumnWithTypeConverterFilters<DateTime, DateTime, double> get createdAt =>
       $composableBuilder(
         column: $table.createdAt,
@@ -82,6 +89,11 @@ class $$InverterMembersTableOrderingComposer
     builder: (column) => i0.ColumnOrderings(column),
   );
 
+  i0.ColumnOrderings<String> get email => $composableBuilder(
+    column: $table.email,
+    builder: (column) => i0.ColumnOrderings(column),
+  );
+
   i0.ColumnOrderings<double> get createdAt => $composableBuilder(
     column: $table.createdAt,
     builder: (column) => i0.ColumnOrderings(column),
@@ -107,6 +119,9 @@ class $$InverterMembersTableAnnotationComposer
 
   i0.GeneratedColumnWithTypeConverter<i2.InverterMemberRole, String> get role =>
       $composableBuilder(column: $table.role, builder: (column) => column);
+
+  i0.GeneratedColumn<String> get email =>
+      $composableBuilder(column: $table.email, builder: (column) => column);
 
   i0.GeneratedColumnWithTypeConverter<DateTime, double> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
@@ -152,12 +167,14 @@ class $$InverterMembersTableTableManager
                 i0.Value<String> inverterId = const i0.Value.absent(),
                 i0.Value<String> userId = const i0.Value.absent(),
                 i0.Value<i2.InverterMemberRole> role = const i0.Value.absent(),
+                i0.Value<String> email = const i0.Value.absent(),
                 i0.Value<DateTime> createdAt = const i0.Value.absent(),
                 i0.Value<int> rowid = const i0.Value.absent(),
               }) => i1.InverterMembersCompanion(
                 inverterId: inverterId,
                 userId: userId,
                 role: role,
+                email: email,
                 createdAt: createdAt,
                 rowid: rowid,
               ),
@@ -166,12 +183,14 @@ class $$InverterMembersTableTableManager
                 required String inverterId,
                 required String userId,
                 required i2.InverterMemberRole role,
+                required String email,
                 required DateTime createdAt,
                 i0.Value<int> rowid = const i0.Value.absent(),
               }) => i1.InverterMembersCompanion.insert(
                 inverterId: inverterId,
                 userId: userId,
                 role: role,
+                email: email,
                 createdAt: createdAt,
                 rowid: rowid,
               ),
@@ -245,6 +264,17 @@ class $InverterMembersTable extends i2.InverterMembers
       ).withConverter<i2.InverterMemberRole>(
         i1.$InverterMembersTable.$converterrole,
       );
+  static const i0.VerificationMeta _emailMeta = const i0.VerificationMeta(
+    'email',
+  );
+  @override
+  late final i0.GeneratedColumn<String> email = i0.GeneratedColumn<String>(
+    'email',
+    aliasedName,
+    false,
+    type: i0.DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
   @override
   late final i0.GeneratedColumnWithTypeConverter<DateTime, double> createdAt =
       i0.GeneratedColumn<double>(
@@ -259,6 +289,7 @@ class $InverterMembersTable extends i2.InverterMembers
     inverterId,
     userId,
     role,
+    email,
     createdAt,
   ];
   @override
@@ -289,6 +320,14 @@ class $InverterMembersTable extends i2.InverterMembers
     } else if (isInserting) {
       context.missing(_userIdMeta);
     }
+    if (data.containsKey('email')) {
+      context.handle(
+        _emailMeta,
+        email.isAcceptableOrUnknown(data['email']!, _emailMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_emailMeta);
+    }
     return context;
   }
 
@@ -312,6 +351,10 @@ class $InverterMembersTable extends i2.InverterMembers
           data['${effectivePrefix}role'],
         )!,
       ),
+      email: attachedDatabase.typeMapping.read(
+        i0.DriftSqlType.string,
+        data['${effectivePrefix}email'],
+      )!,
       createdAt: i1.$InverterMembersTable.$convertercreatedAt.fromSql(
         attachedDatabase.typeMapping.read(
           i0.DriftSqlType.double,
@@ -337,11 +380,13 @@ class InverterMember extends i0.DataClass
   final String inverterId;
   final String userId;
   final i2.InverterMemberRole role;
+  final String email;
   final DateTime createdAt;
   const InverterMember({
     required this.inverterId,
     required this.userId,
     required this.role,
+    required this.email,
     required this.createdAt,
   });
   @override
@@ -354,6 +399,7 @@ class InverterMember extends i0.DataClass
         i1.$InverterMembersTable.$converterrole.toSql(role),
       );
     }
+    map['email'] = i0.Variable<String>(email);
     {
       map['created_at'] = i0.Variable<double>(
         i1.$InverterMembersTable.$convertercreatedAt.toSql(createdAt),
@@ -367,6 +413,7 @@ class InverterMember extends i0.DataClass
       inverterId: i0.Value(inverterId),
       userId: i0.Value(userId),
       role: i0.Value(role),
+      email: i0.Value(email),
       createdAt: i0.Value(createdAt),
     );
   }
@@ -382,6 +429,7 @@ class InverterMember extends i0.DataClass
       role: i1.$InverterMembersTable.$converterrole.fromJson(
         serializer.fromJson<String>(json['role']),
       ),
+      email: serializer.fromJson<String>(json['email']),
       createdAt: i1.$InverterMembersTable.$convertercreatedAt.fromJson(
         serializer.fromJson<String>(json['created_at']),
       ),
@@ -396,6 +444,7 @@ class InverterMember extends i0.DataClass
       'role': serializer.toJson<String>(
         i1.$InverterMembersTable.$converterrole.toJson(role),
       ),
+      'email': serializer.toJson<String>(email),
       'created_at': serializer.toJson<String>(
         i1.$InverterMembersTable.$convertercreatedAt.toJson(createdAt),
       ),
@@ -406,11 +455,13 @@ class InverterMember extends i0.DataClass
     String? inverterId,
     String? userId,
     i2.InverterMemberRole? role,
+    String? email,
     DateTime? createdAt,
   }) => i1.InverterMember(
     inverterId: inverterId ?? this.inverterId,
     userId: userId ?? this.userId,
     role: role ?? this.role,
+    email: email ?? this.email,
     createdAt: createdAt ?? this.createdAt,
   );
   InverterMember copyWithCompanion(i1.InverterMembersCompanion data) {
@@ -420,6 +471,7 @@ class InverterMember extends i0.DataClass
           : this.inverterId,
       userId: data.userId.present ? data.userId.value : this.userId,
       role: data.role.present ? data.role.value : this.role,
+      email: data.email.present ? data.email.value : this.email,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
     );
   }
@@ -430,13 +482,14 @@ class InverterMember extends i0.DataClass
           ..write('inverterId: $inverterId, ')
           ..write('userId: $userId, ')
           ..write('role: $role, ')
+          ..write('email: $email, ')
           ..write('createdAt: $createdAt')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(inverterId, userId, role, createdAt);
+  int get hashCode => Object.hash(inverterId, userId, role, email, createdAt);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -444,6 +497,7 @@ class InverterMember extends i0.DataClass
           other.inverterId == this.inverterId &&
           other.userId == this.userId &&
           other.role == this.role &&
+          other.email == this.email &&
           other.createdAt == this.createdAt);
 }
 
@@ -451,12 +505,14 @@ class InverterMembersCompanion extends i0.UpdateCompanion<i1.InverterMember> {
   final i0.Value<String> inverterId;
   final i0.Value<String> userId;
   final i0.Value<i2.InverterMemberRole> role;
+  final i0.Value<String> email;
   final i0.Value<DateTime> createdAt;
   final i0.Value<int> rowid;
   const InverterMembersCompanion({
     this.inverterId = const i0.Value.absent(),
     this.userId = const i0.Value.absent(),
     this.role = const i0.Value.absent(),
+    this.email = const i0.Value.absent(),
     this.createdAt = const i0.Value.absent(),
     this.rowid = const i0.Value.absent(),
   });
@@ -464,16 +520,19 @@ class InverterMembersCompanion extends i0.UpdateCompanion<i1.InverterMember> {
     required String inverterId,
     required String userId,
     required i2.InverterMemberRole role,
+    required String email,
     required DateTime createdAt,
     this.rowid = const i0.Value.absent(),
   }) : inverterId = i0.Value(inverterId),
        userId = i0.Value(userId),
        role = i0.Value(role),
+       email = i0.Value(email),
        createdAt = i0.Value(createdAt);
   static i0.Insertable<i1.InverterMember> custom({
     i0.Expression<String>? inverterId,
     i0.Expression<String>? userId,
     i0.Expression<String>? role,
+    i0.Expression<String>? email,
     i0.Expression<double>? createdAt,
     i0.Expression<int>? rowid,
   }) {
@@ -481,6 +540,7 @@ class InverterMembersCompanion extends i0.UpdateCompanion<i1.InverterMember> {
       if (inverterId != null) 'inverter_id': inverterId,
       if (userId != null) 'user_id': userId,
       if (role != null) 'role': role,
+      if (email != null) 'email': email,
       if (createdAt != null) 'created_at': createdAt,
       if (rowid != null) 'rowid': rowid,
     });
@@ -490,6 +550,7 @@ class InverterMembersCompanion extends i0.UpdateCompanion<i1.InverterMember> {
     i0.Value<String>? inverterId,
     i0.Value<String>? userId,
     i0.Value<i2.InverterMemberRole>? role,
+    i0.Value<String>? email,
     i0.Value<DateTime>? createdAt,
     i0.Value<int>? rowid,
   }) {
@@ -497,6 +558,7 @@ class InverterMembersCompanion extends i0.UpdateCompanion<i1.InverterMember> {
       inverterId: inverterId ?? this.inverterId,
       userId: userId ?? this.userId,
       role: role ?? this.role,
+      email: email ?? this.email,
       createdAt: createdAt ?? this.createdAt,
       rowid: rowid ?? this.rowid,
     );
@@ -516,6 +578,9 @@ class InverterMembersCompanion extends i0.UpdateCompanion<i1.InverterMember> {
         i1.$InverterMembersTable.$converterrole.toSql(role.value),
       );
     }
+    if (email.present) {
+      map['email'] = i0.Variable<String>(email.value);
+    }
     if (createdAt.present) {
       map['created_at'] = i0.Variable<double>(
         i1.$InverterMembersTable.$convertercreatedAt.toSql(createdAt.value),
@@ -533,6 +598,7 @@ class InverterMembersCompanion extends i0.UpdateCompanion<i1.InverterMember> {
           ..write('inverterId: $inverterId, ')
           ..write('userId: $userId, ')
           ..write('role: $role, ')
+          ..write('email: $email, ')
           ..write('createdAt: $createdAt, ')
           ..write('rowid: $rowid')
           ..write(')'))

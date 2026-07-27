@@ -1248,14 +1248,10 @@ class InverterSnapshot extends i0.DataClass
   final double dischargePower;
   final double chargeEnergyToday;
   final double dischargeEnergyToday;
-
-  /// Site grid import (Pactouser), watts ≥ 0.
   final double gridImportPower;
   final double gridFrequency;
   final double gridVoltage;
   final double gridCurrent;
-
-  /// Site grid export (Pactogrid), watts ≥ 0.
   final double gridExportPower;
   final double gridExportEnergyToday;
   final double gridImportEnergyToday;
