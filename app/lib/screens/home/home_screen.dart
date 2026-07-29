@@ -232,9 +232,23 @@ class _HomeScreenContentState extends ConsumerState<HomeScreenContent> {
                   ),
                   Padding(
                     padding: const EdgeInsets.only(left: 12.0),
-                    child: Text(
-                      widget.inverter?.displayName ?? '',
-                      style: titleTextTheme,
+                    child: Row(
+                      spacing: 8,
+                      children: [
+                        Flexible(
+                          child: Text(
+                            widget.inverter?.displayName ?? '',
+                            style: titleTextTheme,
+                          ),
+                        ),
+                        if (widget.inverter != null)
+                          IconButton(
+                            onPressed: () => GoRouter.of(
+                              context,
+                            ).push('/system-details', extra: widget.inverter),
+                            icon: const Icon(Icons.info),
+                          ),
+                      ],
                     ),
                   ),
                   Padding(
