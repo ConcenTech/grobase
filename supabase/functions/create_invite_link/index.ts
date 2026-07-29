@@ -92,7 +92,7 @@ export default {
     }
     
     // https://<base_url>/invite/?token=...
-    const shareLink = `${baseUrl}/invite?token=${invite_token}`;
+    const shareLink = `${baseUrl}/invite/?token=${invite_token}`;
 
     return Response.json({
       invite_id: inviteReq.data.id,
