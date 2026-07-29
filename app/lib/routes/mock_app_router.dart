@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
 import '../core/components/app_scaffold.dart';
 import '../screens/auth/auth_screen.dart';
 import '../screens/home/home_screen.dart';
+import '../screens/invite/invite_screen.dart';
 import '../screens/settings/settings_screen.dart';
 import '../screens/splash_screen.dart';
 import '../screens/systems/systems_screen.dart';
@@ -11,12 +13,31 @@ import 'app_router.dart';
 
 class MockAppRouter extends AppRouter {
   MockAppRouter() {
-    router = GoRouter(navigatorKey: AppRouter.navigatorKey, routes: _routes);
+    router = GoRouter(
+      navigatorKey: AppRouter.navigatorKey,
+      routes: _testRoutes,
+    );
   }
 
   String? _authRequiredRedirect(BuildContext context, GoRouterState state) {
     return null;
   }
+
+  List<RouteBase> get _testRoutes => [
+    GoRoute(
+      path: '/',
+      builder: (context, state) =>
+          const InviteScreen(token: 'abcdefghijklmnopqrstuvwxyz0123456789'),
+      redirect: (_, _) {
+        SystemChrome.setPreferredOrientations([.portraitUp]);
+        return null;
+      },
+      onExit: (context, state) {
+        SystemChrome.setPreferredOrientations(DeviceOrientation.values);
+        return true;
+      },
+    ),
+  ];
 
   List<RouteBase> get _routes => [
     GoRoute(

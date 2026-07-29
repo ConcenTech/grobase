@@ -113,12 +113,20 @@ class MockOnlineDatabaseService extends OnlineDatabaseService {
 
   @override
   Future<InvitePreview> getInvitePreview(String token) async {
-    throw UnsupportedError('Invites are unavailable in offline mode');
+    return Future.delayed(
+      const Duration(seconds: 1),
+      () => InvitePreview(
+        status: .pending,
+        expiresAt: DateTime.now().add(const Duration(days: 6)),
+        invitedByEmail: 'test@example.com',
+        inverterName: 'Test Inverter',
+      ),
+    );
   }
 
   @override
   Future<void> acceptInvite(String token) async {
-    throw UnsupportedError('Invites are unavailable in offline mode');
+    return Future.delayed(const Duration(seconds: 1), () {});
   }
 
   @override
