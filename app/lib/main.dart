@@ -41,6 +41,8 @@ void main() async {
 
   AppLogger.instance.flush();
 
+  SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+
   runApp(
     ProviderScope(
       overrides: kUseMocks ? MockSyncService.overrides : [],
@@ -59,14 +61,20 @@ class MainApp extends ConsumerWidget {
 
     ref.listen(DatabaseProviders.syncService, (_, _) {});
 
-    return MaterialApp.router(
-      key: AppRouter.routerKey,
-      debugShowCheckedModeBanner: false,
-      title: 'Grobase',
-      themeMode: themeMode,
-      theme: AppTheme.light,
-      darkTheme: AppTheme.dark,
-      routerConfig: router.router,
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        systemNavigationBarColor: Colors.transparent,
+      ),
+      child: MaterialApp.router(
+        key: AppRouter.routerKey,
+        debugShowCheckedModeBanner: false,
+        title: 'Grobase',
+        themeMode: themeMode,
+        theme: AppTheme.light,
+        darkTheme: AppTheme.dark,
+        routerConfig: router.router,
+      ),
     );
   }
 }
