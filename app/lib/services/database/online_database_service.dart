@@ -269,16 +269,22 @@ class OnlineDatabaseService {
       }
 
       return InviteLink.fromJson(res.data);
+    } on FunctionException catch (e) {
+      _logger.severe('Failed to create invite link', e);
+      throw DatabaseException(
+        e.reasonPhrase ?? 'Failed to create invite link',
+        error: e,
+      );
     } catch (e) {
+      _logger.severe('Failed to create invite link', e);
       throw DatabaseException('An unexpected error occurred', error: e);
     }
   }
 
   // Loads public invite metadata for the invite landing page.
-
+  // Auth is not required — get_invite_preview is a public edge function.
   Future<InvitePreview> getInvitePreview(String token) async {
     try {
-      await _ensureValidSession();
       final res = await _db.functions.invoke(
         'get_invite_preview',
         body: {'token': token},
@@ -294,7 +300,14 @@ class OnlineDatabaseService {
       }
 
       return InvitePreview.fromJson(res.data);
+    } on FunctionException catch (e) {
+      _logger.severe('Failed to get invite preview', e);
+      throw DatabaseException(
+        e.reasonPhrase ?? 'Failed to get invite preview',
+        error: e,
+      );
     } catch (e) {
+      _logger.severe('Failed to get invite preview', e);
       throw DatabaseException('An unexpected error occurred', error: e);
     }
   }
@@ -316,7 +329,14 @@ class OnlineDatabaseService {
       if (res.status >= 400) {
         throw DatabaseException(res.data['message'], error: res.data['error']);
       }
+    } on FunctionException catch (e) {
+      _logger.severe('Failed to accept invite', e);
+      throw DatabaseException(
+        e.reasonPhrase ?? 'Failed to accept invite',
+        error: e,
+      );
     } catch (e) {
+      _logger.severe('Failed to accept invite', e);
       throw DatabaseException('An unexpected error occurred', error: e);
     }
   }
@@ -344,7 +364,14 @@ class OnlineDatabaseService {
       }
 
       return GatewayRegistrationResponse.fromJson(res.data);
+    } on FunctionException catch (e) {
+      _logger.severe('Failed to register gateway', e);
+      throw DatabaseException(
+        e.reasonPhrase ?? 'Failed to register gateway',
+        error: e,
+      );
     } catch (e) {
+      _logger.severe('Failed to register gateway', e);
       throw DatabaseException('An unexpected error occurred', error: e);
     }
   }
