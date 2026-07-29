@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../core/components/card_group.dart';
 import 'dialogs/logout_dialog.dart';
 import 'dialogs/logs_dialog.dart';
 import 'theme_preference_widget.dart';
@@ -18,10 +19,10 @@ class SettingsScreen extends StatelessWidget {
             constraints: BoxConstraints(minHeight: screenHeight),
             child: Column(
               children: [
-                const _SettingsGroup([
+                const CardGroup([
                   ThemePreferenceWidget(), //
                 ]),
-                _SettingsGroup([
+                CardGroup([
                   ListTile(
                     title: const Text('Logs'),
                     trailing: const Icon(Icons.open_in_new),
@@ -38,19 +39,6 @@ class SettingsScreen extends StatelessWidget {
           ),
         );
       },
-    );
-  }
-}
-
-class _SettingsGroup extends StatelessWidget {
-  const _SettingsGroup(this.children);
-
-  final List<Widget> children;
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      child: Column(mainAxisSize: MainAxisSize.min, children: children),
     );
   }
 }
