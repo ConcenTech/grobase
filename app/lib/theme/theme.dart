@@ -1,6 +1,7 @@
 import 'package:flex_color_scheme/flex_color_scheme.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 /// The [AppTheme] defines light and dark themes for the app.
 ///
@@ -17,8 +18,15 @@ import 'package:flutter/material.dart';
 ///   darkTheme: AppTheme.dark,
 /// );
 abstract final class AppTheme {
+  static ThemeData _withSora(ThemeData theme) {
+    return theme.copyWith(
+      textTheme: GoogleFonts.soraTextTheme(theme.textTheme),
+      primaryTextTheme: GoogleFonts.soraTextTheme(theme.primaryTextTheme),
+    );
+  }
+
   // The FlexColorScheme defined light mode ThemeData.
-  static ThemeData light = FlexThemeData.light(
+  static ThemeData light = _withSora(FlexThemeData.light(
     // Using FlexColorScheme built-in FlexScheme enum based colors
     scheme: FlexScheme.shadGreen,
     // Input color modifiers.
@@ -93,10 +101,10 @@ abstract final class AppTheme {
     // Direct ThemeData properties.
     visualDensity: FlexColorScheme.comfortablePlatformDensity,
     cupertinoOverrideTheme: const CupertinoThemeData(applyThemeToAll: true),
-  );
+  ));
 
   // The FlexColorScheme defined dark mode ThemeData.
-  static ThemeData dark = FlexThemeData.dark(
+  static ThemeData dark = _withSora(FlexThemeData.dark(
     // Using FlexColorScheme built-in FlexScheme enum based colors.
     scheme: FlexScheme.shadGreen,
     // Input color modifiers.
@@ -164,5 +172,5 @@ abstract final class AppTheme {
     // Direct ThemeData properties.
     visualDensity: FlexColorScheme.comfortablePlatformDensity,
     cupertinoOverrideTheme: const CupertinoThemeData(applyThemeToAll: true),
-  );
+  ));
 }
