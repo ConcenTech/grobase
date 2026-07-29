@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$InvitePreview implements DiagnosticableTreeMixin {
 
-@JsonKey(name: 'status') InviteStatus get status;@JsonKey(name: 'invited_by_email') String get invitedByEmail;@JsonKey(name: 'inverter_display_name') String get inverterName;@JsonKey(name: 'expires_at') DateTime get expiresAt;
+@JsonKey(name: 'status') InviteStatus get status;@JsonKey(name: 'invited_by_email') String? get invitedByEmail;@JsonKey(name: 'inverter_display_name') String? get inverterName;@JsonKey(name: 'expires_at') DateTime get expiresAt;
 /// Create a copy of InvitePreview
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -54,7 +54,7 @@ abstract mixin class $InvitePreviewCopyWith<$Res>  {
   factory $InvitePreviewCopyWith(InvitePreview value, $Res Function(InvitePreview) _then) = _$InvitePreviewCopyWithImpl;
 @useResult
 $Res call({
-@JsonKey(name: 'status') InviteStatus status,@JsonKey(name: 'invited_by_email') String invitedByEmail,@JsonKey(name: 'inverter_display_name') String inverterName,@JsonKey(name: 'expires_at') DateTime expiresAt
+@JsonKey(name: 'status') InviteStatus status,@JsonKey(name: 'invited_by_email') String? invitedByEmail,@JsonKey(name: 'inverter_display_name') String? inverterName,@JsonKey(name: 'expires_at') DateTime expiresAt
 });
 
 
@@ -71,12 +71,12 @@ class _$InvitePreviewCopyWithImpl<$Res>
 
 /// Create a copy of InvitePreview
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? status = null,Object? invitedByEmail = null,Object? inverterName = null,Object? expiresAt = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? status = null,Object? invitedByEmail = freezed,Object? inverterName = freezed,Object? expiresAt = null,}) {
   return _then(_self.copyWith(
 status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
-as InviteStatus,invitedByEmail: null == invitedByEmail ? _self.invitedByEmail : invitedByEmail // ignore: cast_nullable_to_non_nullable
-as String,inverterName: null == inverterName ? _self.inverterName : inverterName // ignore: cast_nullable_to_non_nullable
-as String,expiresAt: null == expiresAt ? _self.expiresAt : expiresAt // ignore: cast_nullable_to_non_nullable
+as InviteStatus,invitedByEmail: freezed == invitedByEmail ? _self.invitedByEmail : invitedByEmail // ignore: cast_nullable_to_non_nullable
+as String?,inverterName: freezed == inverterName ? _self.inverterName : inverterName // ignore: cast_nullable_to_non_nullable
+as String?,expiresAt: null == expiresAt ? _self.expiresAt : expiresAt // ignore: cast_nullable_to_non_nullable
 as DateTime,
   ));
 }
@@ -162,7 +162,7 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function(@JsonKey(name: 'status')  InviteStatus status, @JsonKey(name: 'invited_by_email')  String invitedByEmail, @JsonKey(name: 'inverter_display_name')  String inverterName, @JsonKey(name: 'expires_at')  DateTime expiresAt)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function(@JsonKey(name: 'status')  InviteStatus status, @JsonKey(name: 'invited_by_email')  String? invitedByEmail, @JsonKey(name: 'inverter_display_name')  String? inverterName, @JsonKey(name: 'expires_at')  DateTime expiresAt)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _InvitePreview() when $default != null:
 return $default(_that.status,_that.invitedByEmail,_that.inverterName,_that.expiresAt);case _:
@@ -183,7 +183,7 @@ return $default(_that.status,_that.invitedByEmail,_that.inverterName,_that.expir
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@JsonKey(name: 'status')  InviteStatus status, @JsonKey(name: 'invited_by_email')  String invitedByEmail, @JsonKey(name: 'inverter_display_name')  String inverterName, @JsonKey(name: 'expires_at')  DateTime expiresAt)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@JsonKey(name: 'status')  InviteStatus status, @JsonKey(name: 'invited_by_email')  String? invitedByEmail, @JsonKey(name: 'inverter_display_name')  String? inverterName, @JsonKey(name: 'expires_at')  DateTime expiresAt)  $default,) {final _that = this;
 switch (_that) {
 case _InvitePreview():
 return $default(_that.status,_that.invitedByEmail,_that.inverterName,_that.expiresAt);case _:
@@ -203,7 +203,7 @@ return $default(_that.status,_that.invitedByEmail,_that.inverterName,_that.expir
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function(@JsonKey(name: 'status')  InviteStatus status, @JsonKey(name: 'invited_by_email')  String invitedByEmail, @JsonKey(name: 'inverter_display_name')  String inverterName, @JsonKey(name: 'expires_at')  DateTime expiresAt)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function(@JsonKey(name: 'status')  InviteStatus status, @JsonKey(name: 'invited_by_email')  String? invitedByEmail, @JsonKey(name: 'inverter_display_name')  String? inverterName, @JsonKey(name: 'expires_at')  DateTime expiresAt)?  $default,) {final _that = this;
 switch (_that) {
 case _InvitePreview() when $default != null:
 return $default(_that.status,_that.invitedByEmail,_that.inverterName,_that.expiresAt);case _:
@@ -218,12 +218,12 @@ return $default(_that.status,_that.invitedByEmail,_that.inverterName,_that.expir
 @JsonSerializable()
 
 class _InvitePreview with DiagnosticableTreeMixin implements InvitePreview {
-  const _InvitePreview({@JsonKey(name: 'status') required this.status, @JsonKey(name: 'invited_by_email') required this.invitedByEmail, @JsonKey(name: 'inverter_display_name') required this.inverterName, @JsonKey(name: 'expires_at') required this.expiresAt});
+  const _InvitePreview({@JsonKey(name: 'status') required this.status, @JsonKey(name: 'invited_by_email') this.invitedByEmail, @JsonKey(name: 'inverter_display_name') this.inverterName, @JsonKey(name: 'expires_at') required this.expiresAt});
   factory _InvitePreview.fromJson(Map<String, dynamic> json) => _$InvitePreviewFromJson(json);
 
 @override@JsonKey(name: 'status') final  InviteStatus status;
-@override@JsonKey(name: 'invited_by_email') final  String invitedByEmail;
-@override@JsonKey(name: 'inverter_display_name') final  String inverterName;
+@override@JsonKey(name: 'invited_by_email') final  String? invitedByEmail;
+@override@JsonKey(name: 'inverter_display_name') final  String? inverterName;
 @override@JsonKey(name: 'expires_at') final  DateTime expiresAt;
 
 /// Create a copy of InvitePreview
@@ -265,7 +265,7 @@ abstract mixin class _$InvitePreviewCopyWith<$Res> implements $InvitePreviewCopy
   factory _$InvitePreviewCopyWith(_InvitePreview value, $Res Function(_InvitePreview) _then) = __$InvitePreviewCopyWithImpl;
 @override @useResult
 $Res call({
-@JsonKey(name: 'status') InviteStatus status,@JsonKey(name: 'invited_by_email') String invitedByEmail,@JsonKey(name: 'inverter_display_name') String inverterName,@JsonKey(name: 'expires_at') DateTime expiresAt
+@JsonKey(name: 'status') InviteStatus status,@JsonKey(name: 'invited_by_email') String? invitedByEmail,@JsonKey(name: 'inverter_display_name') String? inverterName,@JsonKey(name: 'expires_at') DateTime expiresAt
 });
 
 
@@ -282,12 +282,12 @@ class __$InvitePreviewCopyWithImpl<$Res>
 
 /// Create a copy of InvitePreview
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? status = null,Object? invitedByEmail = null,Object? inverterName = null,Object? expiresAt = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? status = null,Object? invitedByEmail = freezed,Object? inverterName = freezed,Object? expiresAt = null,}) {
   return _then(_InvitePreview(
 status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
-as InviteStatus,invitedByEmail: null == invitedByEmail ? _self.invitedByEmail : invitedByEmail // ignore: cast_nullable_to_non_nullable
-as String,inverterName: null == inverterName ? _self.inverterName : inverterName // ignore: cast_nullable_to_non_nullable
-as String,expiresAt: null == expiresAt ? _self.expiresAt : expiresAt // ignore: cast_nullable_to_non_nullable
+as InviteStatus,invitedByEmail: freezed == invitedByEmail ? _self.invitedByEmail : invitedByEmail // ignore: cast_nullable_to_non_nullable
+as String?,inverterName: freezed == inverterName ? _self.inverterName : inverterName // ignore: cast_nullable_to_non_nullable
+as String?,expiresAt: null == expiresAt ? _self.expiresAt : expiresAt // ignore: cast_nullable_to_non_nullable
 as DateTime,
   ));
 }
