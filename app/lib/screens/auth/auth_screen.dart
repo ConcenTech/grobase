@@ -13,10 +13,15 @@ import 'auth_password_reset_widget.dart';
 import 'auth_register_widget.dart';
 
 class AuthScreen extends ConsumerWidget {
-  const AuthScreen({super.key});
+  const AuthScreen({super.key, this.initialState});
+
+  final InitialAuthState? initialState;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    if (initialState != null) {
+      ref.read(_authStateProvider.notifier).setInitialState(initialState!);
+    }
     final state = ref.watch(_authStateProvider);
 
     void onSegmentedSwitcherChanged(int index) {
@@ -169,6 +174,8 @@ class _AuthWidget extends StatelessWidget {
 
 enum _AuthState { ready, login, register, confirmEmail, forgotPassword }
 
+enum InitialAuthState { login, register }
+
 class _AuthStateNotifier extends Notifier<_AuthState> {
   @override
   _AuthState build() => _AuthState.ready;
@@ -177,6 +184,20 @@ class _AuthStateNotifier extends Notifier<_AuthState> {
   void showRegister() => state = _AuthState.register;
   void showConfirmEmail() => state = _AuthState.confirmEmail;
   void showForgotPassword() => state = _AuthState.forgotPassword;
+
+  void setInitialState(InitialAuthState initialState) {
+    if (state != .ready) {
+      return;
+    }
+    switch (initialState) {
+      case .login:
+        showLogin();
+        break;
+      case .register:
+        showRegister();
+        break;
+    }
+  }
 }
 
 final _authStateProvider = NotifierProvider<_AuthStateNotifier, _AuthState>(
