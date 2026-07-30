@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../core/utils/async_status.dart';
 import '../../core/utils/auth_errors.dart';
 import '../../core/utils/validators.dart';
+import '../../routes/app_router.dart';
 import 'auth_column.dart';
 
 class AuthLoginWidget extends ConsumerStatefulWidget {
@@ -48,7 +48,7 @@ class _AuthLoginWidgetState extends ConsumerState<AuthLoginWidget> {
 
   void _navigateToHome() {
     if (mounted) {
-      context.go('/home');
+      AppRouter.toHomeOrRedirect(context);
     }
   }
 
@@ -194,10 +194,7 @@ class _LoginNotifier extends Notifier<_LoginState> {
         error: AuthErrors.userFacingMessage(e),
       );
     } catch (e) {
-      state = state.copyWith(
-        status: .error,
-        error: AuthErrors.unexpected,
-      );
+      state = state.copyWith(status: .error, error: AuthErrors.unexpected);
     }
     return false;
   }

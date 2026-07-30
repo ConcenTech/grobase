@@ -49,11 +49,11 @@ enum DeviceStatus {
   cloudFailed('cloud_error', 'Failed to configure cloud settings'),
 
   /// Device config has been written to the device.
-  configured('device_configured', 'Device configured'),
+  configured('device_configured', 'Gateway configured'),
 
   /// Device failed to save the device configuration.
   /// For more details, read the status string directly.
-  configFailed('device_error', 'Failed to configure device'),
+  configFailed('device_error', 'Failed to configure gateway'),
 
   /// Catchall for any status that doesn't match other value.
   /// Read the status string directly for more detailed information.

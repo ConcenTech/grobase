@@ -2,7 +2,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../models/database/app_database.dart';
-import '../../models/database/inverter.drift.dart';
 import '../connectivity/connection_provider.dart';
 import 'offline_database_service.dart';
 import 'offline_storage.dart';
@@ -62,6 +61,11 @@ abstract class DatabaseProviders {
     // Same issue as above.
     (ref, String inverterId) =>
         ref.watch(offlineDatabase).latestInverterSnapshot(inverterId),
+  );
+
+  static final inverterMembers = FutureProvider.autoDispose.family(
+    (ref, String inverterId) =>
+        ref.watch(onlineDatabase).inverterMembers(inverterId),
   );
 }
 

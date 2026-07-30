@@ -29,6 +29,7 @@ class Env {
     supabasePublishableKey != kDebugSupabasePublishableKey,
     'SUPABASE_PUBLISHABLE_KEY is not set',
   )
+  // ignore: unused_field
   static const _ = null;
 }
 

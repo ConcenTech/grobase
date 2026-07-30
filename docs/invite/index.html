@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Open Grobase invite</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        --green: #6eb92b;
+        --ink: #37474f;
+        --bg: #bbddf5;
+        --card: rgba(255, 255, 255, 0.82);
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --ink: #f5f7fa;
+          --bg: #1b2440;
+          --card: rgba(20, 28, 48, 0.88);
+        }
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: Montserrat, "Segoe UI", sans-serif;
+        color: var(--ink);
+        background:
+          radial-gradient(circle at top, rgba(110, 185, 43, 0.25), transparent 45%),
+          linear-gradient(180deg, var(--bg), transparent 70%);
+        display: grid;
+        place-items: center;
+        padding: 24px;
+      }
+      main {
+        width: min(440px, 100%);
+        background: var(--card);
+        border-radius: 20px;
+        padding: 28px 24px;
+        box-shadow: 0 18px 50px rgba(0, 0, 0, 0.12);
+      }
+      h1 {
+        margin: 0 0 8px;
+        font-size: 1.25rem;
+        font-weight: 600;
+      }
+      .brand {
+        margin: 0 0 4px;
+        font-size: 2.5rem;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        line-height: 1.1;
+      }
+      .brand span {
+        color: var(--green);
+      }
+      p {
+        margin: 0 0 16px;
+        line-height: 1.5;
+      }
+      .opening {
+        display: grid;
+        justify-items: start;
+        gap: 16px;
+        text-align: left;
+      }
+      .opening p {
+        margin: 0;
+      }
+      .spinner {
+        width: 28px;
+        height: 28px;
+        border: 3px solid color-mix(in srgb, var(--ink) 18%, transparent);
+        border-top-color: var(--green);
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 12px;
+      }
+      .store-badge {
+        display: block;
+        line-height: 0;
+        text-decoration: none;
+      }
+      .store-badge img {
+        display: block;
+        height: 40px;
+        width: auto;
+      }
+      .hidden {
+        display: none !important;
+      }
+      .error {
+        color: #c62828;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <p class="brand"><span>Gro</span>base</p>
+      <h1>System invite</h1>
+      <div id="opening" class="opening">
+        <p>Opening the Grobase app…</p>
+        <div class="spinner" aria-hidden="true"></div>
+      </div>
+      <div id="actions" class="actions hidden">
+        <a
+          class="store-badge"
+          id="play-store"
+          href="https://play.google.com/store/apps/details?id=com.concentech.grobase"
+          rel="noopener"
+        >
+          <img
+            src="assets/google_play_badge.svg"
+            alt="Get it on Google Play"
+            height="40"
+          />
+        </a>
+        <a
+          class="store-badge"
+          id="app-store"
+          href="https://apps.apple.com/app/id0000000000"
+          rel="noopener"
+        >
+          <img
+            src="assets/app_store_badge.svg"
+            alt="Download on the App Store"
+            height="40"
+          />
+        </a>
+      </div>
+      <p id="error" class="error hidden"></p>
+    </main>
+    <script>
+      (function () {
+        // Update APP_STORE_URL once the iOS listing is live.
+        var PLAY_STORE_URL =
+          "market://details?id=com.concentech.grobase";
+        var PLAY_STORE_HTTPS =
+          "https://play.google.com/store/apps/details?id=com.concentech.grobase";
+        var APP_STORE_URL = "https://apps.apple.com/app/id0000000000";
+
+        var LAUNCH_TIMEOUT_MS = 1600;
+
+        var params = new URLSearchParams(window.location.search);
+        var token = (params.get("token") || "").trim();
+        var opening = document.getElementById("opening");
+        var actions = document.getElementById("actions");
+        var playStore = document.getElementById("play-store");
+        var appStore = document.getElementById("app-store");
+        var error = document.getElementById("error");
+
+        playStore.href = PLAY_STORE_URL;
+        appStore.href = APP_STORE_URL;
+
+        if (!token) {
+          opening.classList.add("hidden");
+          error.textContent = "This invite link is missing a token.";
+          error.classList.remove("hidden");
+          return;
+        }
+
+        var deepLink =
+          "com.concentech.grobase://open/invite?token=" +
+          encodeURIComponent(token);
+
+        var ua = navigator.userAgent || "";
+        var isAndroid = /Android/i.test(ua);
+
+        function showStoreFallback() {
+          if (document.hidden) return;
+          opening.classList.add("hidden");
+          actions.classList.remove("hidden");
+
+          if (isAndroid) {
+            playStore.href = PLAY_STORE_URL;
+          } else {
+            playStore.href = PLAY_STORE_HTTPS;
+          }
+        }
+
+        document.addEventListener("visibilitychange", function () {
+          if (document.hidden) clearTimeout(fallbackTimer);
+        });
+        window.addEventListener("pagehide", function () {
+          clearTimeout(fallbackTimer);
+        });
+        window.addEventListener("blur", function () {
+          clearTimeout(fallbackTimer);
+        });
+
+        var fallbackTimer = window.setTimeout(
+          showStoreFallback,
+          LAUNCH_TIMEOUT_MS
+        );
+
+        window.location.href = deepLink;
+      })();
+    </script>
+  </body>
+</html>

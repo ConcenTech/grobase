@@ -177,7 +177,7 @@ class SystemsListWidget extends StatelessWidget {
                               ? null
                               : ((latest.gridImportPower -
                                             latest.gridExportPower) /
-                                        100)
+                                        1000)
                                     .toStringAsFixed(1),
                           unit: 'kW',
                         ),

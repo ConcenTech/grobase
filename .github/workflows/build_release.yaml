@@ -80,7 +80,8 @@ jobs:
           flutter pub get
           flutter build appbundle \
             --dart-define=SUPABASE_URL=${{ secrets.SUPABASE_URL }} \
-            --dart-define=SUPABASE_PUBLISHABLE_KEY=${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
+            --dart-define=SUPABASE_PUBLISHABLE_KEY=${{ secrets.SUPABASE_PUBLISHABLE_KEY }} \
+            --dart-define=OPENWEATHER_API_KEY=${{ secrets.OPENWEATHER_API_KEY }}
           ls -lah
 
       - name: Rename bundle

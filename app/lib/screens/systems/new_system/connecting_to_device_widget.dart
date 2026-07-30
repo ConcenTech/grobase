@@ -1,8 +1,7 @@
-import 'dart:math';
-
 import 'package:flutter/material.dart';
 
 import '../../../core/components/animations/bluetooth_connecting_animation.dart';
+import '../../../core/components/bottom_sheet_container.dart';
 
 class ConnectingToDeviceWidget extends StatelessWidget {
   const ConnectingToDeviceWidget({
@@ -26,35 +25,25 @@ class ConnectingToDeviceWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.only(
-        left: 16.0,
-        right: 16.0,
-        top: 24,
-        bottom: max(MediaQuery.of(context).viewInsets.bottom, 16),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(switch (status) {
-            .connecting => 'Connecting to $device. \n',
-            .connected =>
-              'Connected to $device \n'
-                  'Configuring device.',
-            .error =>
-              'Failed to connect to $device. \n'
-                  '${error ?? 'An unknown error occurred.'}',
-            .disconnected => '$device disconnected. \n',
-          }, textAlign: TextAlign.center),
-          BluetoothConnectingAnimation(status: status),
-          const SizedBox(height: 16),
-          if (status == .error || status == .disconnected)
-            ElevatedButton(onPressed: onRetry, child: const Text('Retry'))
-          else
-            const SizedBox(height: 36),
-        ],
-      ),
+    return BottomSheetContainer(
+      children: [
+        Text(switch (status) {
+          .connecting => 'Connecting to $device. \n',
+          .connected =>
+            'Connected to $device \n'
+                'Configuring gateway.',
+          .error =>
+            'Failed to connect to $device. \n'
+                '${error ?? 'An unknown error occurred.'}',
+          .disconnected => '$device disconnected. \n',
+        }, textAlign: TextAlign.center),
+        BluetoothConnectingAnimation(status: status),
+        const SizedBox(height: 16),
+        if (status == .error || status == .disconnected)
+          ElevatedButton(onPressed: onRetry, child: const Text('Retry'))
+        else
+          const SizedBox(height: 36),
+      ],
     );
   }
 }

@@ -10,6 +10,7 @@ import 'services/database/database_providers.dart';
 import 'services/database/mocks/mock_sync_service.dart';
 import 'services/database/offline_storage.dart';
 import 'services/database/online_database_service.dart';
+import 'services/theme_provider.dart';
 import 'theme/theme.dart';
 
 // Title font: Montserrat, weight: 600
@@ -40,6 +41,8 @@ void main() async {
 
   AppLogger.instance.flush();
 
+  SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+
   runApp(
     ProviderScope(
       overrides: kUseMocks ? MockSyncService.overrides : [],
@@ -54,16 +57,24 @@ class MainApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(appRouterProvider);
+    final themeMode = ref.watch(themeModeProvider);
 
     ref.listen(DatabaseProviders.syncService, (_, _) {});
 
-    return MaterialApp.router(
-      debugShowCheckedModeBanner: false,
-      title: 'Grobase',
-      themeMode: ThemeMode.system,
-      theme: AppTheme.light,
-      darkTheme: AppTheme.dark,
-      routerConfig: router.router,
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        systemNavigationBarColor: Colors.transparent,
+      ),
+      child: MaterialApp.router(
+        key: AppRouter.routerKey,
+        debugShowCheckedModeBanner: false,
+        title: 'Grobase',
+        themeMode: themeMode,
+        theme: AppTheme.light,
+        darkTheme: AppTheme.dark,
+        routerConfig: router.router,
+      ),
     );
   }
 }

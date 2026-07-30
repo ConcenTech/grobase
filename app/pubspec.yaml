@@ -1,7 +1,7 @@
 name: grobase
 description: "Effortless Energy Management."
 publish_to: 'none'
-version: 0.1.10
+version: 0.1.11
 
 environment:
   sdk: ^3.12.0
@@ -14,6 +14,7 @@ dependencies:
   go_router: ^17.3.0
   google_fonts: ^8.2.0
   supabase_flutter: ^2.16.0
+  app_links: ^7.2.1
   json_annotation: ^4.12.0
   freezed_annotation: ^3.1.0
   flutter_reactive_ble: ^5.5.0

@@ -9,8 +9,8 @@ part of 'invite_preview.dart';
 _InvitePreview _$InvitePreviewFromJson(Map<String, dynamic> json) =>
     _InvitePreview(
       status: $enumDecode(_$InviteStatusEnumMap, json['status']),
-      invitedByEmail: json['invited_by_email'] as String,
-      inverterName: json['inverter_display_name'] as String,
+      invitedByEmail: json['invited_by_email'] as String?,
+      inverterName: json['inverter_display_name'] as String?,
       expiresAt: DateTime.parse(json['expires_at'] as String),
     );
 

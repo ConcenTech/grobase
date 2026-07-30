@@ -9,6 +9,8 @@ class InverterMembers extends Table {
   TextColumn get userId => text()();
   @JsonKey('role')
   TextColumn get role => text().map(const InverterMemberRoleConverter())();
+  @JsonKey('email')
+  TextColumn get email => text()();
   @JsonKey('created_at')
   RealColumn get createdAt => real().map(const DateTimeConverter())();
 

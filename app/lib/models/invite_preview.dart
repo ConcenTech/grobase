@@ -11,8 +11,8 @@ part 'invite_preview.g.dart';
 abstract class InvitePreview with _$InvitePreview {
   const factory InvitePreview({
     @JsonKey(name: 'status') required InviteStatus status,
-    @JsonKey(name: 'invited_by_email') required String invitedByEmail,
-    @JsonKey(name: 'inverter_display_name') required String inverterName,
+    @JsonKey(name: 'invited_by_email') String? invitedByEmail,
+    @JsonKey(name: 'inverter_display_name') String? inverterName,
     @JsonKey(name: 'expires_at') required DateTime expiresAt,
   }) = _InvitePreview;
 

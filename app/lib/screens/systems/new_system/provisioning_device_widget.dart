@@ -1,8 +1,7 @@
-import 'dart:math';
-
 import 'package:flutter/material.dart';
 
 import '../../../core/components/animations/node_searching_animation.dart';
+import '../../../core/components/bottom_sheet_container.dart';
 import '../../../services/provisioning_service.dart';
 
 class ProvisioningDeviceWidget extends StatelessWidget {
@@ -32,32 +31,22 @@ class ProvisioningDeviceWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Padding(
-      padding: EdgeInsets.only(
-        left: 16.0,
-        right: 16.0,
-        top: 24,
-        bottom: max(MediaQuery.of(context).viewInsets.bottom, 16),
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(
-            _isRegistering
-                ? 'Registering gateway...'
-                : 'Writing configuration...',
-            style: theme.textTheme.bodyLarge,
-            textAlign: TextAlign.center,
-          ),
-          NodeConnectivityWidget(
-            icon: Icons.solar_power,
-            type: _isRegistering ? .sending : .receiving,
-          ),
-          const SizedBox(height: 22),
-        ],
-      ),
+    return BottomSheetContainer(
+      spacing: 22.0,
+      children: [
+        Text(
+          _isRegistering
+              ? 'Registering gateway...'
+              : 'Writing configuration...',
+          style: theme.textTheme.bodyLarge,
+          textAlign: TextAlign.center,
+        ),
+        NodeConnectivityWidget(
+          icon: Icons.solar_power,
+          type: _isRegistering ? .sending : .receiving,
+        ),
+        const SizedBox(height: 22),
+      ],
     );
   }
 }

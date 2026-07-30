@@ -46,7 +46,7 @@ class NewSystemWizard extends ConsumerWidget {
         },
       ),
       ProvisioningError(:final error) => ProvisioningErrorWidget(
-        error: 'An error occurred while provisioning the device.',
+        error: 'An error occurred while provisioning the gateway.',
         details: error,
         onRetry: () {
           ref.read(provisioningServiceProvider.notifier).reset();

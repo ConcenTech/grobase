@@ -6,14 +6,13 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../core/components/loading_indicator.dart';
-import '../../core/components/solar/solar_energy_diagram.dart';
 import '../../core/components/solar/solar_energy_diagram_v2.dart';
 import '../../core/extensions/list_extensions.dart';
 import '../../models/database/inverter.drift.dart';
 import '../../models/database/inverter_snapshot.drift.dart';
 import '../../services/database/database_providers.dart';
 import '../../services/inverters_provider.dart';
-import '../../services/weather_provider.dart';
+import '../../services/weather/weather_providers.dart';
 import 'dialogs/battery_chart_dialog.dart';
 import 'dialogs/grid_chart_dialog.dart';
 import 'dialogs/load_chart_dialog.dart';
@@ -100,11 +99,31 @@ class _HomeScreenContentState extends ConsumerState<HomeScreenContent> {
   @override
   void initState() {
     super.initState();
+    if (widget.inverter != null) {
+      print(
+        'setting weather for initial inverter: ${widget.inverter!.displayName}',
+      );
+      _setWeatherForInverter(widget.inverter!);
+    }
+  }
+
+  @override
+  void didUpdateWidget(HomeScreenContent oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.inverter?.id != oldWidget.inverter?.id &&
+        widget.inverter != null) {
+      print(
+        'setting weather for new inverter: ${widget.inverter!.displayName}',
+      );
+      _setWeatherForInverter(widget.inverter!);
+    }
+  }
+
+  void _setWeatherForInverter(Inverter inverter) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      // TODO: Get weather condition.
       ref
-          .read(weatherProvider.notifier) //
-          .setCondition(WeatherCondition.clear);
+          .read(WeatherProviders.weatherNotifier.notifier)
+          .setWeatherForInverter(inverter);
     });
   }
 
@@ -213,9 +232,23 @@ class _HomeScreenContentState extends ConsumerState<HomeScreenContent> {
                   ),
                   Padding(
                     padding: const EdgeInsets.only(left: 12.0),
-                    child: Text(
-                      widget.inverter?.displayName ?? '',
-                      style: titleTextTheme,
+                    child: Row(
+                      spacing: 8,
+                      children: [
+                        Flexible(
+                          child: Text(
+                            widget.inverter?.displayName ?? '',
+                            style: titleTextTheme,
+                          ),
+                        ),
+                        if (widget.inverter != null)
+                          IconButton(
+                            onPressed: () => GoRouter.of(
+                              context,
+                            ).push('/system-details', extra: widget.inverter),
+                            icon: const Icon(Icons.info),
+                          ),
+                      ],
                     ),
                   ),
                   Padding(
