@@ -86,6 +86,7 @@ class AppScaffold extends ConsumerWidget {
     return Scaffold(
       bottomNavigationBar: navigationBar,
       backgroundColor: Colors.transparent,
+      extendBody: true,
       body: Stack(
         fit: StackFit.expand,
         children: [
