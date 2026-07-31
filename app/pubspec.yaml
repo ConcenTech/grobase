@@ -30,6 +30,8 @@ dependencies:
   fl_chart: ^1.2.0
   intl: ^0.20.3
   dio: ^5.10.0
+  sentry_flutter: ^9.26.0
+  sentry_logging: ^9.26.0
 
 dev_dependencies:
   flutter_test:
