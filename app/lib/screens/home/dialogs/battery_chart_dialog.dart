@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 
@@ -14,9 +16,9 @@ import 'chart_dialog.dart';
 /// * **Power** — signed battery power in kW (`charge − discharge`; positive
 ///   means charging). Y-axis bounds snap outward to 0.5 kW steps.
 ///
-/// Chart spots, power axis bounds, and both [LineChartData] configs are built
-/// when [snapshots] or theme dependencies change — not on every [build] — so
-/// switching views only selects the cached dataset.
+/// Chart spots and power axis bounds are derived when [snapshots] change.
+/// Y-axis intervals are chosen at layout time so labels fit the plot height
+/// and text scale.
 class BatteryChartDialog extends StatefulWidget {
   const BatteryChartDialog({super.key, required this.snapshots});
 
@@ -28,8 +30,11 @@ class BatteryChartDialog extends StatefulWidget {
 }
 
 class _BatteryChartDialogState extends State<BatteryChartDialog> {
-  /// Grid / label step for the power view, in watts (0.5 kW).
+  /// Grid / label base step for the power view, in watts (0.5 kW).
   static const _powerStepW = 500.0;
+
+  /// Grid / label base step for the charge view, in percent.
+  static const _chargeStep = 10.0;
 
   _ViewMode _viewMode = _ViewMode.charge;
 
@@ -42,9 +47,6 @@ class _BatteryChartDialogState extends State<BatteryChartDialog> {
   double _powerMinY = -_powerStepW;
   double _powerMaxY = _powerStepW;
 
-  late LineChartData _chargeChartData;
-  late LineChartData _powerChartData;
-
   @override
   void initState() {
     super.initState();
@@ -56,15 +58,7 @@ class _BatteryChartDialogState extends State<BatteryChartDialog> {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.snapshots != widget.snapshots) {
       _rebuildSnapshotDerived();
-      _rebuildChartData();
     }
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    // Theme (line / touch colours) is only available here, not in [initState].
-    _rebuildChartData();
   }
 
   /// Fractional hours since local midnight, for chart X values.
@@ -129,81 +123,84 @@ class _BatteryChartDialogState extends State<BatteryChartDialog> {
     _powerMaxY = maxY;
   }
 
-  /// Builds both cached [LineChartData] instances from spots and the current theme.
-  void _rebuildChartData() {
+  LineChartData _chartDataFor({
+    required double horizontalInterval,
+    required double leftReservedSize,
+  }) {
     final colorScheme = Theme.of(context).colorScheme;
     final touchDotColor = colorScheme.onPrimaryFixedVariant;
     final primary = colorScheme.primary;
 
-    _chargeChartData = _buildChartData(
-      minY: 0, // 0%
-      maxY: 100, // 100%
-      horizontalInterval: 10,
-      leftTitles: const AxisTitles(
-        axisNameWidget: Text('%'),
-        sideTitles: SideTitles(
-          reservedSize: 35,
-          interval: 10,
-          showTitles: true,
+    return switch (_viewMode) {
+      .charge => _buildChartData(
+        minY: 0,
+        maxY: 100,
+        horizontalInterval: horizontalInterval,
+        leftTitles: AxisTitles(
+          axisNameWidget: const Text('%'),
+          sideTitles: SideTitles(
+            reservedSize: leftReservedSize,
+            interval: horizontalInterval,
+            showTitles: true,
+          ),
+        ),
+        barData: LineChartBarData(
+          gradient: LinearGradient(
+            begin: Alignment.bottomCenter,
+            end: Alignment.topCenter,
+            colors: [
+              SolarDiagramPalette.batteryColor(0),
+              SolarDiagramPalette.batteryColor(0.5),
+              SolarDiagramPalette.batteryColor(1),
+            ],
+          ),
+          // Map the gradient to the full chart (0–100), not just the line's
+          // bounding box, so colour tracks SoC.
+          gradientArea: LineChartGradientArea.wholeChart,
+          barWidth: 3,
+          isStrokeCapRound: true,
+          isStrokeJoinRound: true,
+          dotData: const FlDotData(show: false),
+          spots: _chargeSpots,
+        ),
+        touchDotColor: touchDotColor,
+        tooltipBuilder: (spot) => LineTooltipItem(
+          '${spot.y.toStringAsFixed(1)}% · ${_fmtTime(spot.x)}',
+          const TextStyle(color: Colors.white),
         ),
       ),
-      barData: LineChartBarData(
-        gradient: LinearGradient(
-          begin: Alignment.bottomCenter,
-          end: Alignment.topCenter,
-          colors: [
-            SolarDiagramPalette.batteryColor(0),
-            SolarDiagramPalette.batteryColor(0.5),
-            SolarDiagramPalette.batteryColor(1),
-          ],
+      .power => _buildChartData(
+        minY: _powerMinY,
+        maxY: _powerMaxY,
+        horizontalInterval: horizontalInterval,
+        leftTitles: AxisTitles(
+          axisNameWidget: const Text('kW'),
+          sideTitles: SideTitles(
+            reservedSize: leftReservedSize,
+            interval: horizontalInterval,
+            showTitles: true,
+            getTitlesWidget: (value, meta) {
+              return SideTitleWidget(meta: meta, child: Text(_toKW(value)));
+            },
+          ),
         ),
-        // Map the gradient to the full chart (0–100), not just the line's
-        // bounding box, so colour tracks SoC.
-        gradientArea: LineChartGradientArea.wholeChart,
-        barWidth: 3,
-        isStrokeCapRound: true,
-        isStrokeJoinRound: true,
-        dotData: const FlDotData(show: false),
-        spots: _chargeSpots,
-      ),
-      touchDotColor: touchDotColor,
-      tooltipBuilder: (spot) => LineTooltipItem(
-        '${spot.y.toStringAsFixed(1)}% · ${_fmtTime(spot.x)}',
-        const TextStyle(color: Colors.white),
-      ),
-    );
-
-    _powerChartData = _buildChartData(
-      minY: _powerMinY,
-      maxY: _powerMaxY,
-      horizontalInterval: _powerStepW,
-      leftTitles: AxisTitles(
-        axisNameWidget: const Text('kW'),
-        sideTitles: SideTitles(
-          reservedSize: 35,
-          interval: _powerStepW,
-          showTitles: true,
-          getTitlesWidget: (value, meta) {
-            return SideTitleWidget(meta: meta, child: Text(_toKW(value)));
-          },
+        barData: LineChartBarData(
+          // Solid colour as a 3-stop gradient so fl_chart can lerp from the
+          // charge gradient without both paint styles becoming null mid-animation.
+          gradient: LinearGradient(colors: [primary, primary, primary]),
+          barWidth: 3,
+          isStrokeCapRound: true,
+          isStrokeJoinRound: true,
+          dotData: const FlDotData(show: false),
+          spots: _powerSpots,
+        ),
+        touchDotColor: touchDotColor,
+        tooltipBuilder: (spot) => LineTooltipItem(
+          '${_toKW(spot.y)} kW · ${_fmtTime(spot.x)}',
+          const TextStyle(color: Colors.white),
         ),
       ),
-      barData: LineChartBarData(
-        // Solid colour as a 3-stop gradient so fl_chart can lerp from the
-        // charge gradient without both paint styles becoming null mid-animation.
-        gradient: LinearGradient(colors: [primary, primary, primary]),
-        barWidth: 3,
-        isStrokeCapRound: true,
-        isStrokeJoinRound: true,
-        dotData: const FlDotData(show: false),
-        spots: _powerSpots,
-      ),
-      touchDotColor: touchDotColor,
-      tooltipBuilder: (spot) => LineTooltipItem(
-        '${_toKW(spot.y)} kW · ${_fmtTime(spot.x)}',
-        const TextStyle(color: Colors.white),
-      ),
-    );
+    };
   }
 
   /// Shared chart chrome: day-long X axis, matching grid/label intervals, touch.
@@ -279,11 +276,6 @@ class _BatteryChartDialogState extends State<BatteryChartDialog> {
     );
   }
 
-  LineChartData get _chartData => switch (_viewMode) {
-    .charge => _chargeChartData,
-    .power => _powerChartData,
-  };
-
   @override
   Widget build(BuildContext context) {
     return ChartDialog(
@@ -295,10 +287,39 @@ class _BatteryChartDialogState extends State<BatteryChartDialog> {
             child: Card(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(2, 10, 8, 8),
-                child: LineChart(
-                  duration: const Duration(milliseconds: 300),
-                  curve: Curves.easeInOut,
-                  _chartData,
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final (minY, maxY, baseStep, labels) = switch (_viewMode) {
+                      .charge => (0.0, 100.0, _chargeStep, ['0', '100']),
+                      .power => (
+                        _powerMinY,
+                        _powerMaxY,
+                        _powerStepW,
+                        [_toKW(_powerMinY), _toKW(_powerMaxY)],
+                      ),
+                    };
+                    final interval = fittingYInterval(
+                      minY: minY,
+                      maxY: maxY,
+                      baseStep: baseStep,
+                      plotHeight:
+                          constraints.maxHeight - chartBottomTitlesReserved,
+                      labelHeight: labels
+                          .map((label) => chartYLabelHeight(context, label))
+                          .reduce(max),
+                    );
+                    return LineChart(
+                      duration: const Duration(milliseconds: 300),
+                      curve: Curves.easeInOut,
+                      _chartDataFor(
+                        horizontalInterval: interval,
+                        leftReservedSize: chartYLabelReservedSize(
+                          context,
+                          labels,
+                        ),
+                      ),
+                    );
+                  },
                 ),
               ),
             ),
