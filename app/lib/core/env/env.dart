@@ -20,6 +20,11 @@ class Env {
     defaultValue: kDebugSupabasePublishableKey,
   );
 
+  static const sentryDsn = String.fromEnvironment(
+    'SENTRY_DSN',
+    defaultValue: kDebugSentryDsn,
+  );
+
   @StaticAssert(
     openWeatherApiKey != kDebugOpenWeatherApiKey,
     'OPENWEATHER_API_KEY is not set',
@@ -29,6 +34,7 @@ class Env {
     supabasePublishableKey != kDebugSupabasePublishableKey,
     'SUPABASE_PUBLISHABLE_KEY is not set',
   )
+  @StaticAssert(sentryDsn != kDebugSentryDsn, 'SENTRY_DSN is not set')
   // ignore: unused_field
   static const _ = null;
 }
