@@ -2,10 +2,12 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sentry_flutter/sentry_flutter.dart';
+import 'package:sentry_logging/sentry_logging.dart';
 
 import 'core/components/solar/solar_energy_diagram_v2.dart';
+import 'core/env/env.dart';
 import 'routes/app_router.dart';
-import 'services/app_logger.dart';
 import 'services/database/database_providers.dart';
 import 'services/database/mocks/mock_sync_service.dart';
 import 'services/database/offline_storage.dart';
@@ -29,6 +31,7 @@ void main() async {
     yield LicenseEntryWithLineBreaks(<String>['google_fonts'], license);
   });
 
+  SentryWidgetsFlutterBinding.ensureInitialized();
   WidgetsFlutterBinding.ensureInitialized();
 
   await OfflineStorage.ensureInitialized();
@@ -39,14 +42,22 @@ void main() async {
 
   await SolarEnergyDiagramV2.precache();
 
-  AppLogger.instance.flush();
-
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
 
-  runApp(
-    ProviderScope(
-      overrides: kUseMocks ? MockSyncService.overrides : [],
-      child: const MainApp(),
+  await SentryFlutter.init(
+    (options) {
+      options.dsn = Env.sentryDsn;
+      options.addIntegration(LoggingIntegration());
+      options.enableLogs = true;
+      options.debug = true;
+    },
+    appRunner: () => runApp(
+      SentryWidget(
+        child: ProviderScope(
+          overrides: kUseMocks ? MockSyncService.overrides : [],
+          child: const MainApp(),
+        ),
+      ),
     ),
   );
 }
