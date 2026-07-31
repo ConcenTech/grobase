@@ -235,11 +235,9 @@ class _HomeScreenContentState extends ConsumerState<HomeScreenContent> {
                     child: Row(
                       spacing: 8,
                       children: [
-                        Flexible(
-                          child: Text(
-                            widget.inverter?.displayName ?? '',
-                            style: titleTextTheme,
-                          ),
+                        Text(
+                          widget.inverter?.displayName ?? '',
+                          style: titleTextTheme,
                         ),
                         if (widget.inverter != null)
                           IconButton(
