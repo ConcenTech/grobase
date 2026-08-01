@@ -10,6 +10,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Weather based background makes UI unclear.
+- Chart axis labels don't scale well across screen sizes and scales.
+
+### Added
+- Sentry.io integration
 
 ## [0.1.11] - 29/07/26
 
@@ -122,3 +126,4 @@ Initial beta app release
 [0.1.9]: https://github.com/ConcenTech/grobase/compare/v0.1.8...v0.1.9
 [0.1.10]: https://github.com/ConcenTech/grobase/compare/v0.1.9...v0.1.10
 [0.1.11]: https://github.com/ConcenTech/grobase/compare/v0.1.10...v0.1.11
+[0.1.12]: https://github.com/ConcenTech/grobase/compare/v0.1.11...v0.1.12
