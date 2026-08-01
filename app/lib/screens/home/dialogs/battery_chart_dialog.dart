@@ -124,24 +124,37 @@ class _BatteryChartDialogState extends State<BatteryChartDialog> {
   }
 
   LineChartData _chartDataFor({
-    required double horizontalInterval,
+    required double yAxisInterval,
+    required double xAxisInterval,
     required double leftReservedSize,
+    required double axisNameSize,
   }) {
     final colorScheme = Theme.of(context).colorScheme;
     final touchDotColor = colorScheme.onPrimaryFixedVariant;
     final primary = colorScheme.primary;
+    final axisNameStyle = chartAxisLabelStyle(context);
 
     return switch (_viewMode) {
       .charge => _buildChartData(
         minY: 0,
         maxY: 100,
-        horizontalInterval: horizontalInterval,
+        yAxisInterval: yAxisInterval,
+        xAxisInterval: xAxisInterval,
+        axisNameSize: axisNameSize,
         leftTitles: AxisTitles(
-          axisNameWidget: const Text('%'),
+          axisNameSize: axisNameSize,
+          axisNameWidget: Text('Charge (%)', style: axisNameStyle),
           sideTitles: SideTitles(
             reservedSize: leftReservedSize,
-            interval: horizontalInterval,
+            interval: yAxisInterval,
             showTitles: true,
+            getTitlesWidget: (value, meta) {
+              return SideTitleWidget(
+                meta: meta,
+                space: chartYLabelSideTitleSpace,
+                child: Text(value.toStringAsFixed(0), style: axisNameStyle),
+              );
+            },
           ),
         ),
         barData: LineChartBarData(
@@ -172,15 +185,22 @@ class _BatteryChartDialogState extends State<BatteryChartDialog> {
       .power => _buildChartData(
         minY: _powerMinY,
         maxY: _powerMaxY,
-        horizontalInterval: horizontalInterval,
+        yAxisInterval: yAxisInterval,
+        xAxisInterval: xAxisInterval,
+        axisNameSize: axisNameSize,
         leftTitles: AxisTitles(
-          axisNameWidget: const Text('kW'),
+          axisNameSize: axisNameSize,
+          axisNameWidget: Text('Power (kW)', style: axisNameStyle),
           sideTitles: SideTitles(
             reservedSize: leftReservedSize,
-            interval: horizontalInterval,
+            interval: yAxisInterval,
             showTitles: true,
             getTitlesWidget: (value, meta) {
-              return SideTitleWidget(meta: meta, child: Text(_toKW(value)));
+              return SideTitleWidget(
+                meta: meta,
+                space: chartYLabelSideTitleSpace,
+                child: Text(_toKW(value), style: axisNameStyle),
+              );
             },
           ),
         ),
@@ -207,7 +227,9 @@ class _BatteryChartDialogState extends State<BatteryChartDialog> {
   LineChartData _buildChartData({
     required double minY,
     required double maxY,
-    required double horizontalInterval,
+    required double yAxisInterval,
+    required double xAxisInterval,
+    required double axisNameSize,
     required AxisTitles leftTitles,
     required LineChartBarData barData,
     required Color touchDotColor,
@@ -217,22 +239,31 @@ class _BatteryChartDialogState extends State<BatteryChartDialog> {
       gridData: FlGridData(
         drawVerticalLine: false,
         drawHorizontalLine: true,
-        horizontalInterval: horizontalInterval,
+        horizontalInterval: yAxisInterval,
+        verticalInterval: xAxisInterval,
       ),
       borderData: FlBorderData(show: false),
       titlesData: FlTitlesData(
         leftTitles: leftTitles,
         bottomTitles: AxisTitles(
+          axisNameSize: axisNameSize,
+          axisNameWidget: Text(
+            'Time (Hours)',
+            style: chartAxisLabelStyle(context),
+          ),
           sideTitles: SideTitles(
             showTitles: true,
-            interval: 12,
+            reservedSize: axisNameSize,
+            interval: xAxisInterval,
             getTitlesWidget: (value, meta) {
               final hour = value.round();
               return SideTitleWidget(
                 meta: meta,
-                fitInside: SideTitleFitInsideData.fromTitleMeta(meta),
                 space: 2,
-                child: Text('${hour.toString().padLeft(2, '0')}:00'),
+                child: Text(
+                  hour.toString().padLeft(2, '0'),
+                  style: chartAxisLabelStyle(context),
+                ),
               );
             },
           ),
@@ -298,25 +329,36 @@ class _BatteryChartDialogState extends State<BatteryChartDialog> {
                         [_toKW(_powerMinY), _toKW(_powerMaxY)],
                       ),
                     };
-                    final interval = fittingYInterval(
+                    final leftReservedSize = chartYLabelReservedSize(
+                      context,
+                      labels,
+                    );
+                    final axisNameSize = chartAxisNameSize(context);
+                    final yInterval = fittingYInterval(
                       minY: minY,
                       maxY: maxY,
                       baseStep: baseStep,
-                      plotHeight:
-                          constraints.maxHeight - chartBottomTitlesReserved,
+                      plotHeight: constraints.maxHeight - axisNameSize * 2,
                       labelHeight: labels
                           .map((label) => chartYLabelHeight(context, label))
                           .reduce(max),
+                    );
+
+                    final xInterval = fittingXInterval(
+                      plotWidth:
+                          constraints.maxWidth -
+                          leftReservedSize -
+                          axisNameSize,
+                      labelWidth: chartXLabelWidth(context),
                     );
                     return LineChart(
                       duration: const Duration(milliseconds: 300),
                       curve: Curves.easeInOut,
                       _chartDataFor(
-                        horizontalInterval: interval,
-                        leftReservedSize: chartYLabelReservedSize(
-                          context,
-                          labels,
-                        ),
+                        yAxisInterval: yInterval,
+                        xAxisInterval: xInterval,
+                        leftReservedSize: leftReservedSize,
+                        axisNameSize: axisNameSize,
                       ),
                     );
                   },
