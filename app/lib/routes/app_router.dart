@@ -7,7 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:logging/logging.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../core/components/app_scaffold.dart';
+import '../core/components/scaffold/app_scaffold.dart';
 import '../models/database/inverter.drift.dart';
 import '../screens/auth/auth_screen.dart';
 import '../screens/home/home_screen.dart';

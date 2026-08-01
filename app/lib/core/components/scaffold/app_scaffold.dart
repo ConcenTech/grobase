@@ -1,11 +1,12 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide BottomNavigationBar;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../screens/systems/systems_screen.dart';
-import '../../services/database/database_providers.dart';
-import 'logo.dart';
-import 'solar/weather_background.dart';
+import '../../../screens/systems/systems_screen.dart';
+import '../../../services/database/database_providers.dart';
+import '../logo.dart';
+import '../solar/weather_background.dart';
+import 'navigation_bar.dart';
 
 class AppScaffold extends ConsumerWidget {
   const AppScaffold({
@@ -17,10 +18,9 @@ class AppScaffold extends ConsumerWidget {
     this.actions = const [],
     this.showBackButton = false,
     this.bottomSheet,
-    this.navigationBar,
+    this.sideNavigationBar,
+    this.bottomNavigationBar,
   });
-
-  final Widget? navigationBar;
 
   final Widget body;
 
@@ -46,6 +46,10 @@ class AppScaffold extends ConsumerWidget {
   ///
   /// Typically used to show action buttons.
   final List<Widget> actions;
+
+  final Widget? sideNavigationBar;
+
+  final Widget? bottomNavigationBar;
 
   final bool showBackButton;
 
@@ -84,48 +88,55 @@ class AppScaffold extends ConsumerWidget {
     });
 
     return Scaffold(
-      bottomNavigationBar: navigationBar,
+      bottomNavigationBar: bottomNavigationBar,
       backgroundColor: Colors.transparent,
       extendBody: true,
       body: Stack(
         fit: StackFit.expand,
         children: [
           const RepaintBoundary(child: SkyBackground()),
-          SafeArea(
-            left: false,
-            right: false,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (_shouldBuildAppBar)
-                  Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Row(
-                      children: [
-                        if (showBackButton)
-                          IconButton(
-                            icon: const Icon(Icons.arrow_back),
-                            onPressed: () => Navigator.of(context).pop(),
+          Row(
+            children: [
+              ?sideNavigationBar,
+              Expanded(
+                child: SafeArea(
+                  left: false,
+                  right: false,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (_shouldBuildAppBar)
+                        Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Row(
+                            children: [
+                              if (showBackButton)
+                                IconButton(
+                                  icon: const Icon(Icons.arrow_back),
+                                  onPressed: () => Navigator.of(context).pop(),
+                                ),
+                              Expanded(child: _buildTitle(context)),
+                              if (actions.isNotEmpty)
+                                Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  spacing: 8.0,
+                                  children: actions,
+                                ),
+                            ],
                           ),
-                        Expanded(child: _buildTitle(context)),
-                        if (actions.isNotEmpty)
-                          Row(
-                            mainAxisSize: MainAxisSize.min,
-                            spacing: 8.0,
-                            children: actions,
-                          ),
-                      ],
-                    ),
-                  ),
-                Expanded(
-                  child: Padding(
-                    padding: padding ?? const EdgeInsets.all(8.0),
-                    child: body,
+                        ),
+                      Expanded(
+                        child: Padding(
+                          padding: padding ?? const EdgeInsets.all(8.0),
+                          child: body,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ],
       ),
@@ -138,6 +149,25 @@ class HomeScaffold extends StatelessWidget {
   const HomeScaffold(this.shell, {super.key});
 
   final StatefulNavigationShell shell;
+
+  static const kSideAppBarMinWidth = 75.0;
+  static const List<NavigationBarItem> items = [
+    NavigationBarItem(
+      icon: Icon(Icons.home),
+      selectedIcon: Icon(Icons.home),
+      label: 'Home',
+    ),
+    NavigationBarItem(
+      icon: Icon(Icons.solar_power),
+      selectedIcon: Icon(Icons.solar_power),
+      label: 'Systems',
+    ),
+    NavigationBarItem(
+      icon: Icon(Icons.settings),
+      selectedIcon: Icon(Icons.settings),
+      label: 'Settings',
+    ),
+  ];
 
   String? get _title => switch (shell.currentIndex) {
     0 => null,
@@ -160,23 +190,28 @@ class HomeScaffold extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isLandscape = MediaQuery.orientationOf(context) == .landscape;
+
     return AppScaffold(
+      sideNavigationBar: isLandscape
+          ? SideNavigationBar(
+              index: shell.currentIndex,
+              items: items,
+              onDestinationSelected: shell.goBranch,
+              midWidth: kSideAppBarMinWidth,
+            )
+          : null,
+      bottomNavigationBar: !isLandscape
+          ? BottomNavigationBar(
+              index: shell.currentIndex,
+              items: items,
+              onDestinationSelected: shell.goBranch,
+            )
+          : null,
       body: shell,
       title: _title,
       actions: _actions,
       padding: _padding,
-      navigationBar: NavigationBar(
-        onDestinationSelected: (index) => shell.goBranch(index),
-        selectedIndex: shell.currentIndex,
-        destinations: const [
-          NavigationDestination(icon: Icon(Icons.home), label: 'Home'),
-          NavigationDestination(
-            icon: Icon(Icons.solar_power),
-            label: 'Systems',
-          ),
-          NavigationDestination(icon: Icon(Icons.settings), label: 'Settings'),
-        ],
-      ),
     );
   }
 }
