@@ -8,9 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.13] - 01/08/26
 
-## Fixed
+### Fixed
 - There is no GoRouterState above the current context. (Sentry)
 - Chart labels overflow when user has device scaling set to high.
+
+### Added
+- Side navigation bar for lanscape ordientations.
 
 ## [0.1.12] - 30/07/26
 
