@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../core/components/app_scaffold.dart';
 import '../../core/components/loading_indicator.dart';
+import '../../core/components/scaffold/app_scaffold.dart';
 import '../../models/invite_preview.dart';
 import 'invite_screen_notifier.dart';
 
