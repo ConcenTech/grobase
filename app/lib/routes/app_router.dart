@@ -7,7 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:logging/logging.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../core/components/app_scaffold.dart';
+import '../core/components/scaffold/app_scaffold.dart';
 import '../models/database/inverter.drift.dart';
 import '../screens/auth/auth_screen.dart';
 import '../screens/home/home_screen.dart';
@@ -181,23 +181,16 @@ class AppRouter {
 
   void _listenToAuthChanges() {
     _authSubscription = _auth.onAuthStateChange.listen((data) {
-      final context = navigatorKey.currentContext!;
-
-      if (!context.mounted) {
-        _logger.warning(
-          'Auth state change event received after context was disposed',
-        );
-        return;
-      }
-
-      final location = GoRouterState.of(context).uri;
+      // Use the GoRouter instance directly — navigatorKey.currentContext is the
+      // Navigator, which sits above RouteBase.builder, so GoRouterState.of fails.
+      final location = router.state.uri;
       if (data.event == .signedIn && location.path == '/login') {
         final redirect = safeAuthRedirect(location.queryParameters['redirect']);
-        context.go(redirect ?? '/home');
+        router.go(redirect ?? '/home');
       }
 
       if (data.event == .signedOut) {
-        context.go('/login');
+        router.go('/login');
       }
     });
   }

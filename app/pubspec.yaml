@@ -1,7 +1,7 @@
 name: grobase
 description: "Effortless Energy Management."
 publish_to: 'none'
-version: 0.1.12
+version: 0.1.13
 
 environment:
   sdk: ^3.12.0
@@ -43,6 +43,7 @@ dev_dependencies:
   drift_dev: ^2.34.0
   icons_launcher: ^3.1.0
   flutter_native_splash: ^2.4.8
+  sentry_dart_plugin: ^3.4.0
 
 flutter:
   uses-material-design: true

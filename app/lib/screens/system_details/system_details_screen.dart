@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_material_design_icons/flutter_material_design_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../core/components/app_scaffold.dart';
 import '../../core/components/card_group.dart';
 import '../../core/components/loading_indicator.dart';
+import '../../core/components/scaffold/app_scaffold.dart';
 import '../../models/database/inverter.drift.dart';
 import '../../models/database/inverter_member.drift.dart';
 import '../../services/database/database_providers.dart';

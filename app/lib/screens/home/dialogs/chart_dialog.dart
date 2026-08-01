@@ -2,14 +2,15 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 
-TextStyle _chartAxisLabelStyle(BuildContext context) {
+/// Style used for chart axis tick labels (measure and render must match).
+TextStyle chartAxisLabelStyle(BuildContext context) {
   return Theme.of(context).textTheme.bodySmall ??
       Theme.of(context).textTheme.bodyMedium!;
 }
 
 Size _measureChartAxisLabel(BuildContext context, String text) {
   final painter = TextPainter(
-    text: TextSpan(text: text, style: _chartAxisLabelStyle(context)),
+    text: TextSpan(text: text, style: chartAxisLabelStyle(context)),
     textDirection: Directionality.of(context),
     textScaler: MediaQuery.textScalerOf(context),
     maxLines: 1,
@@ -22,6 +23,14 @@ double chartYLabelHeight(BuildContext context, String sampleLabel) {
   return _measureChartAxisLabel(context, sampleLabel).height;
 }
 
+/// Width of an X-axis label at the current text scale.
+double chartXLabelWidth(BuildContext context) {
+  return _measureChartAxisLabel(context, '24').width;
+}
+
+/// Default [SideTitleWidget.space] between a left-axis label and the plot.
+const chartYLabelSideTitleSpace = 8.0;
+
 /// Width to reserve for Y-axis side titles using the widest scaled label text.
 double chartYLabelReservedSize(BuildContext context, Iterable<String> labels) {
   var maxWidth = 0.0;
@@ -29,12 +38,21 @@ double chartYLabelReservedSize(BuildContext context, Iterable<String> labels) {
     maxWidth = max(maxWidth, _measureChartAxisLabel(context, label).width);
   }
 
-  // Leave room for SideTitleWidget spacing and keep a small minimum.
-  return max(35, maxWidth + 12);
+  // SideTitleWidget puts [chartYLabelSideTitleSpace] inside reservedSize;
+  // add a small buffer for glyph rounding.
+  return max(40, maxWidth.ceilToDouble() + chartYLabelSideTitleSpace + 8);
 }
 
-/// Space reserved for bottom time labels when estimating the plot area.
-const chartBottomTitlesReserved = 28.0;
+/// Size for [AxisTitles.axisNameSize] and bottom tick [SideTitles.reservedSize],
+/// scaled with system text size.
+///
+/// Left axis names are rotated, so this value is the horizontal space they
+/// occupy (= text height). Bottom axis names and hour ticks use the same
+/// height vertically.
+double chartAxisNameSize(BuildContext context) {
+  // Any single-line sample works; height is driven by style + text scale.
+  return max(16, _measureChartAxisLabel(context, 'Hg').height.ceilToDouble());
+}
 
 /// Returns a Y-axis interval that is a multiple of [baseStep] so labels fit
 /// in [plotHeight] given [labelHeight] (already text-scaled).
@@ -57,6 +75,23 @@ double fittingYInterval({
   if (stepsAtBase <= maxSteps) return baseStep;
 
   return baseStep * (stepsAtBase / maxSteps).ceil();
+}
+
+/// Returns an X-axis interval that is a multiple of [baseStep] so labels fit
+/// in [plotWidth] given [labelWidth] (already text-scaled).
+double fittingXInterval({
+  required double plotWidth,
+  required double labelWidth,
+}) {
+  const hourSteps = [1.0, 2.0, 3.0, 4.0, 6.0, 8.0, 12.0];
+  final edgeInset = labelWidth / 8; // half glyph + fitInside distanceFromEdge
+  final maxSteps = max(1, (plotWidth / (labelWidth * 1.5 + edgeInset)).floor());
+  final ideal = 24.0 / maxSteps;
+
+  return hourSteps.firstWhere(
+    (step) => step >= ideal,
+    orElse: () => hourSteps.first,
+  );
 }
 
 class ChartDialog extends StatelessWidget {
