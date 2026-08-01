@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
-import '../core/components/app_scaffold.dart';
+import '../core/components/scaffold/app_scaffold.dart';
 import '../screens/auth/auth_screen.dart';
 import '../screens/home/home_screen.dart';
 import '../screens/invite/invite_screen.dart';
