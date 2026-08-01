@@ -84,6 +84,16 @@ jobs:
             --dart-define=OPENWEATHER_API_KEY=${{ secrets.OPENWEATHER_API_KEY }} \
             --dart-define=SENTRY_DSN=${{ secrets.SENTRY_DSN }}
           ls -lah
+      
+      - name: Upload to Sentry
+        working-directory: app
+        run: |
+          dart run sentry_dart_plugin \
+            --sentry-define=project=grobase \
+            --sentry-define=release="grobase@${{ needs.create-release.outputs.version }}" \
+            --sentry-define=org=concentech \
+            --sentry-define=auth_token=${{ secrets.SENTRY_AUTH_TOKEN }}
+
 
       - name: Rename bundle
         run: mv app/build/app/outputs/bundle/release/app-release.aab app/build/app/outputs/bundle/release/grobase-${{ needs.create-release.outputs.version }}-android.aab
