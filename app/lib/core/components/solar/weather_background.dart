@@ -65,34 +65,17 @@ class WeatherParams {
     final snow = _precipIntensity(data.snow);
     final rain = _precipIntensity(data.rain);
 
+    // Sky gradient is day/night only — weather does not tint it.
     final Color skyTop;
     final Color skyBottom;
     final Color cloudColor;
     if (night) {
-      skyTop = Color.lerp(
-        const Color(0xFF0A0E1E),
-        const Color(0xFF181D30),
-        cover,
-      )!;
-      skyBottom = Color.lerp(
-        const Color(0xFF1B2440),
-        const Color(0xFF2A3148),
-        cover,
-      )!;
+      skyTop = const Color(0xFF0A0E1E);
+      skyBottom = const Color(0xFF1B2440);
       cloudColor = const Color(0xFF2C3548);
     } else {
-      // Clear blue deepening to a darker, muted blue as cover increases
-      // (rather than washing out to grey).
-      skyTop = Color.lerp(
-        const Color(0xFF5AA6E0),
-        const Color(0xFF3E6285),
-        cover,
-      )!;
-      skyBottom = Color.lerp(
-        const Color(0xFFBBDDF5),
-        const Color(0xFF7E9FBA),
-        cover,
-      )!;
+      skyTop = const Color(0xFF5AA6E0);
+      skyBottom = const Color(0xFFBBDDF5);
       cloudColor = Color.lerp(
         const Color(0xFFFFFFFF),
         const Color(0xFFD7DEE5),

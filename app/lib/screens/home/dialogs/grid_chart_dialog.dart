@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 
@@ -21,8 +23,6 @@ class _GridChartDialogState extends State<GridChartDialog> {
   double _powerMinY = -_powerStepW;
   double _powerMaxY = _powerStepW;
 
-  late LineChartData _chartData;
-
   @override
   void initState() {
     super.initState();
@@ -30,18 +30,11 @@ class _GridChartDialogState extends State<GridChartDialog> {
   }
 
   @override
-  didUpdateWidget(covariant GridChartDialog oldWidget) {
+  void didUpdateWidget(covariant GridChartDialog oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.snapshots != widget.snapshots) {
       _rebuildSnapshotDerived();
-      _rebuildChartData();
     }
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    _rebuildChartData();
   }
 
   // Formats watts as a one-decimal kW string (e.g. `-1.2`).
@@ -94,54 +87,14 @@ class _GridChartDialogState extends State<GridChartDialog> {
     _powerMaxY = maxY;
   }
 
-  void _rebuildChartData() {
+  LineChartData _buildChartData({
+    required double horizontalInterval,
+    required double leftReservedSize,
+  }) {
     final colorScheme = Theme.of(context).colorScheme;
     final touchDotColor = colorScheme.onPrimaryFixedVariant;
     final primary = colorScheme.primary;
 
-    _chartData = _buildChartData(
-      minY: _powerMinY,
-      maxY: _powerMaxY,
-      horizontalInterval: _powerStepW,
-      leftTitles: AxisTitles(
-        axisNameWidget: const Text('kW'),
-        sideTitles: SideTitles(
-          reservedSize: 35,
-          interval: _powerStepW,
-          showTitles: true,
-          getTitlesWidget: (value, meta) {
-            return SideTitleWidget(meta: meta, child: Text(_toKW(value)));
-          },
-        ),
-      ),
-      barData: [
-        LineChartBarData(
-          color: primary,
-          barWidth: 3,
-          isStrokeCapRound: true,
-          isStrokeJoinRound: true,
-          dotData: const FlDotData(show: false),
-          spots: _spots,
-        ),
-      ],
-      touchDotColor: touchDotColor,
-      tooltipBuilder: (spot) => LineTooltipItem(
-        '${_toKW(spot.y)} kW · ${_fmtTime(spot.x)}',
-        const TextStyle(color: Colors.white),
-      ),
-    );
-  }
-
-  /// Shared chart chrome: day-long X axis, matching grid/label intervals, touch.
-  LineChartData _buildChartData({
-    required double minY,
-    required double maxY,
-    required double horizontalInterval,
-    required AxisTitles leftTitles,
-    required List<LineChartBarData> barData,
-    required Color touchDotColor,
-    required LineTooltipItem Function(LineBarSpot spot) tooltipBuilder,
-  }) {
     return LineChartData(
       gridData: FlGridData(
         drawVerticalLine: false,
@@ -150,7 +103,17 @@ class _GridChartDialogState extends State<GridChartDialog> {
       ),
       borderData: FlBorderData(show: false),
       titlesData: FlTitlesData(
-        leftTitles: leftTitles,
+        leftTitles: AxisTitles(
+          axisNameWidget: const Text('kW'),
+          sideTitles: SideTitles(
+            reservedSize: leftReservedSize,
+            interval: horizontalInterval,
+            showTitles: true,
+            getTitlesWidget: (value, meta) {
+              return SideTitleWidget(meta: meta, child: Text(_toKW(value)));
+            },
+          ),
+        ),
         bottomTitles: AxisTitles(
           sideTitles: SideTitles(
             showTitles: true,
@@ -171,8 +134,8 @@ class _GridChartDialogState extends State<GridChartDialog> {
           sideTitles: SideTitles(showTitles: false),
         ),
       ),
-      minY: minY,
-      maxY: maxY,
+      minY: _powerMinY,
+      maxY: _powerMaxY,
       minX: 0, // 00:00
       maxX: 24, // 24:00
       lineTouchData: LineTouchData(
@@ -197,11 +160,27 @@ class _GridChartDialogState extends State<GridChartDialog> {
           fitInsideHorizontally: true,
           fitInsideVertically: true,
           getTooltipItems: (touchedSpots) {
-            return touchedSpots.map(tooltipBuilder).toList();
+            return touchedSpots
+                .map(
+                  (spot) => LineTooltipItem(
+                    '${_toKW(spot.y)} kW · ${_fmtTime(spot.x)}',
+                    const TextStyle(color: Colors.white),
+                  ),
+                )
+                .toList();
           },
         ),
       ),
-      lineBarsData: barData,
+      lineBarsData: [
+        LineChartBarData(
+          color: primary,
+          barWidth: 3,
+          isStrokeCapRound: true,
+          isStrokeJoinRound: true,
+          dotData: const FlDotData(show: false),
+          spots: _spots,
+        ),
+      ],
     );
   }
 
@@ -216,10 +195,33 @@ class _GridChartDialogState extends State<GridChartDialog> {
             child: Card(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(2, 10, 8, 8),
-                child: LineChart(
-                  duration: const Duration(milliseconds: 300),
-                  curve: Curves.easeInOut,
-                  _chartData,
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final minLabel = _toKW(_powerMinY);
+                    final maxLabel = _toKW(_powerMaxY);
+                    final interval = fittingYInterval(
+                      minY: _powerMinY,
+                      maxY: _powerMaxY,
+                      baseStep: _powerStepW,
+                      plotHeight:
+                          constraints.maxHeight - chartBottomTitlesReserved,
+                      labelHeight: max(
+                        chartYLabelHeight(context, minLabel),
+                        chartYLabelHeight(context, maxLabel),
+                      ),
+                    );
+                    return LineChart(
+                      duration: const Duration(milliseconds: 300),
+                      curve: Curves.easeInOut,
+                      _buildChartData(
+                        horizontalInterval: interval,
+                        leftReservedSize: chartYLabelReservedSize(context, [
+                          minLabel,
+                          maxLabel,
+                        ]),
+                      ),
+                    );
+                  },
                 ),
               ),
             ),
