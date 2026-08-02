@@ -180,19 +180,30 @@ class AppRouter {
   ];
 
   void _listenToAuthChanges() {
-    _authSubscription = _auth.onAuthStateChange.listen((data) {
-      // Use the GoRouter instance directly — navigatorKey.currentContext is the
-      // Navigator, which sits above RouteBase.builder, so GoRouterState.of fails.
-      final location = router.state.uri;
-      if (data.event == .signedIn && location.path == '/login') {
-        final redirect = safeAuthRedirect(location.queryParameters['redirect']);
-        router.go(redirect ?? '/home');
-      }
+    // onError is required: GoTrue emits AuthRetryableFetchException on the
+    // auth stream when token refresh fails (common on resume before DNS/network
+    // is ready). Without onError, Dart treats that as an unhandled exception
+    // and cancels this subscription.
+    _authSubscription = _auth.onAuthStateChange.listen(
+      (data) {
+        // Use the GoRouter instance directly — navigatorKey.currentContext is the
+        // Navigator, which sits above RouteBase.builder, so GoRouterState.of fails.
+        final location = router.state.uri;
+        if (data.event == .signedIn && location.path == '/login') {
+          final redirect = safeAuthRedirect(
+            location.queryParameters['redirect'],
+          );
+          router.go(redirect ?? '/home');
+        }
 
-      if (data.event == .signedOut) {
-        router.go('/login');
-      }
-    });
+        if (data.event == .signedOut) {
+          router.go('/login');
+        }
+      },
+      onError: (Object error, StackTrace stackTrace) {
+        _logger.warning('Auth state stream error', error, stackTrace);
+      },
+    );
   }
 
   void dispose() {

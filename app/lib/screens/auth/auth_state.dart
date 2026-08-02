@@ -1,10 +1,13 @@
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:logging/logging.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../core/utils/async_status.dart';
 import '../../core/utils/auth_errors.dart';
+
+final _logger = Logger('AuthStateNotifier');
 
 class AuthStateNotifier extends Notifier<AuthState> {
   final GoTrueClient auth = Supabase.instance.client.auth;
@@ -47,21 +50,30 @@ class AuthStateNotifier extends Notifier<AuthState> {
   /// Listens for authentication state changes to detect when the user's
   /// email is confirmed.
   Future<void> _waitForEmailConfirmation() async {
-    _authChangesStream = auth.onAuthStateChange.listen((data) {
-      // If the user is not on the confirm email screen, we can stop listening
-      if (state.uiStatus != AuthUIStatus.confirmEmail) {
-        _authChangesStream?.cancel();
-        return;
-      }
-      // Check if the email is confirmed and update the state accordingly
-      if (data.session?.user.emailConfirmedAt != null) {
-        state = state.copyWith(
-          asyncStatus: AsyncStatus.success,
-          emailConfirmed: true,
-        );
-        _authChangesStream?.cancel();
-      }
-    });
+    // onError is required: GoTrue emits AuthRetryableFetchException on the
+    // auth stream when token refresh fails (common on resume before DNS/network
+    // is ready). Without onError, Dart treats that as an unhandled exception
+    // and cancels this subscription.
+    _authChangesStream = auth.onAuthStateChange.listen(
+      (data) {
+        // If the user is not on the confirm email screen, we can stop listening
+        if (state.uiStatus != AuthUIStatus.confirmEmail) {
+          _authChangesStream?.cancel();
+          return;
+        }
+        // Check if the email is confirmed and update the state accordingly
+        if (data.session?.user.emailConfirmedAt != null) {
+          state = state.copyWith(
+            asyncStatus: AsyncStatus.success,
+            emailConfirmed: true,
+          );
+          _authChangesStream?.cancel();
+        }
+      },
+      onError: (Object error, StackTrace stackTrace) {
+        _logger.warning('Auth state stream error', error, stackTrace);
+      },
+    );
     ref.onDispose(() {
       _authChangesStream?.cancel();
     });

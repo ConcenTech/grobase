@@ -16,8 +16,17 @@ class AuthErrors {
     return _messageContains(error, 'email not confirmed');
   }
 
+  static const offline =
+      'No internet connection. Check your network and try again.';
+
   /// Clean message suitable for inline Auth UI error text.
   static String userFacingMessage(AuthException error) {
+    // Transient network failures during token refresh (e.g. DNS not ready on
+    // app resume). AuthRetryableFetchException is expected and retryable.
+    if (error is AuthRetryableFetchException) {
+      return offline;
+    }
+
     final code = error.code;
     if (code != null && code.isNotEmpty) {
       final fromCode = _messageForCode(code);

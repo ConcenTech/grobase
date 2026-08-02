@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:sentry_logging/sentry_logging.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'core/components/solar/solar_energy_diagram_v2.dart';
 import 'core/env/env.dart';
@@ -50,6 +51,21 @@ void main() async {
       options.addIntegration(LoggingIntegration());
       options.enableLogs = true;
       options.debug = true;
+      // Drop transient auth refresh failures (DNS/network not ready on resume).
+      // These are retryable and handled via onAuthStateChange onError handlers.
+      options.beforeSend = (event, hint) {
+        final throwable = event.throwable ?? hint.throwable;
+        if (throwable is AuthRetryableFetchException) {
+          return null;
+        }
+        final message = throwable?.toString() ?? '';
+        if (message.contains('AuthRetryableFetchException') ||
+            (message.contains('Failed host lookup') &&
+                message.contains('refresh_token'))) {
+          return null;
+        }
+        return event;
+      };
     },
     appRunner: () => runApp(
       SentryWidget(

@@ -35,7 +35,14 @@ class OnlineDatabaseService {
     }
     if (session.isExpired) {
       _logger.info('Session expired, refreshing');
-      await _db.auth.refreshSession();
+      try {
+        await _db.auth.refreshSession();
+      } on AuthRetryableFetchException catch (e, s) {
+        // Common on app resume before DNS/network is ready. Surface as a
+        // network failure so sync UI can show offline rather than crash.
+        _logger.warning('Retryable session refresh failure', e, s);
+        throw DatabaseException('No internet connection', error: e);
+      }
 
       final newSessionIsValid = !(_db.auth.currentSession?.isExpired ?? true);
       if (!newSessionIsValid) {

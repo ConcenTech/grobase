@@ -41,6 +41,12 @@ class SyncErrors {
       return _messageForPostgrest(error);
     }
 
+    // Transient auth network failures (e.g. token refresh on resume before DNS
+    // is ready). Prefer the offline message over a generic auth error.
+    if (error is AuthRetryableFetchException) {
+      return offline;
+    }
+
     if (error is AuthException) {
       return AuthErrors.userFacingMessage(error);
     }

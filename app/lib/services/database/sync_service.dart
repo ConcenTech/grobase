@@ -172,7 +172,16 @@ class SyncService {
   ///
   /// If the user is already authenticated, sync operations will begin immediately.
   void _startSubscriptions() {
-    _authSubscription = _auth.onAuthStateChange.listen(_handleAuthChange);
+    // onError is required: GoTrue emits AuthRetryableFetchException on the
+    // auth stream when token refresh fails (common on resume before DNS/network
+    // is ready). Without onError, Dart treats that as an unhandled exception
+    // and cancels this subscription.
+    _authSubscription = _auth.onAuthStateChange.listen(
+      _handleAuthChange,
+      onError: (Object error, StackTrace stackTrace) {
+        _logger.warning('Auth state stream error', error, stackTrace);
+      },
+    );
     _connectionSubscription = _connectionManager.stream.listen(
       _handleConnectionChange,
     );
