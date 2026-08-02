@@ -38,8 +38,8 @@ class OnlineDatabaseService {
       try {
         await _db.auth.refreshSession();
       } on AuthRetryableFetchException catch (e, s) {
-        // Common on app resume before DNS/network is ready. Surface as a
-        // network failure so sync UI can show offline rather than crash.
+        // Common on app resume before DNS/network is ready. SyncService retries
+        // transient failures before surfacing anything to the UI.
         _logger.warning('Retryable session refresh failure', e, s);
         throw DatabaseException('No internet connection', error: e);
       }

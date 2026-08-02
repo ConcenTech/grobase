@@ -27,6 +27,36 @@ class SyncErrors {
 
   static const noAccess = "You don't have access to this data.";
 
+  /// Whether [error] is likely transient and worth automatic retry.
+  static bool isRetryable(Object error) {
+    if (error is AuthRetryableFetchException) return true;
+    if (error is TimeoutException) return true;
+    if (error is SocketException ||
+        error is HttpException ||
+        error is HandshakeException) {
+      return true;
+    }
+
+    if (error is DatabaseException) {
+      final nested = error.error;
+      if (nested != null) return isRetryable(nested);
+      return _isRetryableMessage(error.message);
+    }
+
+    // Permanent auth failures (expired session, banned, etc.) should surface.
+    if (error is AuthException) return false;
+
+    if (error is PostgrestException) {
+      final code = error.code;
+      if (code == 'PGRST301' || code == 'PGRST303') return false;
+      if (code != null && code.startsWith('28')) return false;
+      if (code == '42501') return false;
+      return _isRetryableMessage(error.message);
+    }
+
+    return _isRetryableMessage(error.toString());
+  }
+
   /// Clean message suitable for the sync error snackbar.
   static String userFacingMessage(Object error) {
     if (error is DatabaseException) {
@@ -62,6 +92,22 @@ class SyncErrors {
     }
 
     return _messageForRawMessage(error.toString()) ?? unexpected;
+  }
+
+  static bool _isRetryableMessage(String message) {
+    final lower = message.toLowerCase();
+    return lower.contains('failed host lookup') ||
+        lower.contains('network is unreachable') ||
+        lower.contains('connection refused') ||
+        lower.contains('connection reset') ||
+        lower.contains('socketexception') ||
+        lower.contains('clientexception') ||
+        lower.contains('no internet') ||
+        lower.contains('offline') ||
+        lower.contains('timed out') ||
+        lower.contains('timeout') ||
+        lower.contains('connection closed') ||
+        lower.contains('temporarily unavailable');
   }
 
   static String _messageForPostgrest(PostgrestException error) {

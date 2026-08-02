@@ -29,6 +29,15 @@ class SyncService {
   final OfflineDatabaseService _offlineService;
   final SyncStateNotifier _syncStateNotifier;
 
+  static const _maxRetries = 4;
+
+  static const _retryDelays = <Duration>[
+    Duration(seconds: 1),
+    Duration(seconds: 2),
+    Duration(seconds: 4),
+    Duration(seconds: 8),
+  ];
+
   /// Whether the sync service is currently running.
   bool _isRunning = false;
 
@@ -54,6 +63,11 @@ class SyncService {
 
   /// Cancels stale delayed resume catch-up attempts.
   int _resumeGeneration = 0;
+
+  /// Completed failed attempts before the next automatic retry.
+  int _retryAttempt = 0;
+
+  Timer? _retryTimer;
 
   void init() {
     _offlineService.getInverterCount().then((count) {
@@ -93,6 +107,7 @@ class SyncService {
 
     _logger.info('Stopping sync service');
     _isRunning = false;
+    _cancelScheduledRetry();
     _stopListeningForDbChanges();
     _stopListeningForSnapshotChanges();
   }
@@ -100,6 +115,8 @@ class SyncService {
   /// Retries sync after a failure by stopping and starting again.
   void retry() {
     _logger.info('Retrying sync');
+    _cancelScheduledRetry();
+    _retryAttempt = 0;
     _syncStateNotifier.setSyncing();
     _restart();
   }
@@ -110,25 +127,7 @@ class SyncService {
   }
 
   Future<void> _syncAndStartSnapshotListeners() async {
-    await _getInitialSyncState();
-  }
-
-  Future<void> _getInitialSyncState() async {
-    try {
-      final inverters = await _onlineService.inverters();
-      await _offlineService.setInverters(inverters);
-
-      // We only care abount inverters, snapshots can come later.
-      _syncStateNotifier.setSynced();
-
-      for (final inverter in inverters) {
-        await _syncSnapshotsForInverter(inverter.id);
-        await _ensureSnapshotListener(inverter.id);
-      }
-    } catch (e, s) {
-      _logger.severe('Failed to get initial sync state', e, s);
-      _syncStateNotifier.setError(SyncErrors.userFacingMessage(e));
-    }
+    await _catchUpFromServer();
   }
 
   /// Pulls any snapshots missed while backgrounded / disconnected.
@@ -156,6 +155,9 @@ class SyncService {
     try {
       final inverters = await _onlineService.inverters();
       await _offlineService.setInverters(inverters);
+
+      // Mark synced once inverters land; snapshot pulls can continue after.
+      _clearRetryState();
       _syncStateNotifier.setSynced();
 
       if (_inverterChangesChannel == null) {
@@ -177,9 +179,51 @@ class SyncService {
       }
     } catch (e, s) {
       _logger.warning('Catch-up sync failed', e, s);
-      // Keep last known data; surface a recoverable error for the UI.
-      _syncStateNotifier.setError(SyncErrors.userFacingMessage(e));
+      _scheduleRetryOrSurface(e);
     }
+  }
+
+  void _scheduleRetryOrSurface(Object error) {
+    if (!_isRunning) {
+      return;
+    }
+
+    if (SyncErrors.isRetryable(error) && _retryAttempt < _maxRetries) {
+      final delay = _retryDelays[_retryAttempt];
+      _retryAttempt += 1;
+      _logger.info(
+        'Scheduling sync retry $_retryAttempt/$_maxRetries in ${delay.inSeconds}s',
+      );
+      _retryTimer?.cancel();
+      _retryTimer = Timer(delay, () {
+        if (!_isRunning || _auth.currentSession == null) {
+          return;
+        }
+        unawaited(_catchUpFromServer());
+      });
+      return;
+    }
+
+    _logger.severe(
+      _retryAttempt > 0
+          ? 'Sync failed after $_retryAttempt retries'
+          : 'Sync failed with non-retryable error',
+      error,
+    );
+    _retryAttempt = 0;
+    _syncStateNotifier.setError(SyncErrors.userFacingMessage(error));
+  }
+
+  void _clearRetryState() {
+    _retryAttempt = 0;
+    _retryTimer?.cancel();
+    _retryTimer = null;
+  }
+
+  void _cancelScheduledRetry() {
+    _retryTimer?.cancel();
+    _retryTimer = null;
+    _retryAttempt = 0;
   }
 
   Future<void> _syncSnapshotsForInverter(String inverterId) async {
@@ -209,8 +253,8 @@ class SyncService {
       await _syncSnapshotsForInverter(inverter.id);
       await _ensureSnapshotListener(inverter.id);
     } catch (e, s) {
-      _logger.severe('Failed to sync new inverter', e, s);
-      _syncStateNotifier.setError(SyncErrors.userFacingMessage(e));
+      _logger.warning('Failed to sync new inverter', e, s);
+      _recoverFromEventFailure(e);
     }
   }
 
@@ -221,8 +265,8 @@ class SyncService {
       await _syncSnapshotsForInverter(inverter.id);
       await _ensureSnapshotListener(inverter.id);
     } catch (e, s) {
-      _logger.severe('Failed to sync updated inverter', e, s);
-      _syncStateNotifier.setError(SyncErrors.userFacingMessage(e));
+      _logger.warning('Failed to sync updated inverter', e, s);
+      _recoverFromEventFailure(e);
     }
   }
 
@@ -233,16 +277,26 @@ class SyncService {
       await _offlineService.removeInverter(inverterId);
       await _offlineService.removeSnapshots(inverterId);
     } catch (e, s) {
-      _logger.severe('Failed to sync deleted inverter', e, s);
-      _syncStateNotifier.setError(SyncErrors.userFacingMessage(e));
+      _logger.warning('Failed to sync deleted inverter', e, s);
+      _recoverFromEventFailure(e);
     }
+  }
+
+  /// Event-handler failures should not immediately snackbar; retryable ones
+  /// kick a catch-up with the shared retry budget.
+  void _recoverFromEventFailure(Object error) {
+    if (SyncErrors.isRetryable(error)) {
+      unawaited(_catchUpFromServer());
+      return;
+    }
+    _syncStateNotifier.setError(SyncErrors.userFacingMessage(error));
   }
 
   Future<void> _handleSnapshotCreated(InverterSnapshot snapshot) async {
     try {
       await _offlineService.addSnapshots([snapshot]);
     } catch (e, s) {
-      _logger.severe('Failed to persist realtime snapshot', e, s);
+      _logger.warning('Failed to persist realtime snapshot', e, s);
     }
   }
 
@@ -296,6 +350,11 @@ class SyncService {
       _handleAuthChange,
       onError: (Object error, StackTrace stackTrace) {
         _logger.warning('Auth state stream error', error, stackTrace);
+        if (_isRunning &&
+            _auth.currentSession != null &&
+            SyncErrors.isRetryable(error)) {
+          unawaited(_catchUpFromServer());
+        }
       },
     );
     _connectionSubscription = _connectionManager.stream.listen(
@@ -356,6 +415,7 @@ class SyncService {
     _isOnline = isOnline;
     if (isOnline && _isRunning && _auth.currentSession != null) {
       _logger.info('Connection restored, restarting sync');
+      _cancelScheduledRetry();
       _restart();
     }
   }
@@ -372,6 +432,8 @@ class SyncService {
         onDelete: (id) => unawaited(_handleInverterDeleted(id)),
       );
     } catch (e, s) {
+      // REST catch-up still works without realtime; the next catch-up/resume
+      // will try to subscribe again.
       _logger.warning('Failed to subscribe to inverter changes', e, s);
     }
   }
