@@ -10,6 +10,9 @@ import '../../models/database/inverter_snapshot.drift.dart';
 import '../../models/gateway_registration.dart';
 import '../../models/invite_link.dart';
 import '../../models/invite_preview.dart';
+import 'database_exception.dart';
+
+export 'database_exception.dart';
 
 final _logger = Logger('OnlineDatabaseService');
 
@@ -382,14 +385,4 @@ class OnlineDatabaseService {
       throw DatabaseException('An unexpected error occurred', error: e);
     }
   }
-}
-
-class DatabaseException implements Exception {
-  final String message;
-  final Object? error;
-
-  DatabaseException(this.message, {this.error});
-
-  @override
-  String toString() => 'DatabaseException: $message $error';
 }

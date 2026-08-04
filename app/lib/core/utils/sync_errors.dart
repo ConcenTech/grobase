@@ -3,7 +3,7 @@ import 'dart:io';
 
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../../services/database/online_database_service.dart';
+import '../../services/database/database_exception.dart';
 import 'auth_errors.dart';
 
 /// Maps sync / database failures to short, user-facing copy.

@@ -10,6 +10,7 @@ import '../../models/database/inverter_snapshot.drift.dart';
 import '../connectivity/connection_manager.dart';
 import 'offline_database_service.dart';
 import 'online_database_service.dart';
+import 'sync_retry_scheduler.dart';
 import 'sync_state_notifier.dart';
 
 final _logger = Logger('SyncService');
@@ -29,14 +30,9 @@ class SyncService {
   final OfflineDatabaseService _offlineService;
   final SyncStateNotifier _syncStateNotifier;
 
-  static const _maxRetries = 4;
-
-  static const _retryDelays = <Duration>[
-    Duration(seconds: 1),
-    Duration(seconds: 2),
-    Duration(seconds: 4),
-    Duration(seconds: 8),
-  ];
+  late final SyncRetryScheduler _retryScheduler = SyncRetryScheduler(
+    onFire: _onScheduledCatchUp,
+  );
 
   /// Whether the sync service is currently running.
   bool _isRunning = false;
@@ -60,14 +56,6 @@ class SyncService {
 
   /// Dedupes overlapping catch-up work from resume / token refresh / reconnect.
   Future<void>? _catchUpInFlight;
-
-  /// Cancels stale delayed resume catch-up attempts.
-  int _resumeGeneration = 0;
-
-  /// Completed failed attempts before the next automatic retry.
-  int _retryAttempt = 0;
-
-  Timer? _retryTimer;
 
   void init() {
     _offlineService.getInverterCount().then((count) {
@@ -97,7 +85,7 @@ class SyncService {
     _isRunning = true;
 
     _startListeningForDbChanges();
-    unawaited(_syncAndStartSnapshotListeners());
+    unawaited(_catchUpFromServer());
   }
 
   void stop() {
@@ -107,7 +95,7 @@ class SyncService {
 
     _logger.info('Stopping sync service');
     _isRunning = false;
-    _cancelScheduledRetry();
+    _retryScheduler.reset();
     _stopListeningForDbChanges();
     _stopListeningForSnapshotChanges();
   }
@@ -115,8 +103,7 @@ class SyncService {
   /// Retries sync after a failure by stopping and starting again.
   void retry() {
     _logger.info('Retrying sync');
-    _cancelScheduledRetry();
-    _retryAttempt = 0;
+    _retryScheduler.reset();
     _syncStateNotifier.setSyncing();
     _restart();
   }
@@ -126,8 +113,11 @@ class SyncService {
     return DateTime(now.year, now.month, now.day);
   }
 
-  Future<void> _syncAndStartSnapshotListeners() async {
-    await _catchUpFromServer();
+  void _onScheduledCatchUp() {
+    if (!_isRunning || _auth.currentSession == null) {
+      return;
+    }
+    unawaited(_catchUpFromServer());
   }
 
   /// Pulls any snapshots missed while backgrounded / disconnected.
@@ -157,11 +147,11 @@ class SyncService {
       await _offlineService.setInverters(inverters);
 
       // Mark synced once inverters land; snapshot pulls can continue after.
-      _clearRetryState();
+      _retryScheduler.reset();
       _syncStateNotifier.setSynced();
 
       if (_inverterChangesChannel == null) {
-        _startListeningForDbChanges();
+        unawaited(_startListeningForDbChanges());
       }
 
       final activeIds = <String>{};
@@ -188,42 +178,26 @@ class SyncService {
       return;
     }
 
-    if (SyncErrors.isRetryable(error) && _retryAttempt < _maxRetries) {
-      final delay = _retryDelays[_retryAttempt];
-      _retryAttempt += 1;
-      _logger.info(
-        'Scheduling sync retry $_retryAttempt/$_maxRetries in ${delay.inSeconds}s',
-      );
-      _retryTimer?.cancel();
-      _retryTimer = Timer(delay, () {
-        if (!_isRunning || _auth.currentSession == null) {
-          return;
-        }
-        unawaited(_catchUpFromServer());
-      });
-      return;
+    if (SyncErrors.isRetryable(error)) {
+      final delay = _retryScheduler.scheduleRetry();
+      if (delay != null) {
+        _logger.info(
+          'Scheduling sync retry '
+          '${_retryScheduler.attempt}/${SyncRetryScheduler.maxRetries} '
+          'in ${delay.inSeconds}s',
+        );
+        return;
+      }
     }
 
     _logger.severe(
-      _retryAttempt > 0
-          ? 'Sync failed after $_retryAttempt retries'
+      _retryScheduler.attempt > 0
+          ? 'Sync failed after ${_retryScheduler.attempt} retries'
           : 'Sync failed with non-retryable error',
       error,
     );
-    _retryAttempt = 0;
+    _retryScheduler.reset();
     _syncStateNotifier.setError(SyncErrors.userFacingMessage(error));
-  }
-
-  void _clearRetryState() {
-    _retryAttempt = 0;
-    _retryTimer?.cancel();
-    _retryTimer = null;
-  }
-
-  void _cancelScheduledRetry() {
-    _retryTimer?.cancel();
-    _retryTimer = null;
-    _retryAttempt = 0;
   }
 
   Future<void> _syncSnapshotsForInverter(String inverterId) async {
@@ -368,18 +342,10 @@ class SyncService {
       return;
     }
 
-    final generation = ++_resumeGeneration;
+    // Delay so DNS/network can come back after backgrounding before we hit
+    // Supabase (avoids racing AuthRetryableFetchException on resume).
     _logger.info('App resumed, scheduling sync catch-up');
-
-    // Brief delay so DNS/network can come back after backgrounding before we
-    // hit Supabase (avoids racing the same AuthRetryableFetchException path).
-    unawaited(() async {
-      await Future<void>.delayed(const Duration(seconds: 1));
-      if (generation != _resumeGeneration || !_isRunning) {
-        return;
-      }
-      await _catchUpFromServer();
-    }());
+    _retryScheduler.scheduleResumeCatchUp();
   }
 
   void _handleAuthChange(AuthState state) {
@@ -415,12 +381,12 @@ class SyncService {
     _isOnline = isOnline;
     if (isOnline && _isRunning && _auth.currentSession != null) {
       _logger.info('Connection restored, restarting sync');
-      _cancelScheduledRetry();
+      _retryScheduler.reset();
       _restart();
     }
   }
 
-  void _startListeningForDbChanges() async {
+  Future<void> _startListeningForDbChanges() async {
     if (!_isRunning) {
       return;
     }
@@ -452,11 +418,11 @@ class SyncService {
   }
 
   void dispose() {
-    _resumeGeneration++;
     stop();
     _stopListeningForDbChanges();
     _stopListeningForSnapshotChanges();
 
+    _retryScheduler.dispose();
     _lifecycleListener?.dispose();
     _lifecycleListener = null;
     _authSubscription?.cancel();
