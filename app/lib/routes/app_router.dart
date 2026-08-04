@@ -180,19 +180,26 @@ class AppRouter {
   ];
 
   void _listenToAuthChanges() {
-    _authSubscription = _auth.onAuthStateChange.listen((data) {
-      // Use the GoRouter instance directly — navigatorKey.currentContext is the
-      // Navigator, which sits above RouteBase.builder, so GoRouterState.of fails.
-      final location = router.state.uri;
-      if (data.event == .signedIn && location.path == '/login') {
-        final redirect = safeAuthRedirect(location.queryParameters['redirect']);
-        router.go(redirect ?? '/home');
-      }
+    _authSubscription = _auth.onAuthStateChange.listen(
+      (data) {
+        // Use the GoRouter instance directly — navigatorKey.currentContext is the
+        // Navigator, which sits above RouteBase.builder, so GoRouterState.of fails.
+        final location = router.state.uri;
+        if (data.event == .signedIn && location.path == '/login') {
+          final redirect = safeAuthRedirect(
+            location.queryParameters['redirect'],
+          );
+          router.go(redirect ?? '/home');
+        }
 
-      if (data.event == .signedOut) {
-        router.go('/login');
-      }
-    });
+        if (data.event == .signedOut) {
+          router.go('/login');
+        }
+      },
+      onError: (Object e, StackTrace s) {
+        _logger.warning('Auth state change error', e, s);
+      },
+    );
   }
 
   void dispose() {
