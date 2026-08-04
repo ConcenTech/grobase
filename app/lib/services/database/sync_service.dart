@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/widgets.dart';
 import 'package:logging/logging.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -41,6 +42,16 @@ class SyncService {
 
   RealtimeChannel? _inverterChangesChannel;
 
+  AppLifecycleListener? _appLifecycleListener;
+
+  /// Timer for retrying sync after a failure.
+  ///
+  /// Ensure it is cancelled before calling [_getInitialSyncState]
+  Timer? _retryTimer;
+
+  static const _maxRetryAttempts = 4;
+  int _retryAttempts = 0;
+
   void init() {
     _offlineService.getInverterCount().then((count) {
       if (count > 0) {
@@ -69,7 +80,7 @@ class SyncService {
     _isRunning = true;
 
     _startListeningForDbChanges();
-    unawaited(_syncAndStartSnapshotListeners());
+    unawaited(_getInitialSyncState());
   }
 
   void stop() {
@@ -79,23 +90,25 @@ class SyncService {
 
     _logger.info('Stopping sync service');
     _isRunning = false;
+    _clearRetryState();
     _stopListeningForDbChanges();
   }
 
   /// Retries sync after a failure by stopping and starting again.
-  void retry() {
+  void restart() {
     _logger.info('Retrying sync');
     _syncStateNotifier.setSyncing();
     _restart();
   }
 
+  void _clearRetryState() {
+    _retryTimer?.cancel();
+    _retryAttempts = 0;
+  }
+
   DateTime _startOfDay() {
     final now = DateTime.now();
     return DateTime(now.year, now.month, now.day);
-  }
-
-  Future<void> _syncAndStartSnapshotListeners() async {
-    await _getInitialSyncState();
   }
 
   Future<void> _getInitialSyncState() async {
@@ -105,14 +118,37 @@ class SyncService {
 
       // We only care abount inverters, snapshots can come later.
       _syncStateNotifier.setSynced();
+      _clearRetryState();
 
       for (final inverter in inverters) {
         await _syncSnapshotsForInverter(inverter.id);
       }
     } catch (e, s) {
-      _logger.severe('Failed to get initial sync state', e, s);
-      _syncStateNotifier.setError(SyncErrors.userFacingMessage(e));
+      _scheduleRetryOrSetError(e, s);
     }
+  }
+
+  void _scheduleRetryOrSetError(Object e, StackTrace s) {
+    _retryTimer?.cancel();
+    if (_retryAttempts < _maxRetryAttempts && SyncErrors.isRetryable(e)) {
+      _retryAttempts++;
+      _retryTimer = Timer(Duration(seconds: 1 * _retryAttempts), () {
+        _logger.info(
+          'Retrying sync. Attempt $_retryAttempts of $_maxRetryAttempts',
+        );
+        _getInitialSyncState();
+      });
+      return;
+    }
+
+    if (_retryAttempts >= _maxRetryAttempts) {
+      _logger.severe('Sync failed after $_maxRetryAttempts attempts', e, s);
+    } else {
+      _logger.severe('Sync failed with non-retryable error', e, s);
+    }
+
+    _clearRetryState();
+    _syncStateNotifier.setError(SyncErrors.userFacingMessage(e));
   }
 
   Future<void> _syncSnapshotsForInverter(String inverterId) async {
@@ -172,9 +208,15 @@ class SyncService {
   ///
   /// If the user is already authenticated, sync operations will begin immediately.
   void _startSubscriptions() {
-    _authSubscription = _auth.onAuthStateChange.listen(_handleAuthChange);
+    _authSubscription = _auth.onAuthStateChange.listen(
+      _handleAuthChange,
+      onError: (e, s) => _logger.warning('Auth state change error', e, s),
+    );
     _connectionSubscription = _connectionManager.stream.listen(
       _handleConnectionChange,
+    );
+    _appLifecycleListener = AppLifecycleListener(
+      onResume: _handleLifecycleResume,
     );
   }
 
@@ -209,6 +251,14 @@ class SyncService {
     }
   }
 
+  void _handleLifecycleResume() {
+    _logger.info('App resumed');
+    _clearRetryState();
+    if (_isRunning && _auth.currentSession != null) {
+      _getInitialSyncState();
+    }
+  }
+
   void _startListeningForDbChanges() async {
     if (!_isRunning) {
       return;
@@ -229,7 +279,6 @@ class SyncService {
 
   /// Restarts sync operations by stopping and then starting sync.
   void _restart() {
-    _logger.info('Restarting sync');
     stop();
     start();
   }
@@ -240,5 +289,6 @@ class SyncService {
 
     _authSubscription?.cancel();
     _connectionSubscription?.cancel();
+    _appLifecycleListener?.dispose();
   }
 }
