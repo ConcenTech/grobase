@@ -80,7 +80,7 @@ class AppScaffold extends ConsumerWidget {
             message: next.error!,
             onRetry: () {
               messenger.hideCurrentSnackBar();
-              ref.read(DatabaseProviders.syncService).retry();
+              ref.read(DatabaseProviders.syncService).restart();
             },
           ),
         );
