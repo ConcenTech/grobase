@@ -44,22 +44,21 @@ void main() async {
 
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
 
-  await SentryFlutter.init(
-    (options) {
+  final app = ProviderScope(
+    overrides: kUseMocks ? MockSyncService.overrides : [],
+    child: const MainApp(),
+  );
+
+  if (kDebugMode) {
+    runApp(app);
+  } else {
+    await SentryFlutter.init((options) {
       options.dsn = Env.sentryDsn;
       options.addIntegration(LoggingIntegration());
       options.enableLogs = true;
       options.debug = true;
-    },
-    appRunner: () => runApp(
-      SentryWidget(
-        child: ProviderScope(
-          overrides: kUseMocks ? MockSyncService.overrides : [],
-          child: const MainApp(),
-        ),
-      ),
-    ),
-  );
+    }, appRunner: () => runApp(SentryWidget(child: app)));
+  }
 }
 
 class MainApp extends ConsumerWidget {
