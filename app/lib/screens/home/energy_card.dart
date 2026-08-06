@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_material_design_icons/flutter_material_design_icons.dart';
 
+import '../../core/utils/formatters.dart';
+
 class EnergyCardContainer extends StatelessWidget {
   const EnergyCardContainer({
     super.key,
@@ -142,22 +144,6 @@ class EnergyCard extends StatelessWidget {
     return '$status $soc%';
   }
 
-  String _fmtPower(double value) {
-    final power = value.abs();
-    if (power < 1000) {
-      return power.toStringAsFixed(0);
-    }
-    return (power / 1000).toStringAsFixed(1);
-  }
-
-  String _fmtUnit(double value) {
-    final power = value.abs();
-    if (power < 1000) {
-      return 'W';
-    }
-    return 'kW';
-  }
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -231,14 +217,14 @@ class EnergyCard extends StatelessWidget {
                         TextSpan(
                           children: [
                             TextSpan(
-                              text: _fmtPower(power),
+                              text: formatPower(power),
                               style: theme.textTheme.displayLarge?.copyWith(
                                 fontSize: 58,
                                 color: textColor,
                               ),
                             ),
                             TextSpan(
-                              text: _fmtUnit(power),
+                              text: formatPowerUnit(power),
                               style: theme.textTheme.labelMedium?.copyWith(
                                 color: textColor,
                               ),

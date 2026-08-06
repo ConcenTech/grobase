@@ -18,6 +18,7 @@ import 'dialogs/grid_chart_dialog.dart';
 import 'dialogs/load_chart_dialog.dart';
 import 'dialogs/solar_chart_dialog.dart';
 import 'energy_card.dart';
+import 'statistics_card.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -174,7 +175,7 @@ class _HomeScreenContentState extends ConsumerState<HomeScreenContent> {
       GoogleFonts.montserrat(fontWeight: .w500),
     );
     final subtitleTextTheme = theme.textTheme.labelSmall!;
-
+    const statisticsCardHeight = 45.0;
     final titleTextHeight = titleTextTheme.height! * titleTextTheme.fontSize!;
     final statusTextHeight =
         subtitleTextTheme.height! * subtitleTextTheme.fontSize!;
@@ -193,7 +194,7 @@ class _HomeScreenContentState extends ConsumerState<HomeScreenContent> {
         if (availableSize.width > availableSize.height) {
           mainAxis = Axis.horizontal;
           final houseHeight = min(
-            availableSize.height - 16.0,
+            availableSize.height - 16.0 - statisticsCardHeight,
             (availableSize.width * .65) / 2,
           );
 
@@ -256,9 +257,15 @@ class _HomeScreenContentState extends ConsumerState<HomeScreenContent> {
                       style: subtitleTextTheme,
                     ),
                   ),
+                  if (widget.snapshots.isNotEmpty)
+                    StatisticsCard(
+                      height: statisticsCardHeight,
+                      maxWidth: houseSize.width,
+                      snapshot: widget.snapshots.last,
+                      weather: ref.watch(WeatherProviders.weatherNotifier),
+                    ),
                 ],
               ),
-              spacer,
               EnergyCardContainer(
                 mainAxis: mainAxis,
                 children: [
@@ -301,6 +308,7 @@ class _HomeScreenContentState extends ConsumerState<HomeScreenContent> {
                   ),
                 ],
               ),
+              spacer,
             ],
           ),
         );
