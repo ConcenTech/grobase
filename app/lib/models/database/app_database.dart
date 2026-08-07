@@ -1,7 +1,5 @@
-import 'dart:io';
-
 import 'package:drift/drift.dart';
-import 'package:drift/native.dart';
+import 'package:drift_flutter/drift_flutter.dart';
 import 'package:flutter/foundation.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
@@ -40,16 +38,23 @@ class AppDatabase extends $AppDatabase {
   //   );
   // }
 
-  static LazyDatabase _openConnection() {
-    return LazyDatabase(() async {
-      final dbFolder = await getApplicationSupportDirectory();
-      final file = File(join(dbFolder.path, 'grobase.db'));
-      // await file.delete();
-      if (kDebugMode && await file.exists()) {
-        await file.delete();
-        // await const SecureStorage().clear();
-      }
-      return NativeDatabase(file);
-    });
+  static QueryExecutor _openConnection() {
+    return driftDatabase(
+      name: 'grobase',
+      web: kIsWeb
+          ? DriftWebOptions(
+              sqlite3Wasm: Uri.parse('sqlite3.wasm'),
+              driftWorker: Uri.parse('drift_worker.dart.js'),
+            )
+          : null,
+      native: !kIsWeb
+          ? DriftNativeOptions(
+              databasePath: () async {
+                final dbFolder = await getApplicationSupportDirectory();
+                return join(dbFolder.path, 'grobase.db');
+              },
+            )
+          : null,
+    );
   }
 }

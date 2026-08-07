@@ -216,6 +216,7 @@ class SyncService {
       _handleConnectionChange,
     );
     _appLifecycleListener = AppLifecycleListener(
+      onPause: _handleLifecyclePause,
       onResume: _handleLifecycleResume,
     );
   }
@@ -251,11 +252,16 @@ class SyncService {
     }
   }
 
+  void _handleLifecyclePause() {
+    _logger.info('App paused, stopping sync');
+    stop();
+  }
+
   void _handleLifecycleResume() {
     _logger.info('App resumed');
     _clearRetryState();
-    if (_isRunning && _auth.currentSession != null) {
-      _getInitialSyncState();
+    if (_auth.currentSession != null) {
+      start();
     }
   }
 
