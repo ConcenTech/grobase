@@ -13,6 +13,7 @@ import 'services/database/mocks/mock_sync_service.dart';
 import 'services/database/offline_storage.dart';
 import 'services/database/online_database_service.dart';
 import 'services/theme_provider.dart';
+import 'services/wall_clock_provider.dart';
 import 'theme/theme.dart';
 
 // Title font: Montserrat, weight: 600
@@ -68,6 +69,8 @@ class MainApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(appRouterProvider);
     final themeMode = ref.watch(themeModeProvider);
+    // Keep wall-clock refresh alive for day-scoped charts and location theme.
+    ref.watch(wallClockTickProvider);
 
     ref.listen(DatabaseProviders.syncService, (_, _) {});
 

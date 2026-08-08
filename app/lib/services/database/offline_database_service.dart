@@ -11,11 +11,19 @@ class OfflineDatabaseService {
   final AppDatabase _db;
   final _logger = Logger('OfflineDatabaseService');
 
-  Stream<List<InverterSnapshot>> todaysInverterSnapshots(String inverterId) {
+  /// Snapshots recorded on [day]'s local calendar date (defaults to today).
+  ///
+  /// The lower bound is fixed for the lifetime of the returned stream — callers
+  /// must recreate it when the civil day changes.
+  Stream<List<InverterSnapshot>> todaysInverterSnapshots(
+    String inverterId, {
+    DateTime? day,
+  }) {
     try {
-      final now = DateTime.now();
+      final base = day ?? DateTime.now();
       final today =
-          DateTime(now.year, now.month, now.day).millisecondsSinceEpoch / 1000;
+          DateTime(base.year, base.month, base.day).millisecondsSinceEpoch /
+          1000;
 
       final q = _db.inverterSnapshots.select()
         ..where((e) => e.recordedAt.isBiggerOrEqualValue(today))

@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../theme/app_theme_preference.dart';
 import 'database/database_providers.dart';
 import 'database/offline_storage.dart';
+import 'wall_clock_provider.dart';
 import 'weather/weather_providers.dart';
 
 /// Persisted appearance preference.
@@ -56,6 +57,9 @@ final themeModeProvider = Provider<ThemeMode>((ref) {
     case AppThemePreference.dark:
       return ThemeMode.dark;
     case AppThemePreference.location:
+      // Re-evaluate after overnight resume; Timers alone are unreliable while
+      // the isolate is suspended.
+      ref.watch(wallClockTickProvider);
       final weather = ref.watch(WeatherProviders.weatherNotifier);
       final timeUntilRefresh = weather.durationUntilNextDayNightChange();
       ref.watch(_dayNightBoundaryProvider(timeUntilRefresh));

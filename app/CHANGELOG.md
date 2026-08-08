@@ -12,6 +12,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Daily statistics on ome screen.
 - Pause/resume sync service when app is paused/resumed.
 
+### Fixed
+- Charts showing two days of data and location theme stuck on night after leaving the app in the background overnight.
+
 ## [0.1.14] - 04/08/26
 
 ### Fixed

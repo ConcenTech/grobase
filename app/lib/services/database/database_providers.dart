@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../models/database/app_database.dart';
 import '../connectivity/connection_provider.dart';
+import '../wall_clock_provider.dart';
 import 'offline_database_service.dart';
 import 'offline_storage.dart';
 import 'online_database_service.dart';
@@ -50,11 +51,18 @@ abstract class DatabaseProviders {
   );
 
   /// A stream of todays inverter snapshots for the given inverter.
+  ///
+  /// Watches [localCalendarDayProvider] so the day bound is recreated after
+  /// midnight / overnight resume instead of keeping yesterday's filter.
   static final inverterSnapshots = StreamProvider.autoDispose.family(
     // User String inverterId instead of inverter object to avoid provider
     // rebuilds when the inverter object changes.
-    (ref, String inverterId) =>
-        ref.watch(offlineDatabase).todaysInverterSnapshots(inverterId),
+    (ref, String inverterId) {
+      final day = ref.watch(localCalendarDayProvider);
+      return ref
+          .watch(offlineDatabase)
+          .todaysInverterSnapshots(inverterId, day: day);
+    },
   );
 
   static final latestInverterSnapshot = StreamProvider.autoDispose.family(
