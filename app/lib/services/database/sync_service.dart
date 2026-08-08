@@ -106,9 +106,8 @@ class SyncService {
     _retryAttempts = 0;
   }
 
-  DateTime _startOfDay() {
-    final now = DateTime.now();
-    return DateTime(now.year, now.month, now.day);
+  DateTime _startOfDay(DateTime dateTime) {
+    return DateTime(dateTime.year, dateTime.month, dateTime.day);
   }
 
   Future<void> _getInitialSyncState() async {
@@ -121,10 +120,32 @@ class SyncService {
       _clearRetryState();
 
       for (final inverter in inverters) {
-        await _syncSnapshotsForInverter(inverter.id);
+        await _syncSnapshotsForInverter(inverter.id, DateTime.now());
       }
     } catch (e, s) {
       _scheduleRetryOrSetError(e, s);
+    }
+  }
+
+  /// Syncs snapshots for the selected date.
+  ///
+  /// This method assumes sync has completed successfully and will fetch
+  /// inverters from the offline database.
+  Future<void> syncSelectedDateTime(
+    DateTime dateTime,
+    String inverterId,
+  ) async {
+    final syncDate = _startOfDay(dateTime);
+    final today = _startOfDay(DateTime.now());
+    if (!syncDate.isBefore(today)) {
+      return;
+    }
+
+    try {
+      await _syncSnapshotsForInverter(inverterId, dateTime);
+    } catch (e, s) {
+      _logger.severe('Failed to sync selected date', e, s);
+      _syncStateNotifier.setError(SyncErrors.userFacingMessage(e));
     }
   }
 
@@ -151,10 +172,15 @@ class SyncService {
     _syncStateNotifier.setError(SyncErrors.userFacingMessage(e));
   }
 
-  Future<void> _syncSnapshotsForInverter(String inverterId) async {
-    final startOfDay = _startOfDay();
-    final timestamp = await _offlineService.getInverterLastSnapshotTime(
+  Future<void> _syncSnapshotsForInverter(
+    String inverterId,
+    DateTime dateTime,
+  ) async {
+    final startOfDay = _startOfDay(dateTime);
+    final endOfDay = startOfDay.add(const Duration(days: 1));
+    final timestamp = await _offlineService.getInverterLastSnapshotTimeForDate(
       inverterId,
+      dateTime,
     );
 
     final latest = timestamp == null || timestamp.isBefore(startOfDay)
@@ -164,6 +190,7 @@ class SyncService {
     final snapshots = await _onlineService.snapshots(
       inverterId: inverterId,
       start: latest,
+      end: endOfDay,
     );
     _logger.info('New snapshots: ${snapshots.length}');
     if (snapshots.isNotEmpty) {
@@ -175,7 +202,7 @@ class SyncService {
     try {
       _logger.info('Inverter created: ${inverter.id}');
       await _offlineService.addInverter(inverter);
-      await _syncSnapshotsForInverter(inverter.id);
+      await _syncSnapshotsForInverter(inverter.id, DateTime.now());
     } catch (e, s) {
       _logger.severe('Failed to sync new inverter', e, s);
       _syncStateNotifier.setError(SyncErrors.userFacingMessage(e));
@@ -186,7 +213,7 @@ class SyncService {
     _logger.info('Inverter updated: ${inverter.id}');
     try {
       await _offlineService.upsertInverter(inverter);
-      await _syncSnapshotsForInverter(inverter.id);
+      await _syncSnapshotsForInverter(inverter.id, DateTime.now());
     } catch (e, s) {
       _logger.severe('Failed to sync updated inverter', e, s);
       _syncStateNotifier.setError(SyncErrors.userFacingMessage(e));

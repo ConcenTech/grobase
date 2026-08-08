@@ -12,6 +12,7 @@ import '../../models/database/inverter.drift.dart';
 import '../../models/database/inverter_snapshot.drift.dart';
 import '../../services/database/database_providers.dart';
 import '../../services/inverters_provider.dart';
+import '../../services/selected_date_time_notifier.dart';
 import '../../services/weather/weather_providers.dart';
 import 'dialogs/battery_chart_dialog.dart';
 import 'dialogs/grid_chart_dialog.dart';
@@ -110,6 +111,7 @@ class _HomeScreenContentState extends ConsumerState<HomeScreenContent> {
         if (widget.inverter != null) {
           _setWeatherForInverter(widget.inverter!);
         }
+        ref.read(selectedDateTimeProvider.notifier).setTodayIfNotPinned();
       },
     );
   }
