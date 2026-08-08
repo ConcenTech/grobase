@@ -24,12 +24,12 @@ class StatisticsCard extends StatelessWidget {
     final children = [
       (
         'Total import',
-        MdiIcons.transmissionTowerImport,
+        MdiIcons.transmissionTowerExport,
         formatPowerWithUnit(snapshot.gridImportEnergyToday),
       ),
       (
         'Total export',
-        MdiIcons.transmissionTowerExport,
+        MdiIcons.transmissionTowerImport,
         formatPowerWithUnit(snapshot.gridExportEnergyToday),
       ),
       (
