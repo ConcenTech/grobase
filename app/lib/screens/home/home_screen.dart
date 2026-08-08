@@ -97,15 +97,21 @@ class HomeScreenContent extends ConsumerStatefulWidget {
 }
 
 class _HomeScreenContentState extends ConsumerState<HomeScreenContent> {
+  late final AppLifecycleListener _appLifecycleListener;
+
   @override
   void initState() {
     super.initState();
     if (widget.inverter != null) {
-      print(
-        'setting weather for initial inverter: ${widget.inverter!.displayName}',
-      );
       _setWeatherForInverter(widget.inverter!);
     }
+    _appLifecycleListener = AppLifecycleListener(
+      onResume: () {
+        if (widget.inverter != null) {
+          _setWeatherForInverter(widget.inverter!);
+        }
+      },
+    );
   }
 
   @override
@@ -113,11 +119,14 @@ class _HomeScreenContentState extends ConsumerState<HomeScreenContent> {
     super.didUpdateWidget(oldWidget);
     if (widget.inverter?.id != oldWidget.inverter?.id &&
         widget.inverter != null) {
-      print(
-        'setting weather for new inverter: ${widget.inverter!.displayName}',
-      );
       _setWeatherForInverter(widget.inverter!);
     }
+  }
+
+  @override
+  void dispose() {
+    _appLifecycleListener.dispose();
+    super.dispose();
   }
 
   void _setWeatherForInverter(Inverter inverter) {
