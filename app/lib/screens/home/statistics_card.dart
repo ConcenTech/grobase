@@ -25,17 +25,17 @@ class StatisticsCard extends StatelessWidget {
       (
         'Total import',
         MdiIcons.transmissionTowerExport,
-        formatPowerWithUnit(snapshot.gridImportEnergyToday),
+        formatEnergy(snapshot.gridImportEnergyToday),
       ),
       (
         'Total export',
         MdiIcons.transmissionTowerImport,
-        formatPowerWithUnit(snapshot.gridExportEnergyToday),
+        formatEnergy(snapshot.gridExportEnergyToday),
       ),
       (
         'Total generation',
         MdiIcons.solarPowerVariant,
-        formatPowerWithUnit(snapshot.solarEnergyToday),
+        formatEnergy(snapshot.solarEnergyToday),
       ),
       ('Sunrise', Icons.sunny, formatTime(weather.sunrise)),
       ('Sunset', Icons.nightlight, formatTime(weather.sunset)),
