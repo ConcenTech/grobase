@@ -25,6 +25,11 @@ class Env {
     defaultValue: kDebugSentryDsn,
   );
 
+  static const projectUrl = String.fromEnvironment(
+    'PROJECT_URL',
+    defaultValue: kDebugProjectUrl,
+  );
+
   @StaticAssert(
     openWeatherApiKey != kDebugOpenWeatherApiKey,
     'OPENWEATHER_API_KEY is not set',
@@ -35,6 +40,7 @@ class Env {
     'SUPABASE_PUBLISHABLE_KEY is not set',
   )
   @StaticAssert(sentryDsn != kDebugSentryDsn, 'SENTRY_DSN is not set')
+  @StaticAssert(projectUrl != kDebugProjectUrl, 'PROJECT_URL is not set')
   // ignore: unused_field
   static const _ = null;
 }
