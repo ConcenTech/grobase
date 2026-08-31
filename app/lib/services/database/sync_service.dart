@@ -119,11 +119,27 @@ class SyncService {
       _syncStateNotifier.setSynced();
       _clearRetryState();
 
-      for (final inverter in inverters) {
-        await _syncSnapshotsForInverter(inverter.id, DateTime.now());
-      }
+      unawaited(_syncUser());
+
+      await Future.wait([
+        _syncUser(),
+        for (final inverter in inverters)
+          _syncSnapshotsForInverter(inverter.id, DateTime.now()),
+      ]);
     } catch (e, s) {
       _scheduleRetryOrSetError(e, s);
+    }
+  }
+
+  Future<void> _syncUser() async {
+    try {
+      final userId = _auth.currentUser!.id;
+
+      final memberships = await _onlineService.userMemberships(userId);
+      await _offlineService.setInverterMembers(memberships, userId);
+    } catch (e, s) {
+      _logger.severe('Failed to sync user', e, s);
+      _syncStateNotifier.setError(SyncErrors.userFacingMessage(e));
     }
   }
 

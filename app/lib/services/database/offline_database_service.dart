@@ -3,6 +3,7 @@ import 'package:logging/logging.dart';
 
 import '../../models/database/app_database.dart';
 import '../../models/database/inverter.drift.dart';
+import '../../models/database/inverter_member.drift.dart';
 import '../../models/database/inverter_snapshot.drift.dart';
 
 class OfflineDatabaseService {
@@ -108,6 +109,39 @@ class OfflineDatabaseService {
     }
   }
 
+  /// If userId is provided, all existing memberships for that user will be
+  /// deleted and replaced with the new memberships.
+  ///
+  /// Otherwise, the memberships will be added to the existing memberships.
+  Future<void> setInverterMembers(
+    List<InverterMember> members, [
+    String? userId,
+  ]) async {
+    try {
+      await _db.transaction(() async {
+        if (userId != null) {
+          await _db.inverterMembers.deleteWhere((e) => e.userId.equals(userId));
+        }
+        await _db.inverterMembers.insertAll(members);
+      });
+    } catch (e, s) {
+      _logger.severe('Failed to set inverter members', e, s);
+      rethrow;
+    }
+  }
+
+  Stream<InverterMember?> inverterMembership(String userId, String inverterId) {
+    try {
+      final q = _db.inverterMembers.select()
+        ..where((e) => e.userId.equals(userId))
+        ..where((e) => e.inverterId.equals(inverterId));
+      return q.watchSingleOrNull();
+    } catch (e, s) {
+      _logger.severe('Failed to get inverter membership', e, s);
+      rethrow;
+    }
+  }
+
   Future<void> addInverter(Inverter inverter) async {
     try {
       await _db.inverters.insertOne(inverter);
@@ -184,15 +218,6 @@ class OfflineDatabaseService {
       rethrow;
     }
   }
-
-  // Future<void> removeSnapshot(String snapshotId) async {
-  //   try {
-  //     await _db.inverterSnapshots.deleteWhere((e) => e.id.equals(snapshotId));
-  //   } catch (e, s) {
-  //     _logger.severe('Failed to remove snapshot', e, s);
-  //     rethrow;
-  //   }
-  // }
 
   Future<DateTime?> getInverterLastSnapshotTime(String inverterId) async {
     try {

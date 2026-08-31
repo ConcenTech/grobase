@@ -70,10 +70,13 @@ abstract class DatabaseProviders {
         ref.watch(offlineDatabase).latestInverterSnapshot(inverterId),
   );
 
-  static final inverterMembers = FutureProvider.autoDispose.family(
-    (ref, String inverterId) =>
-        ref.watch(onlineDatabase).inverterMembers(inverterId),
-  );
+  static final userMembership = StreamProvider.autoDispose.family((
+    ref,
+    String inverterId,
+  ) {
+    final userId = Supabase.instance.client.auth.currentUser!.id;
+    return ref.watch(offlineDatabase).inverterMembership(userId, inverterId);
+  });
 }
 
 class SyncCompleteNotifier extends Notifier<bool> {
