@@ -24,13 +24,15 @@ abstract final class HouseDiagramV2Layout {
   /// Full reference width including the side strip (`115` with [sideExtent] 0.15).
   static const refWidth = refSize * (1 + sideExtent);
 
+  /// Width / height of the full content rect (house + side strip).
+  static const contentAspect = imageAspect * (1 + sideExtent);
+
   /// Reference height of the coordinate grid over the content rect.
   static const refHeight = 60.0;
 
   /// Full content (house + side strip), centered in [canvas] at [imageAspect]
   /// with extra width for [sideExtent].
   static Rect contentRect(Size canvas) {
-    const contentAspect = imageAspect * (1 + sideExtent);
     var w = canvas.width;
     var h = w / contentAspect;
     if (h > canvas.height) {
