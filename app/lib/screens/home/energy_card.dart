@@ -56,6 +56,7 @@ class EnergyCardContainer extends StatelessWidget {
             scrollDirection: Axis.horizontal,
             shrinkWrap: true,
             primary: false,
+            physics: const NeverScrollableScrollPhysics(),
             padding: padding,
             crossAxisCount: crossAxisCount,
             childAspectRatio: _cardHeight / cardWidth,
