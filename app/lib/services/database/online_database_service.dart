@@ -5,6 +5,7 @@ import '../../core/env/env.dart';
 import '../../models/database/gateway.drift.dart';
 import '../../models/database/gateway_event.drift.dart';
 import '../../models/database/inverter.dart';
+import '../../models/database/inverter_invite.drift.dart';
 import '../../models/database/inverter_member.drift.dart';
 import '../../models/database/inverter_snapshot.drift.dart';
 import '../../models/gateway_registration.dart';
@@ -229,6 +230,27 @@ class OnlineDatabaseService {
     }
   }
 
+  /// Returns the user's member list for all their associated inverters.
+  Future<List<InverterMember>> userMemberships(String userId) async {
+    try {
+      await _ensureValidSession();
+
+      final data = await _db
+          .from('inverter_members')
+          .select()
+          .eq('user_id', userId);
+
+      return data.map((item) => InverterMember.fromJson(item)).toList();
+    } on PostgrestException catch (e) {
+      throw DatabaseException(e.message, error: e);
+    } catch (e) {
+      throw DatabaseException(
+        'Failed to get current user memberships',
+        error: e,
+      );
+    }
+  }
+
   // Removes a viewer from an inverter.
   Future<void> removeViewer({
     required String inverterId,
@@ -337,6 +359,35 @@ class OnlineDatabaseService {
       );
     } catch (e) {
       _logger.severe('Failed to accept invite', e);
+      throw DatabaseException('An unexpected error occurred', error: e);
+    }
+  }
+
+  Future<void> revokeInvite(String inviteId) async {
+    try {
+      await _ensureValidSession();
+      await _db.from('inverter_invites').delete().eq('id', inviteId);
+      _logger.info('Invite $inviteId revoked.');
+    } on PostgrestException catch (e) {
+      throw DatabaseException(e.message, error: e);
+    } catch (e) {
+      throw DatabaseException('An unexpected error occurred', error: e);
+    }
+  }
+
+  Future<List<InverterInvite>> inverterInvites(String inverterId) async {
+    try {
+      await _ensureValidSession();
+      final data = await _db
+          .from('inverter_invites')
+          .select('id, token, created_at, expires_at, accepted_at')
+          .eq('inverter_id', inverterId)
+          .order('expires_at', ascending: false);
+
+      return data.map((item) => InverterInvite.fromJson(item)).toList();
+    } on PostgrestException catch (e) {
+      throw DatabaseException(e.message, error: e);
+    } catch (e) {
       throw DatabaseException('An unexpected error occurred', error: e);
     }
   }

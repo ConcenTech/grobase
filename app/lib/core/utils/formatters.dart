@@ -27,3 +27,14 @@ String formatPowerWithUnit(double value) {
 String formatTime(DateTime time) {
   return DateFormat('HH:mm').format(time);
 }
+
+/// Formats energy in kWh
+///
+/// If energy is less than 1, it returns the energy in Wh
+String formatEnergy(double value) {
+  final energy = value.abs();
+  if (energy < 1 && energy > 0) {
+    return '${energy * 1000} Wh';
+  }
+  return '${energy.toStringAsFixed(0)} kWh';
+}

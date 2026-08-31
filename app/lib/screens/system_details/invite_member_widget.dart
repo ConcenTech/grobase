@@ -5,8 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/components/bottom_sheet_container.dart';
 import '../../core/components/loading_indicator.dart';
 import '../../models/database/inverter.dart';
-import '../../services/database/database_providers.dart';
 import '../../services/database/online_database_service.dart';
+import '../../services/inverters/inverter_invites_notifier.dart';
 
 class InviteMemberWidget extends ConsumerStatefulWidget {
   const InviteMemberWidget({super.key, required this.inverter});
@@ -32,10 +32,10 @@ class _InviteMemberWidgetState extends ConsumerState<InviteMemberWidget> {
 
     try {
       final link = await ref
-          .read(DatabaseProviders.onlineDatabase)
-          .createInviteLink(widget.inverter.id);
+          .read(inverterInvitesProvider(widget.inverter.id).notifier)
+          .create();
 
-      _inviteLinkController.text = link.url;
+      _inviteLinkController.text = link?.url ?? '';
     } on DatabaseException catch (e) {
       _showError(e.message);
     }

@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../models/database/app_database.dart';
 import '../connectivity/connection_provider.dart';
+import '../selected_date_time_notifier.dart';
 import 'offline_database_service.dart';
 import 'offline_storage.dart';
 import 'online_database_service.dart';
@@ -49,12 +50,18 @@ abstract class DatabaseProviders {
     (ref) => ref.watch(offlineDatabase).inverters(),
   );
 
-  /// A stream of todays inverter snapshots for the given inverter.
+  /// A stream of inverter snapshots for the given inverter based on the
+  /// selected date in [selectedDateTimeProvider].
   static final inverterSnapshots = StreamProvider.autoDispose.family(
     // User String inverterId instead of inverter object to avoid provider
     // rebuilds when the inverter object changes.
-    (ref, String inverterId) =>
-        ref.watch(offlineDatabase).todaysInverterSnapshots(inverterId),
+    (ref, String inverterId) {
+      final selectedDate = ref.watch(selectedDateTimeProvider);
+      ref.read(syncService).syncSelectedDateTime(selectedDate, inverterId);
+      return ref
+          .watch(offlineDatabase)
+          .inverterSnapshots(inverterId, selectedDate);
+    },
   );
 
   static final latestInverterSnapshot = StreamProvider.autoDispose.family(
@@ -63,10 +70,13 @@ abstract class DatabaseProviders {
         ref.watch(offlineDatabase).latestInverterSnapshot(inverterId),
   );
 
-  static final inverterMembers = FutureProvider.autoDispose.family(
-    (ref, String inverterId) =>
-        ref.watch(onlineDatabase).inverterMembers(inverterId),
-  );
+  static final userMembership = StreamProvider.autoDispose.family((
+    ref,
+    String inverterId,
+  ) {
+    final userId = Supabase.instance.client.auth.currentUser!.id;
+    return ref.watch(offlineDatabase).inverterMembership(userId, inverterId);
+  });
 }
 
 class SyncCompleteNotifier extends Notifier<bool> {

@@ -8,6 +8,7 @@ import 'solar_diagram_v2_foreground_painter.dart';
 import 'solar_energy_data.dart' show SolarEnergyData, SolarDiagramPalette;
 import 'weather_background.dart';
 
+export 'solar_diagram_v2_background_painter.dart' show HouseDiagramV2Layout;
 export 'solar_energy_data.dart' show SolarEnergyData;
 
 /// A second, visually distinct take on [SolarEnergyDiagram], used for A/B

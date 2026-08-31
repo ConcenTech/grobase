@@ -3,6 +3,7 @@ import 'package:logging/logging.dart';
 
 import '../../models/database/app_database.dart';
 import '../../models/database/inverter.drift.dart';
+import '../../models/database/inverter_member.drift.dart';
 import '../../models/database/inverter_snapshot.drift.dart';
 
 class OfflineDatabaseService {
@@ -11,24 +12,38 @@ class OfflineDatabaseService {
   final AppDatabase _db;
   final _logger = Logger('OfflineDatabaseService');
 
-  Stream<List<InverterSnapshot>> todaysInverterSnapshots(String inverterId) {
+  Stream<List<InverterSnapshot>> inverterSnapshots(
+    String inverterId,
+    DateTime dateTime,
+  ) {
     try {
-      final now = DateTime.now();
-      final today =
-          DateTime(now.year, now.month, now.day).millisecondsSinceEpoch / 1000;
-
+      final queryStartDate = DateTime(
+        dateTime.year,
+        dateTime.month,
+        dateTime.day,
+      );
+      final queryEndDate = queryStartDate.add(const Duration(days: 1));
       final q = _db.inverterSnapshots.select()
-        ..where((e) => e.recordedAt.isBiggerOrEqualValue(today))
+        ..where(
+          (e) => e.recordedAt.isBiggerOrEqualValue(
+            queryStartDate.millisecondsSinceEpoch / 1000,
+          ),
+        )
+        ..where(
+          (e) => e.recordedAt.isSmallerThanValue(
+            queryEndDate.millisecondsSinceEpoch / 1000,
+          ),
+        )
         ..where((e) => e.inverterId.equals(inverterId));
 
       return q
           .watch() //
           .handleError((e, s) {
-            _logger.severe('Failure emitting todays inverter snapshots', e, s);
+            _logger.severe('Failure emitting inverter snapshots', e, s);
           });
     } catch (e, stackTrace) {
       _logger.severe(
-        'Failed to create todays inverter snapshots stream',
+        'Failed to create inverter snapshots stream',
         e,
         stackTrace,
       );
@@ -58,6 +73,16 @@ class OfflineDatabaseService {
     }
   }
 
+  Future<List<Inverter>> getInverters() async {
+    try {
+      final q = _db.inverters.select();
+      return await q.get();
+    } catch (e, stackTrace) {
+      _logger.severe('Failed to get inverters', e, stackTrace);
+      rethrow;
+    }
+  }
+
   Stream<List<Inverter>> inverters() {
     try {
       final q = _db.inverters.select();
@@ -80,6 +105,39 @@ class OfflineDatabaseService {
       });
     } catch (e, s) {
       _logger.severe('Failed to set inverters', e, s);
+      rethrow;
+    }
+  }
+
+  /// If userId is provided, all existing memberships for that user will be
+  /// deleted and replaced with the new memberships.
+  ///
+  /// Otherwise, the memberships will be added to the existing memberships.
+  Future<void> setInverterMembers(
+    List<InverterMember> members, [
+    String? userId,
+  ]) async {
+    try {
+      await _db.transaction(() async {
+        if (userId != null) {
+          await _db.inverterMembers.deleteWhere((e) => e.userId.equals(userId));
+        }
+        await _db.inverterMembers.insertAll(members);
+      });
+    } catch (e, s) {
+      _logger.severe('Failed to set inverter members', e, s);
+      rethrow;
+    }
+  }
+
+  Stream<InverterMember?> inverterMembership(String userId, String inverterId) {
+    try {
+      final q = _db.inverterMembers.select()
+        ..where((e) => e.userId.equals(userId))
+        ..where((e) => e.inverterId.equals(inverterId));
+      return q.watchSingleOrNull();
+    } catch (e, s) {
+      _logger.severe('Failed to get inverter membership', e, s);
       rethrow;
     }
   }
@@ -161,19 +219,39 @@ class OfflineDatabaseService {
     }
   }
 
-  // Future<void> removeSnapshot(String snapshotId) async {
-  //   try {
-  //     await _db.inverterSnapshots.deleteWhere((e) => e.id.equals(snapshotId));
-  //   } catch (e, s) {
-  //     _logger.severe('Failed to remove snapshot', e, s);
-  //     rethrow;
-  //   }
-  // }
-
   Future<DateTime?> getInverterLastSnapshotTime(String inverterId) async {
     try {
       final q = _db.inverterSnapshots.select()
         ..where((e) => e.inverterId.equals(inverterId))
+        ..orderBy([(e) => OrderingTerm.desc(e.recordedAt)])
+        ..limit(1);
+      final snapshot = await q.getSingleOrNull();
+      return snapshot?.recordedAt;
+    } catch (e, s) {
+      _logger.severe('Failed to get inverter last snapshot time', e, s);
+      rethrow;
+    }
+  }
+
+  Future<DateTime?> getInverterLastSnapshotTimeForDate(
+    String inverterId,
+    DateTime date,
+  ) async {
+    try {
+      final queryStartDate = DateTime(date.year, date.month, date.day);
+      final queryEndDate = queryStartDate.add(const Duration(days: 1));
+      final q = _db.inverterSnapshots.select()
+        ..where((e) => e.inverterId.equals(inverterId))
+        ..where(
+          (e) => e.recordedAt.isBiggerOrEqualValue(
+            queryStartDate.millisecondsSinceEpoch / 1000,
+          ),
+        )
+        ..where(
+          (e) => e.recordedAt.isSmallerThanValue(
+            queryEndDate.millisecondsSinceEpoch / 1000,
+          ),
+        )
         ..orderBy([(e) => OrderingTerm.desc(e.recordedAt)])
         ..limit(1);
       final snapshot = await q.getSingleOrNull();
