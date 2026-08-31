@@ -8,6 +8,7 @@ import 'app_database.drift.dart';
 import 'gateway.dart';
 import 'gateway_event.dart';
 import 'inverter.dart';
+import 'inverter_invite.dart';
 import 'inverter_member.dart';
 import 'inverter_snapshot.dart';
 
@@ -18,6 +19,7 @@ import 'inverter_snapshot.dart';
     InverterMembers,
     InverterSnapshots,
     Inverters,
+    InverterInvites,
   ],
 )
 class AppDatabase extends $AppDatabase {

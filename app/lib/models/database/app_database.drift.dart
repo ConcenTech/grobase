@@ -6,6 +6,7 @@ import 'package:grobase/models/database/gateway.drift.dart' as i2;
 import 'package:grobase/models/database/inverter_member.drift.dart' as i3;
 import 'package:grobase/models/database/inverter_snapshot.drift.dart' as i4;
 import 'package:grobase/models/database/inverter.drift.dart' as i5;
+import 'package:grobase/models/database/inverter_invite.drift.dart' as i6;
 
 abstract class $AppDatabase extends i0.GeneratedDatabase {
   $AppDatabase(i0.QueryExecutor e) : super(e);
@@ -19,6 +20,8 @@ abstract class $AppDatabase extends i0.GeneratedDatabase {
   late final i4.$InverterSnapshotsTable inverterSnapshots = i4
       .$InverterSnapshotsTable(this);
   late final i5.$InvertersTable inverters = i5.$InvertersTable(this);
+  late final i6.$InverterInvitesTable inverterInvites = i6
+      .$InverterInvitesTable(this);
   @override
   Iterable<i0.TableInfo<i0.Table, Object?>> get allTables =>
       allSchemaEntities.whereType<i0.TableInfo<i0.Table, Object?>>();
@@ -29,6 +32,7 @@ abstract class $AppDatabase extends i0.GeneratedDatabase {
     inverterMembers,
     inverterSnapshots,
     inverters,
+    inverterInvites,
   ];
 }
 
@@ -45,4 +49,6 @@ class $AppDatabaseManager {
       i4.$$InverterSnapshotsTableTableManager(_db, _db.inverterSnapshots);
   i5.$$InvertersTableTableManager get inverters =>
       i5.$$InvertersTableTableManager(_db, _db.inverters);
+  i6.$$InverterInvitesTableTableManager get inverterInvites =>
+      i6.$$InverterInvitesTableTableManager(_db, _db.inverterInvites);
 }
