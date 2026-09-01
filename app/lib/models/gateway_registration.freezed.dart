@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // coverage:ignore-file
-// ignore_for_file: type=lint
+// ignore_for_file: type=lint, type=warning, deprecated_member_use, deprecated_member_use_from_same_package
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'gateway_registration.dart';
@@ -9,6 +9,7 @@ part of 'gateway_registration.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format off
 T _$identity<T>(T value) => value;
 
@@ -27,23 +28,29 @@ $GatewayRegistrationResponseCopyWith<GatewayRegistrationResponse> get copyWith =
 
 @override
 void debugFillProperties(DiagnosticPropertiesBuilder properties) {
+  final _this = this as GatewayRegistrationResponse;
   properties
     ..add(DiagnosticsProperty('type', 'GatewayRegistrationResponse'))
-    ..add(DiagnosticsProperty('gatewayId', gatewayId))..add(DiagnosticsProperty('inverterId', inverterId))..add(DiagnosticsProperty('deviceSecret', deviceSecret))..add(DiagnosticsProperty('inverterSerialNumber', inverterSerialNumber));
+    ..add(DiagnosticsProperty('gatewayId', _this.gatewayId))..add(DiagnosticsProperty('inverterId', _this.inverterId))..add(DiagnosticsProperty('deviceSecret', _this.deviceSecret))..add(DiagnosticsProperty('inverterSerialNumber', _this.inverterSerialNumber));
 }
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is GatewayRegistrationResponse&&(identical(other.gatewayId, gatewayId) || other.gatewayId == gatewayId)&&(identical(other.inverterId, inverterId) || other.inverterId == inverterId)&&(identical(other.deviceSecret, deviceSecret) || other.deviceSecret == deviceSecret)&&(identical(other.inverterSerialNumber, inverterSerialNumber) || other.inverterSerialNumber == inverterSerialNumber));
+  final _this = this as GatewayRegistrationResponse;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is GatewayRegistrationResponse&&(identical(other.gatewayId, _this.gatewayId) || other.gatewayId == _this.gatewayId)&&(identical(other.inverterId, _this.inverterId) || other.inverterId == _this.inverterId)&&(identical(other.deviceSecret, _this.deviceSecret) || other.deviceSecret == _this.deviceSecret)&&(identical(other.inverterSerialNumber, _this.inverterSerialNumber) || other.inverterSerialNumber == _this.inverterSerialNumber));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,gatewayId,inverterId,deviceSecret,inverterSerialNumber);
+int get hashCode {
+  final _this = this as GatewayRegistrationResponse;
+  return Object.hash(runtimeType,_this.gatewayId,_this.inverterId,_this.deviceSecret,_this.inverterSerialNumber);
+}
 
 @override
 String toString({ DiagnosticLevel minLevel = DiagnosticLevel.info }) {
-  return 'GatewayRegistrationResponse(gatewayId: $gatewayId, inverterId: $inverterId, deviceSecret: $deviceSecret, inverterSerialNumber: $inverterSerialNumber)';
+  final _this = this as GatewayRegistrationResponse;
+  return 'GatewayRegistrationResponse(gatewayId: ${_this.gatewayId}, inverterId: ${_this.inverterId}, deviceSecret: ${_this.deviceSecret}, inverterSerialNumber: ${_this.inverterSerialNumber})';
 }
 
 
@@ -72,7 +79,7 @@ class _$GatewayRegistrationResponseCopyWithImpl<$Res>
 /// Create a copy of GatewayRegistrationResponse
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? gatewayId = null,Object? inverterId = null,Object? deviceSecret = null,Object? inverterSerialNumber = null,}) {
-  return _then(_self.copyWith(
+  return _then(GatewayRegistrationResponse(
 gatewayId: null == gatewayId ? _self.gatewayId : gatewayId // ignore: cast_nullable_to_non_nullable
 as String,inverterId: null == inverterId ? _self.inverterId : inverterId // ignore: cast_nullable_to_non_nullable
 as String,deviceSecret: null == deviceSecret ? _self.deviceSecret : deviceSecret // ignore: cast_nullable_to_non_nullable
@@ -238,23 +245,25 @@ Map<String, dynamic> toJson() {
 }
 @override
 void debugFillProperties(DiagnosticPropertiesBuilder properties) {
-  properties
+    properties
     ..add(DiagnosticsProperty('type', 'GatewayRegistrationResponse'))
     ..add(DiagnosticsProperty('gatewayId', gatewayId))..add(DiagnosticsProperty('inverterId', inverterId))..add(DiagnosticsProperty('deviceSecret', deviceSecret))..add(DiagnosticsProperty('inverterSerialNumber', inverterSerialNumber));
 }
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _GatewayRegistrationResponse&&(identical(other.gatewayId, gatewayId) || other.gatewayId == gatewayId)&&(identical(other.inverterId, inverterId) || other.inverterId == inverterId)&&(identical(other.deviceSecret, deviceSecret) || other.deviceSecret == deviceSecret)&&(identical(other.inverterSerialNumber, inverterSerialNumber) || other.inverterSerialNumber == inverterSerialNumber));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _GatewayRegistrationResponse&&(identical(other.gatewayId, gatewayId) || other.gatewayId == gatewayId)&&(identical(other.inverterId, inverterId) || other.inverterId == inverterId)&&(identical(other.deviceSecret, deviceSecret) || other.deviceSecret == deviceSecret)&&(identical(other.inverterSerialNumber, inverterSerialNumber) || other.inverterSerialNumber == inverterSerialNumber));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,gatewayId,inverterId,deviceSecret,inverterSerialNumber);
+int get hashCode {
+    return Object.hash(runtimeType,gatewayId,inverterId,deviceSecret,inverterSerialNumber);
+}
 
 @override
 String toString({ DiagnosticLevel minLevel = DiagnosticLevel.info }) {
-  return 'GatewayRegistrationResponse(gatewayId: $gatewayId, inverterId: $inverterId, deviceSecret: $deviceSecret, inverterSerialNumber: $inverterSerialNumber)';
+    return 'GatewayRegistrationResponse(gatewayId: $gatewayId, inverterId: $inverterId, deviceSecret: $deviceSecret, inverterSerialNumber: $inverterSerialNumber)';
 }
 
 
@@ -311,23 +320,29 @@ $GatewayRegistrationRequestCopyWith<GatewayRegistrationRequest> get copyWith => 
 
 @override
 void debugFillProperties(DiagnosticPropertiesBuilder properties) {
+  final _this = this as GatewayRegistrationRequest;
   properties
     ..add(DiagnosticsProperty('type', 'GatewayRegistrationRequest'))
-    ..add(DiagnosticsProperty('mode', mode))..add(DiagnosticsProperty('hardwareId', hardwareId))..add(DiagnosticsProperty('inverterSerialNumber', inverterSerialNumber))..add(DiagnosticsProperty('profile', profile))..add(DiagnosticsProperty('inverterId', inverterId))..add(DiagnosticsProperty('displayName', displayName))..add(DiagnosticsProperty('location', location));
+    ..add(DiagnosticsProperty('mode', _this.mode))..add(DiagnosticsProperty('hardwareId', _this.hardwareId))..add(DiagnosticsProperty('inverterSerialNumber', _this.inverterSerialNumber))..add(DiagnosticsProperty('profile', _this.profile))..add(DiagnosticsProperty('inverterId', _this.inverterId))..add(DiagnosticsProperty('displayName', _this.displayName))..add(DiagnosticsProperty('location', _this.location));
 }
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is GatewayRegistrationRequest&&(identical(other.mode, mode) || other.mode == mode)&&(identical(other.hardwareId, hardwareId) || other.hardwareId == hardwareId)&&(identical(other.inverterSerialNumber, inverterSerialNumber) || other.inverterSerialNumber == inverterSerialNumber)&&(identical(other.profile, profile) || other.profile == profile)&&(identical(other.inverterId, inverterId) || other.inverterId == inverterId)&&(identical(other.displayName, displayName) || other.displayName == displayName)&&(identical(other.location, location) || other.location == location));
+  final _this = this as GatewayRegistrationRequest;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is GatewayRegistrationRequest&&(identical(other.mode, _this.mode) || other.mode == _this.mode)&&(identical(other.hardwareId, _this.hardwareId) || other.hardwareId == _this.hardwareId)&&(identical(other.inverterSerialNumber, _this.inverterSerialNumber) || other.inverterSerialNumber == _this.inverterSerialNumber)&&(identical(other.profile, _this.profile) || other.profile == _this.profile)&&(identical(other.inverterId, _this.inverterId) || other.inverterId == _this.inverterId)&&(identical(other.displayName, _this.displayName) || other.displayName == _this.displayName)&&(identical(other.location, _this.location) || other.location == _this.location));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,mode,hardwareId,inverterSerialNumber,profile,inverterId,displayName,location);
+int get hashCode {
+  final _this = this as GatewayRegistrationRequest;
+  return Object.hash(runtimeType,_this.mode,_this.hardwareId,_this.inverterSerialNumber,_this.profile,_this.inverterId,_this.displayName,_this.location);
+}
 
 @override
 String toString({ DiagnosticLevel minLevel = DiagnosticLevel.info }) {
-  return 'GatewayRegistrationRequest(mode: $mode, hardwareId: $hardwareId, inverterSerialNumber: $inverterSerialNumber, profile: $profile, inverterId: $inverterId, displayName: $displayName, location: $location)';
+  final _this = this as GatewayRegistrationRequest;
+  return 'GatewayRegistrationRequest(mode: ${_this.mode}, hardwareId: ${_this.hardwareId}, inverterSerialNumber: ${_this.inverterSerialNumber}, profile: ${_this.profile}, inverterId: ${_this.inverterId}, displayName: ${_this.displayName}, location: ${_this.location})';
 }
 
 
@@ -356,7 +371,7 @@ class _$GatewayRegistrationRequestCopyWithImpl<$Res>
 /// Create a copy of GatewayRegistrationRequest
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? mode = null,Object? hardwareId = null,Object? inverterSerialNumber = null,Object? profile = freezed,Object? inverterId = freezed,Object? displayName = null,Object? location = null,}) {
-  return _then(_self.copyWith(
+  return _then(GatewayRegistrationRequest(
 mode: null == mode ? _self.mode : mode // ignore: cast_nullable_to_non_nullable
 as GatewayRegistrationMode,hardwareId: null == hardwareId ? _self.hardwareId : hardwareId // ignore: cast_nullable_to_non_nullable
 as String,inverterSerialNumber: null == inverterSerialNumber ? _self.inverterSerialNumber : inverterSerialNumber // ignore: cast_nullable_to_non_nullable
@@ -537,23 +552,25 @@ Map<String, dynamic> toJson() {
 }
 @override
 void debugFillProperties(DiagnosticPropertiesBuilder properties) {
-  properties
+    properties
     ..add(DiagnosticsProperty('type', 'GatewayRegistrationRequest'))
     ..add(DiagnosticsProperty('mode', mode))..add(DiagnosticsProperty('hardwareId', hardwareId))..add(DiagnosticsProperty('inverterSerialNumber', inverterSerialNumber))..add(DiagnosticsProperty('profile', profile))..add(DiagnosticsProperty('inverterId', inverterId))..add(DiagnosticsProperty('displayName', displayName))..add(DiagnosticsProperty('location', location));
 }
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _GatewayRegistrationRequest&&(identical(other.mode, mode) || other.mode == mode)&&(identical(other.hardwareId, hardwareId) || other.hardwareId == hardwareId)&&(identical(other.inverterSerialNumber, inverterSerialNumber) || other.inverterSerialNumber == inverterSerialNumber)&&(identical(other.profile, profile) || other.profile == profile)&&(identical(other.inverterId, inverterId) || other.inverterId == inverterId)&&(identical(other.displayName, displayName) || other.displayName == displayName)&&(identical(other.location, location) || other.location == location));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _GatewayRegistrationRequest&&(identical(other.mode, mode) || other.mode == mode)&&(identical(other.hardwareId, hardwareId) || other.hardwareId == hardwareId)&&(identical(other.inverterSerialNumber, inverterSerialNumber) || other.inverterSerialNumber == inverterSerialNumber)&&(identical(other.profile, profile) || other.profile == profile)&&(identical(other.inverterId, inverterId) || other.inverterId == inverterId)&&(identical(other.displayName, displayName) || other.displayName == displayName)&&(identical(other.location, location) || other.location == location));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,mode,hardwareId,inverterSerialNumber,profile,inverterId,displayName,location);
+int get hashCode {
+    return Object.hash(runtimeType,mode,hardwareId,inverterSerialNumber,profile,inverterId,displayName,location);
+}
 
 @override
 String toString({ DiagnosticLevel minLevel = DiagnosticLevel.info }) {
-  return 'GatewayRegistrationRequest(mode: $mode, hardwareId: $hardwareId, inverterSerialNumber: $inverterSerialNumber, profile: $profile, inverterId: $inverterId, displayName: $displayName, location: $location)';
+    return 'GatewayRegistrationRequest(mode: $mode, hardwareId: $hardwareId, inverterSerialNumber: $inverterSerialNumber, profile: $profile, inverterId: $inverterId, displayName: $displayName, location: $location)';
 }
 
 

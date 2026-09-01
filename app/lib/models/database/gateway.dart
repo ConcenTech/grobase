@@ -20,7 +20,8 @@ class Gateways extends Table {
   @JsonKey('created_at')
   RealColumn get createdAt => real().map(const DateTimeConverter())();
   @JsonKey('retired_at')
-  RealColumn get retiredAt => real().map(const DateTimeConverter())();
+  RealColumn get retiredAt =>
+      real().nullable().map(const NullableDateTimeConverter())();
 
   @override
   Set<Column> get primaryKey => {id};

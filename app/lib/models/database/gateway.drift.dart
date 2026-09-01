@@ -15,7 +15,7 @@ typedef $$GatewaysTableCreateCompanionBuilder =
       required DateTime lastSeenAt,
       required String firmwareVersion,
       required DateTime createdAt,
-      required DateTime retiredAt,
+      i0.Value<DateTime?> retiredAt,
       i0.Value<int> rowid,
     });
 typedef $$GatewaysTableUpdateCompanionBuilder =
@@ -28,7 +28,7 @@ typedef $$GatewaysTableUpdateCompanionBuilder =
       i0.Value<DateTime> lastSeenAt,
       i0.Value<String> firmwareVersion,
       i0.Value<DateTime> createdAt,
-      i0.Value<DateTime> retiredAt,
+      i0.Value<DateTime?> retiredAt,
       i0.Value<int> rowid,
     });
 
@@ -84,11 +84,11 @@ class $$GatewaysTableFilterComposer
         builder: (column) => i0.ColumnWithTypeConverterFilters(column),
       );
 
-  i0.ColumnWithTypeConverterFilters<DateTime, DateTime, double> get retiredAt =>
-      $composableBuilder(
-        column: $table.retiredAt,
-        builder: (column) => i0.ColumnWithTypeConverterFilters(column),
-      );
+  i0.ColumnWithTypeConverterFilters<DateTime?, DateTime, double>
+  get retiredAt => $composableBuilder(
+    column: $table.retiredAt,
+    builder: (column) => i0.ColumnWithTypeConverterFilters(column),
+  );
 }
 
 class $$GatewaysTableOrderingComposer
@@ -190,7 +190,7 @@ class $$GatewaysTableAnnotationComposer
   i0.GeneratedColumnWithTypeConverter<DateTime, double> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
 
-  i0.GeneratedColumnWithTypeConverter<DateTime, double> get retiredAt =>
+  i0.GeneratedColumnWithTypeConverter<DateTime?, double> get retiredAt =>
       $composableBuilder(column: $table.retiredAt, builder: (column) => column);
 }
 
@@ -237,7 +237,7 @@ class $$GatewaysTableTableManager
                 i0.Value<DateTime> lastSeenAt = const i0.Value.absent(),
                 i0.Value<String> firmwareVersion = const i0.Value.absent(),
                 i0.Value<DateTime> createdAt = const i0.Value.absent(),
-                i0.Value<DateTime> retiredAt = const i0.Value.absent(),
+                i0.Value<DateTime?> retiredAt = const i0.Value.absent(),
                 i0.Value<int> rowid = const i0.Value.absent(),
               }) => i1.GatewaysCompanion(
                 id: id,
@@ -261,7 +261,7 @@ class $$GatewaysTableTableManager
                 required DateTime lastSeenAt,
                 required String firmwareVersion,
                 required DateTime createdAt,
-                required DateTime retiredAt,
+                i0.Value<DateTime?> retiredAt = const i0.Value.absent(),
                 i0.Value<int> rowid = const i0.Value.absent(),
               }) => i1.GatewaysCompanion.insert(
                 id: id,
@@ -388,14 +388,14 @@ class $GatewaysTable extends i2.Gateways
         requiredDuringInsert: true,
       ).withConverter<DateTime>(i1.$GatewaysTable.$convertercreatedAt);
   @override
-  late final i0.GeneratedColumnWithTypeConverter<DateTime, double> retiredAt =
+  late final i0.GeneratedColumnWithTypeConverter<DateTime?, double> retiredAt =
       i0.GeneratedColumn<double>(
         'retired_at',
         aliasedName,
-        false,
+        true,
         type: i0.DriftSqlType.double,
-        requiredDuringInsert: true,
-      ).withConverter<DateTime>(i1.$GatewaysTable.$converterretiredAt);
+        requiredDuringInsert: false,
+      ).withConverter<DateTime?>(i1.$GatewaysTable.$converterretiredAt);
   @override
   List<i0.GeneratedColumn> get $columns => [
     id,
@@ -514,7 +514,7 @@ class $GatewaysTable extends i2.Gateways
         attachedDatabase.typeMapping.read(
           i0.DriftSqlType.double,
           data['${effectivePrefix}retired_at'],
-        )!,
+        ),
       ),
     );
   }
@@ -530,8 +530,8 @@ class $GatewaysTable extends i2.Gateways
       const i3.DateTimeConverter();
   static i0.JsonTypeConverter2<DateTime, double, String> $convertercreatedAt =
       const i3.DateTimeConverter();
-  static i0.JsonTypeConverter2<DateTime, double, String> $converterretiredAt =
-      const i3.DateTimeConverter();
+  static i0.JsonTypeConverter2<DateTime?, double?, String?>
+  $converterretiredAt = const i3.NullableDateTimeConverter();
 }
 
 class Gateway extends i0.DataClass implements i0.Insertable<i1.Gateway> {
@@ -543,7 +543,7 @@ class Gateway extends i0.DataClass implements i0.Insertable<i1.Gateway> {
   final DateTime lastSeenAt;
   final String firmwareVersion;
   final DateTime createdAt;
-  final DateTime retiredAt;
+  final DateTime? retiredAt;
   const Gateway({
     required this.id,
     required this.hardwareId,
@@ -553,7 +553,7 @@ class Gateway extends i0.DataClass implements i0.Insertable<i1.Gateway> {
     required this.lastSeenAt,
     required this.firmwareVersion,
     required this.createdAt,
-    required this.retiredAt,
+    this.retiredAt,
   });
   @override
   Map<String, i0.Expression> toColumns(bool nullToAbsent) {
@@ -578,7 +578,7 @@ class Gateway extends i0.DataClass implements i0.Insertable<i1.Gateway> {
         i1.$GatewaysTable.$convertercreatedAt.toSql(createdAt),
       );
     }
-    {
+    if (!nullToAbsent || retiredAt != null) {
       map['retired_at'] = i0.Variable<double>(
         i1.$GatewaysTable.$converterretiredAt.toSql(retiredAt),
       );
@@ -596,7 +596,9 @@ class Gateway extends i0.DataClass implements i0.Insertable<i1.Gateway> {
       lastSeenAt: i0.Value(lastSeenAt),
       firmwareVersion: i0.Value(firmwareVersion),
       createdAt: i0.Value(createdAt),
-      retiredAt: i0.Value(retiredAt),
+      retiredAt: retiredAt == null && nullToAbsent
+          ? const i0.Value.absent()
+          : i0.Value(retiredAt),
     );
   }
 
@@ -621,7 +623,7 @@ class Gateway extends i0.DataClass implements i0.Insertable<i1.Gateway> {
         serializer.fromJson<String>(json['created_at']),
       ),
       retiredAt: i1.$GatewaysTable.$converterretiredAt.fromJson(
-        serializer.fromJson<String>(json['retired_at']),
+        serializer.fromJson<String?>(json['retired_at']),
       ),
     );
   }
@@ -643,7 +645,7 @@ class Gateway extends i0.DataClass implements i0.Insertable<i1.Gateway> {
       'created_at': serializer.toJson<String>(
         i1.$GatewaysTable.$convertercreatedAt.toJson(createdAt),
       ),
-      'retired_at': serializer.toJson<String>(
+      'retired_at': serializer.toJson<String?>(
         i1.$GatewaysTable.$converterretiredAt.toJson(retiredAt),
       ),
     };
@@ -658,7 +660,7 @@ class Gateway extends i0.DataClass implements i0.Insertable<i1.Gateway> {
     DateTime? lastSeenAt,
     String? firmwareVersion,
     DateTime? createdAt,
-    DateTime? retiredAt,
+    i0.Value<DateTime?> retiredAt = const i0.Value.absent(),
   }) => i1.Gateway(
     id: id ?? this.id,
     hardwareId: hardwareId ?? this.hardwareId,
@@ -668,7 +670,7 @@ class Gateway extends i0.DataClass implements i0.Insertable<i1.Gateway> {
     lastSeenAt: lastSeenAt ?? this.lastSeenAt,
     firmwareVersion: firmwareVersion ?? this.firmwareVersion,
     createdAt: createdAt ?? this.createdAt,
-    retiredAt: retiredAt ?? this.retiredAt,
+    retiredAt: retiredAt.present ? retiredAt.value : this.retiredAt,
   );
   Gateway copyWithCompanion(i1.GatewaysCompanion data) {
     return Gateway(
@@ -746,7 +748,7 @@ class GatewaysCompanion extends i0.UpdateCompanion<i1.Gateway> {
   final i0.Value<DateTime> lastSeenAt;
   final i0.Value<String> firmwareVersion;
   final i0.Value<DateTime> createdAt;
-  final i0.Value<DateTime> retiredAt;
+  final i0.Value<DateTime?> retiredAt;
   final i0.Value<int> rowid;
   const GatewaysCompanion({
     this.id = const i0.Value.absent(),
@@ -769,7 +771,7 @@ class GatewaysCompanion extends i0.UpdateCompanion<i1.Gateway> {
     required DateTime lastSeenAt,
     required String firmwareVersion,
     required DateTime createdAt,
-    required DateTime retiredAt,
+    this.retiredAt = const i0.Value.absent(),
     this.rowid = const i0.Value.absent(),
   }) : id = i0.Value(id),
        hardwareId = i0.Value(hardwareId),
@@ -778,8 +780,7 @@ class GatewaysCompanion extends i0.UpdateCompanion<i1.Gateway> {
        provisionedBy = i0.Value(provisionedBy),
        lastSeenAt = i0.Value(lastSeenAt),
        firmwareVersion = i0.Value(firmwareVersion),
-       createdAt = i0.Value(createdAt),
-       retiredAt = i0.Value(retiredAt);
+       createdAt = i0.Value(createdAt);
   static i0.Insertable<i1.Gateway> custom({
     i0.Expression<String>? id,
     i0.Expression<String>? hardwareId,
@@ -815,7 +816,7 @@ class GatewaysCompanion extends i0.UpdateCompanion<i1.Gateway> {
     i0.Value<DateTime>? lastSeenAt,
     i0.Value<String>? firmwareVersion,
     i0.Value<DateTime>? createdAt,
-    i0.Value<DateTime>? retiredAt,
+    i0.Value<DateTime?>? retiredAt,
     i0.Value<int>? rowid,
   }) {
     return i1.GatewaysCompanion(
