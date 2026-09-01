@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // coverage:ignore-file
-// ignore_for_file: type=lint
+// ignore_for_file: type=lint, type=warning, deprecated_member_use, deprecated_member_use_from_same_package
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'invite_preview.dart';
@@ -9,6 +9,7 @@ part of 'invite_preview.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format off
 T _$identity<T>(T value) => value;
 
@@ -27,23 +28,29 @@ $InvitePreviewCopyWith<InvitePreview> get copyWith => _$InvitePreviewCopyWithImp
 
 @override
 void debugFillProperties(DiagnosticPropertiesBuilder properties) {
+  final _this = this as InvitePreview;
   properties
     ..add(DiagnosticsProperty('type', 'InvitePreview'))
-    ..add(DiagnosticsProperty('status', status))..add(DiagnosticsProperty('invitedByEmail', invitedByEmail))..add(DiagnosticsProperty('inverterName', inverterName))..add(DiagnosticsProperty('expiresAt', expiresAt));
+    ..add(DiagnosticsProperty('status', _this.status))..add(DiagnosticsProperty('invitedByEmail', _this.invitedByEmail))..add(DiagnosticsProperty('inverterName', _this.inverterName))..add(DiagnosticsProperty('expiresAt', _this.expiresAt));
 }
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is InvitePreview&&(identical(other.status, status) || other.status == status)&&(identical(other.invitedByEmail, invitedByEmail) || other.invitedByEmail == invitedByEmail)&&(identical(other.inverterName, inverterName) || other.inverterName == inverterName)&&(identical(other.expiresAt, expiresAt) || other.expiresAt == expiresAt));
+  final _this = this as InvitePreview;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is InvitePreview&&(identical(other.status, _this.status) || other.status == _this.status)&&(identical(other.invitedByEmail, _this.invitedByEmail) || other.invitedByEmail == _this.invitedByEmail)&&(identical(other.inverterName, _this.inverterName) || other.inverterName == _this.inverterName)&&(identical(other.expiresAt, _this.expiresAt) || other.expiresAt == _this.expiresAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,status,invitedByEmail,inverterName,expiresAt);
+int get hashCode {
+  final _this = this as InvitePreview;
+  return Object.hash(runtimeType,_this.status,_this.invitedByEmail,_this.inverterName,_this.expiresAt);
+}
 
 @override
 String toString({ DiagnosticLevel minLevel = DiagnosticLevel.info }) {
-  return 'InvitePreview(status: $status, invitedByEmail: $invitedByEmail, inverterName: $inverterName, expiresAt: $expiresAt)';
+  final _this = this as InvitePreview;
+  return 'InvitePreview(status: ${_this.status}, invitedByEmail: ${_this.invitedByEmail}, inverterName: ${_this.inverterName}, expiresAt: ${_this.expiresAt})';
 }
 
 
@@ -72,7 +79,7 @@ class _$InvitePreviewCopyWithImpl<$Res>
 /// Create a copy of InvitePreview
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? status = null,Object? invitedByEmail = freezed,Object? inverterName = freezed,Object? expiresAt = null,}) {
-  return _then(_self.copyWith(
+  return _then(InvitePreview(
 status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
 as InviteStatus,invitedByEmail: freezed == invitedByEmail ? _self.invitedByEmail : invitedByEmail // ignore: cast_nullable_to_non_nullable
 as String?,inverterName: freezed == inverterName ? _self.inverterName : inverterName // ignore: cast_nullable_to_non_nullable
@@ -238,23 +245,25 @@ Map<String, dynamic> toJson() {
 }
 @override
 void debugFillProperties(DiagnosticPropertiesBuilder properties) {
-  properties
+    properties
     ..add(DiagnosticsProperty('type', 'InvitePreview'))
     ..add(DiagnosticsProperty('status', status))..add(DiagnosticsProperty('invitedByEmail', invitedByEmail))..add(DiagnosticsProperty('inverterName', inverterName))..add(DiagnosticsProperty('expiresAt', expiresAt));
 }
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _InvitePreview&&(identical(other.status, status) || other.status == status)&&(identical(other.invitedByEmail, invitedByEmail) || other.invitedByEmail == invitedByEmail)&&(identical(other.inverterName, inverterName) || other.inverterName == inverterName)&&(identical(other.expiresAt, expiresAt) || other.expiresAt == expiresAt));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _InvitePreview&&(identical(other.status, status) || other.status == status)&&(identical(other.invitedByEmail, invitedByEmail) || other.invitedByEmail == invitedByEmail)&&(identical(other.inverterName, inverterName) || other.inverterName == inverterName)&&(identical(other.expiresAt, expiresAt) || other.expiresAt == expiresAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,status,invitedByEmail,inverterName,expiresAt);
+int get hashCode {
+    return Object.hash(runtimeType,status,invitedByEmail,inverterName,expiresAt);
+}
 
 @override
 String toString({ DiagnosticLevel minLevel = DiagnosticLevel.info }) {
-  return 'InvitePreview(status: $status, invitedByEmail: $invitedByEmail, inverterName: $inverterName, expiresAt: $expiresAt)';
+    return 'InvitePreview(status: $status, invitedByEmail: $invitedByEmail, inverterName: $inverterName, expiresAt: $expiresAt)';
 }
 
 

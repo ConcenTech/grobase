@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // coverage:ignore-file
-// ignore_for_file: type=lint
+// ignore_for_file: type=lint, type=warning, deprecated_member_use, deprecated_member_use_from_same_package
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'invite_link.dart';
@@ -9,6 +9,7 @@ part of 'invite_link.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
 // dart format off
 T _$identity<T>(T value) => value;
 
@@ -28,16 +29,21 @@ $InviteLinkCopyWith<InviteLink> get copyWith => _$InviteLinkCopyWithImpl<InviteL
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is InviteLink&&(identical(other.id, id) || other.id == id)&&(identical(other.token, token) || other.token == token)&&(identical(other.url, url) || other.url == url)&&(identical(other.expiresAt, expiresAt) || other.expiresAt == expiresAt));
+  final _this = this as InviteLink;
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is InviteLink&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.token, _this.token) || other.token == _this.token)&&(identical(other.url, _this.url) || other.url == _this.url)&&(identical(other.expiresAt, _this.expiresAt) || other.expiresAt == _this.expiresAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,token,url,expiresAt);
+int get hashCode {
+  final _this = this as InviteLink;
+  return Object.hash(runtimeType,_this.id,_this.token,_this.url,_this.expiresAt);
+}
 
 @override
 String toString() {
-  return 'InviteLink(id: $id, token: $token, url: $url, expiresAt: $expiresAt)';
+  final _this = this as InviteLink;
+  return 'InviteLink(id: ${_this.id}, token: ${_this.token}, url: ${_this.url}, expiresAt: ${_this.expiresAt})';
 }
 
 
@@ -66,7 +72,7 @@ class _$InviteLinkCopyWithImpl<$Res>
 /// Create a copy of InviteLink
 /// with the given fields replaced by the non-null parameter values.
 @pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? token = null,Object? url = null,Object? expiresAt = null,}) {
-  return _then(_self.copyWith(
+  return _then(InviteLink(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,token: null == token ? _self.token : token // ignore: cast_nullable_to_non_nullable
 as String,url: null == url ? _self.url : url // ignore: cast_nullable_to_non_nullable
@@ -233,16 +239,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _InviteLink&&(identical(other.id, id) || other.id == id)&&(identical(other.token, token) || other.token == token)&&(identical(other.url, url) || other.url == url)&&(identical(other.expiresAt, expiresAt) || other.expiresAt == expiresAt));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _InviteLink&&(identical(other.id, id) || other.id == id)&&(identical(other.token, token) || other.token == token)&&(identical(other.url, url) || other.url == url)&&(identical(other.expiresAt, expiresAt) || other.expiresAt == expiresAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,token,url,expiresAt);
+int get hashCode {
+    return Object.hash(runtimeType,id,token,url,expiresAt);
+}
 
 @override
 String toString() {
-  return 'InviteLink(id: $id, token: $token, url: $url, expiresAt: $expiresAt)';
+    return 'InviteLink(id: $id, token: $token, url: $url, expiresAt: $expiresAt)';
 }
 
 
