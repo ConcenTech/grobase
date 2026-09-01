@@ -23,9 +23,10 @@ import 'theme/theme.dart';
 // Dark scaffold background: const Color(0xFF1B2440)
 
 /// When true, use mock data for local development and never touch Supabase.
-const kUseMocks = true && kDebugMode;
+const kUseMocks = false && kDebugMode;
 
 void main() async {
+  //
   LicenseRegistry.addLicense(() async* {
     final String license = await rootBundle.loadString('google_fonts/OFL.txt');
     yield LicenseEntryWithLineBreaks(<String>['google_fonts'], license);
