@@ -6,6 +6,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.17] - 31/08/26
+
+## Fixed
+- Sync fails due to missing database migration.
+
 ## [0.1.16] - 31/08/26
 
 ## Added
@@ -161,3 +166,5 @@ Initial beta app release
 [0.1.13]: https://github.com/ConcenTech/grobase/compare/v0.1.12...v0.1.13
 [0.1.14]: https://github.com/ConcenTech/grobase/compare/v0.1.13...v0.1.14
 [0.1.15]: https://github.com/ConcenTech/grobase/compare/v0.1.14...v0.1.15
+[0.1.16]: https://github.com/ConcenTech/grobase/compare/v0.1.15...v0.1.16
+[0.1.17]: https://github.com/ConcenTech/grobase/compare/v0.1.16...v0.1.17
