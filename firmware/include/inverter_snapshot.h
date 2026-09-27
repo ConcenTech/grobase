@@ -30,6 +30,8 @@ struct InverterSnapshot {
   float grid_current_a;
   /// Pactogrid (1029–30): power exported to the utility grid.
   float power_to_grid_w;
+  /// Etouser_today (1044–45): energy imported from the utility grid to the house.
+  float energy_to_user_today_kwh;
   float energy_to_grid_today_kwh;
   float ac_charge_energy_today_kwh;
   float ac_charge_power_w;

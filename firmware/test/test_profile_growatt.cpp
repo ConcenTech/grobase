@@ -33,6 +33,8 @@ static void fill_sample_tables(uint16_t *r1009,
   r1009[1030 - 1009] = 0x00FA; // 25.0 W
   r1009[1037 - 1009] = 0x0000;
   r1009[1038 - 1009] = 0x01F4; // 50.0 W
+  r1009[1044 - 1009] = 0x0000;
+  r1009[1045 - 1009] = 0x007D; // 12.5 kWh Etouser_today (0.1 kWh)
   r1009[1048 - 1009] = 0x0000;
   r1009[1049 - 1009] = 0x012C; // 30.0 kWh
   r1009[1052 - 1009] = 0x0000;
@@ -93,6 +95,7 @@ void test_profile_growatt_fill_maps_expected_fields() {
   TEST_ASSERT_EQUAL_FLOAT(10.0f, snapshot.eac_today_kwh);
   TEST_ASSERT_EQUAL_FLOAT(10.0f, snapshot.pv_energy_today_kwh);
   TEST_ASSERT_EQUAL_FLOAT(300.0f, snapshot.pv_power_w);
+  TEST_ASSERT_EQUAL_FLOAT(12.5f, snapshot.energy_to_user_today_kwh);
   TEST_ASSERT_EQUAL_FLOAT(40.0f, snapshot.power_to_user_w);
   TEST_ASSERT_EQUAL_FLOAT(50.0f, snapshot.home_load_power_w);
   TEST_ASSERT_EQUAL_FLOAT(100.0f, snapshot.grid_pac_w);
@@ -143,6 +146,12 @@ void test_profile_growatt_ffff_sentinel_is_zero() {
 
   TEST_ASSERT_EQUAL_FLOAT(0.0f, snapshot.pv_power_w);
   TEST_ASSERT_EQUAL_FLOAT(0.0f, snapshot.grid_voltage_v);
+
+  // Same displayed spike when the low word is not exactly 0xFFFF.
+  r2097[2102 - 2097] = SENTINEL_VALUE;
+  r2097[2103 - 2097] = 0xFF00;
+  profileGrowattFill(&snapshot, r1009, r1086, r1124, r2035, r2097, r2112);
+  TEST_ASSERT_EQUAL_FLOAT(0.0f, snapshot.pv_power_w);
 }
 
 int main(int argc, char **argv) {

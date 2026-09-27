@@ -32,6 +32,7 @@ void printInverterSnapshotJson(const InverterSnapshot *s) {
   DEBUG_PRINTF("\"GridVoltage_V\":%.1f,", s->grid_voltage_v);
   DEBUG_PRINTF("\"GridCurrent_A\":%.1f,", s->grid_current_a);
   DEBUG_PRINTF("\"PowerToGrid_W\":%.1f,", s->power_to_grid_w);
+  DEBUG_PRINTF("\"EnergyToUserToday_kWh\":%.1f,", s->energy_to_user_today_kwh);
   DEBUG_PRINTF("\"EnergyToGridToday_kWh\":%.1f,", s->energy_to_grid_today_kwh);
   DEBUG_PRINTF("\"ACChargeEnergyToday_kWh\":%.1f,", s->ac_charge_energy_today_kwh);
   DEBUG_PRINTF("\"ACChargePower_W\":%.1f,", s->ac_charge_power_w);

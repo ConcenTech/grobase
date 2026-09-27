@@ -171,7 +171,7 @@ static String buildSnapshotJson(const InverterSnapshot *s,
   appendJsonNumber(j, "grid_current_a", s->grid_current_a, 1);
   appendJsonNumber(j, "grid_export_power_w", s->power_to_grid_w, 1);
   appendJsonNumber(j, "grid_export_energy_today_kwh", s->energy_to_grid_today_kwh, 1);
-  appendJsonNumber(j, "grid_import_energy_today_kwh", s->ac_charge_energy_today_kwh, 1);
+  appendJsonNumber(j, "grid_import_energy_today_kwh", s->energy_to_user_today_kwh, 1);
   appendJsonNumber(j, "grid_charge_power_w", s->ac_charge_power_spa_w, 1);
   appendJsonNumber(j, "solar_energy_today_kwh", s->pv_energy_today_kwh, 1);
   appendJsonNumber(j, "solar_power_w", s->pv_power_w, 1);
