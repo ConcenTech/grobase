@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart' hide BottomNavigationBar;
+import 'package:material_ui/material_ui.dart' hide BottomNavigationBar;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -60,7 +60,10 @@ class AppScaffold extends ConsumerWidget {
 
   Widget _buildTitle(BuildContext context) {
     if (title != null) {
-      return Text(title!, style: Theme.of(context).textTheme.headlineLarge);
+      return Hero(
+        tag: 'app-bar-title-$title',
+        child: Text(title!, style: Theme.of(context).textTheme.headlineLarge),
+      );
     }
 
     if (showAppName) {
