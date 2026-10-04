@@ -125,7 +125,6 @@ class _InviteValidWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final line1 = preview.invitedByEmail == null
         ? 'You have been invited as a viewer to'
         : '${preview.invitedByEmail} has invited you to be a viewer of';
