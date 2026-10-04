@@ -131,7 +131,11 @@ class SyncService {
 
   Future<void> _syncUser() async {
     try {
-      final userId = _auth.currentUser!.id;
+      final userId = _auth.currentUser?.id;
+
+      if (userId == null) {
+        return;
+      }
 
       final memberships = await _onlineService.userMemberships(userId);
       await _offlineService.setInverterMembers(memberships, userId);
