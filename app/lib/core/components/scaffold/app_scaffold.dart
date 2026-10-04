@@ -77,11 +77,11 @@ class AppScaffold extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     ref.listen(DatabaseProviders.singleSyncState(null), (previous, next) {
       if (next.hasError) {
-        final messenger = ScaffoldMessenger.of(context);
-        messenger.showSnackBar(
+        ScaffoldMessenger.of(context).showSnackBar(
           SyncErrorSnackBar(
             message: next.error!,
             onRetry: () {
+              final messenger = ScaffoldMessenger.of(context);
               messenger.hideCurrentSnackBar();
               ref.read(DatabaseProviders.syncService).restart();
             },
