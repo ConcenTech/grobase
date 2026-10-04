@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>UI mocks — Grobase</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600&family=Sora:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --brand-green: #6eb92b;
+        --ink: #37474f;
+        --muted: #5d6b7a;
+        --surface: #ffffff;
+        --line: rgba(28, 36, 48, 0.12);
+        font-family: Sora, "Segoe UI", sans-serif;
+        color: var(--ink);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background:
+          radial-gradient(ellipse at 18% 0%, rgba(110, 185, 43, 0.16), transparent 42%),
+          linear-gradient(165deg, #e8f1f8 0%, #dfe8f0 48%, #cfd9e4 100%);
+        padding: 32px 20px 64px;
+      }
+
+      body.night {
+        background: #000;
+        color: #edf1f7;
+        --muted: #b7c2d0;
+        --surface: #141414;
+        --line: rgba(237, 241, 247, 0.14);
+      }
+
+      .page {
+        max-width: 720px;
+        margin: 0 auto;
+      }
+
+      .top {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: end;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 28px;
+      }
+
+      .brand {
+        font-family: Montserrat, Sora, sans-serif;
+        font-weight: 600;
+        font-size: 1.75rem;
+        letter-spacing: -0.02em;
+        line-height: 1;
+      }
+
+      .brand .gro {
+        color: var(--brand-green);
+      }
+
+      h1 {
+        margin: 8px 0 0;
+        font-family: Montserrat, Sora, sans-serif;
+        font-size: 1.35rem;
+        font-weight: 600;
+        letter-spacing: -0.02em;
+      }
+
+      .top p {
+        margin: 6px 0 0;
+        max-width: 36rem;
+        color: var(--muted);
+        font-size: 0.92rem;
+        line-height: 1.5;
+      }
+
+      button {
+        appearance: none;
+        border: 1px solid color-mix(in srgb, var(--ink) 16%, transparent);
+        background: rgba(255, 255, 255, 0.72);
+        color: var(--ink);
+        border-radius: 999px;
+        padding: 8px 14px;
+        font: inherit;
+        font-size: 0.85rem;
+        cursor: pointer;
+      }
+
+      body.night button {
+        background: rgba(255, 255, 255, 0.08);
+        color: #edf1f7;
+        border-color: rgba(237, 241, 247, 0.2);
+      }
+
+      button[aria-pressed="true"] {
+        background: #166534;
+        border-color: #166534;
+        color: #fff;
+      }
+
+      .list {
+        display: grid;
+        gap: 10px;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+
+      .list a {
+        display: grid;
+        gap: 4px;
+        padding: 16px 18px;
+        border-radius: 14px;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        color: inherit;
+        text-decoration: none;
+      }
+
+      .list a:hover {
+        border-color: var(--brand-green);
+      }
+
+      .list a:focus-visible {
+        outline: 2px solid var(--brand-green);
+        outline-offset: 2px;
+      }
+
+      .list strong {
+        font-family: Montserrat, Sora, sans-serif;
+        font-weight: 600;
+        font-size: 1rem;
+      }
+
+      .list span {
+        color: var(--muted);
+        font-size: 0.86rem;
+        line-height: 1.4;
+      }
+    </style>
+  </head>
+  <body class="night">
+    <div class="page">
+      <header class="top">
+        <div>
+          <div class="brand"><span class="gro">Gro</span>base</div>
+          <h1>UI mocks</h1>
+          <p>Open a mock in the browser. Each page links back here.</p>
+        </div>
+        <button type="button" id="toggle-night" aria-pressed="true">Night</button>
+      </header>
+
+      <ul class="list">
+        <li>
+          <a href="home_screen_ui_mock.html">
+            <strong>Home screen</strong>
+            <span>Live home with the diagram, power cards, and a link to history.</span>
+          </a>
+        </li>
+        <li>
+          <a href="history_day_ui_mock.html">
+            <strong>History day</strong>
+            <span>Combined history: self-powered, the power chart, energy cards, and the week.</span>
+          </a>
+        </li>
+        <li>
+          <a href="power_scale_ui_mock.html">
+            <strong>Power scale</strong>
+            <span>Three ways to plot a 9.5 kW home spike against a 2 kW solar curve.</span>
+          </a>
+        </li>
+        <li>
+          <a href="invite_screen_ui_mock.html">
+            <strong>Invite screen</strong>
+            <span>Accept-invite flow, including loading, expired, and unavailable.</span>
+          </a>
+        </li>
+      </ul>
+    </div>
+
+    <script>
+      document.getElementById("toggle-night").addEventListener("click", () => {
+        const on = document.body.classList.toggle("night");
+        document.getElementById("toggle-night").setAttribute("aria-pressed", String(on));
+      });
+    </script>
+  </body>
+</html>
