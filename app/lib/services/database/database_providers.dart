@@ -41,9 +41,23 @@ abstract class DatabaseProviders {
   });
 
   static final syncState =
-      NotifierProvider.autoDispose<SyncStateNotifier, SyncState>(
-        SyncStateNotifier.new,
-      );
+      NotifierProvider.autoDispose<
+        SyncStateNotifier,
+        Map<DateTime?, SyncState>
+      >(SyncStateNotifier.new);
+
+  static final syncStateForDate = Provider.autoDispose((ref) {
+    final selectedDate = ref.watch(selectedDateTimeProvider);
+    return ref.watch(syncState)[selectedDate] ?? const SyncState.synced();
+  });
+
+  static final singleSyncState = Provider.autoDispose.family(
+    (ref, DateTime? dateTime) =>
+        ref.watch(syncState)[dateTime] ??
+        (dateTime == null
+            ? const SyncState.initial()
+            : const SyncState.synced()),
+  );
 
   /// A stream of inverters from the offline database.
   static final inverters = StreamProvider(

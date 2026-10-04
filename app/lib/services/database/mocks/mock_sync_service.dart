@@ -32,7 +32,9 @@ class MockSyncService extends SyncService {
   void init() {
     // Skip auth/session checks — pull mock online data into offline storage.
     start();
-    _syncStateNotifier.setSynced();
+    Future.delayed(const Duration(seconds: 1), () {
+      _syncStateNotifier.setSynced(null);
+    });
   }
 
   static List<Override> overrides = [
