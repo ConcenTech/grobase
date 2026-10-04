@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../../../core/utils/formatters.dart';
 import '../../../models/database/inverter_snapshot.drift.dart';
 import 'chart_dialog.dart';
 
@@ -45,14 +46,6 @@ class _SolarChartDialogState extends State<SolarChartDialog> {
   /// Fractional hours since local midnight, for chart X values.
   double _hoursOfDay(DateTime dt) {
     return dt.hour + dt.minute / 60 + dt.second / 3600;
-  }
-
-  /// Formats fractional hours since midnight as `HH:mm` (24-hour).
-  String _fmtTime(double hours) {
-    final totalMinutes = (hours * 60).round();
-    final hour = (totalMinutes ~/ 60) % 24;
-    final minute = totalMinutes % 60;
-    return '${hour.toString().padLeft(2, '0')}:${minute.toString().padLeft(2, '0')}';
   }
 
   void _rebuildSnapshotDerived() {
@@ -175,7 +168,7 @@ class _SolarChartDialogState extends State<SolarChartDialog> {
             return touchedSpots
                 .map(
                   (spot) => LineTooltipItem(
-                    '${_toKW(spot.y)} kW · ${_fmtTime(spot.x)}',
+                    '${_toKW(spot.y)} kW · ${formatHours(spot.x)}',
                     const TextStyle(color: Colors.white),
                   ),
                 )
@@ -222,8 +215,7 @@ class _SolarChartDialogState extends State<SolarChartDialog> {
                       minY: _powerMinY,
                       maxY: _powerMaxY,
                       baseStep: _powerStepW,
-                      plotHeight:
-                          constraints.maxHeight - axisNameSize * 2,
+                      plotHeight: constraints.maxHeight - axisNameSize * 2,
                       labelHeight: max(
                         chartYLabelHeight(context, minLabel),
                         chartYLabelHeight(context, maxLabel),
