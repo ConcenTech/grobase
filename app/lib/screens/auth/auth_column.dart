@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 class AuthColumn extends StatelessWidget {
   const AuthColumn({required this.children, super.key});

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 Future<void> showLogoutDialog(BuildContext context) {
@@ -33,8 +33,11 @@ class _LogoutDialog extends StatelessWidget {
             ),
             ElevatedButton(
               onPressed: () {
+                // Close the dialog
                 Navigator.of(context).pop();
+                // Sign out
                 Supabase.instance.client.auth.signOut();
+                // Navigation is handled by the AppRouter
               },
               child: const Text('Logout'),
             ),

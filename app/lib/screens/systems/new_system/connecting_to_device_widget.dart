@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../../../core/components/animations/bluetooth_connecting_animation.dart';
 import '../../../core/components/bottom_sheet_container.dart';
