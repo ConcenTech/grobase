@@ -67,6 +67,7 @@ class _SelfSufficiencyCardState extends State<SelfSufficiencyCard> {
     _timer?.cancel();
     if (widget.isLoading == false) {
       _timer = Timer(const Duration(seconds: 1), () {
+        if (!mounted) return;
         setState(() {
           _isLoading = false;
         });
