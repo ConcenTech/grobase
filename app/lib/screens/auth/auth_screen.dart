@@ -12,16 +12,31 @@ import 'auth_login_widget.dart';
 import 'auth_password_reset_widget.dart';
 import 'auth_register_widget.dart';
 
-class AuthScreen extends ConsumerWidget {
+class AuthScreen extends ConsumerStatefulWidget {
   const AuthScreen({super.key, this.initialState});
 
   final InitialAuthState? initialState;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    if (initialState != null) {
-      ref.read(_authStateProvider.notifier).setInitialState(initialState!);
+  ConsumerState<AuthScreen> createState() => _AuthScreenState();
+}
+
+class _AuthScreenState extends ConsumerState<AuthScreen> {
+  @override
+  void initState() {
+    super.initState();
+
+    if (widget.initialState != null) {
+      Future(
+        () => ref
+            .read(_authStateProvider.notifier)
+            .setInitialState(widget.initialState!),
+      );
     }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final state = ref.watch(_authStateProvider);
 
     void onSegmentedSwitcherChanged(int index) {
