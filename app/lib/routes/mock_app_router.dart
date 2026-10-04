@@ -1,6 +1,6 @@
-import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../core/components/scaffold/app_scaffold.dart';
 import '../screens/auth/auth_screen.dart';
@@ -9,6 +9,7 @@ import '../screens/invite/invite_screen.dart';
 import '../screens/settings/settings_screen.dart';
 import '../screens/splash_screen.dart';
 import '../screens/systems/systems_screen.dart';
+import '../screens/test/theme_test_screen.dart';
 import 'app_router.dart';
 
 class MockAppRouter extends AppRouter {
@@ -46,6 +47,10 @@ class MockAppRouter extends AppRouter {
       redirect: (context, state) {
         return '/home';
       },
+    ),
+    GoRoute(
+      path: '/theme-test',
+      builder: (context, state) => const ThemeTestScreen(),
     ),
     GoRoute(
       path: '/login',
