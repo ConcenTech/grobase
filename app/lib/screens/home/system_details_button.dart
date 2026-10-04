@@ -32,7 +32,7 @@ class SystemDetailsButton extends ConsumerWidget {
     return IconButton(
       onPressed: () =>
           GoRouter.of(context).push('/system-details', extra: inverter),
-      icon: const Icon(Icons.info),
+      icon: const Icon(Icons.info_outlined),
     );
   }
 }
