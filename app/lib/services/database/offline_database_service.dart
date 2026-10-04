@@ -22,7 +22,13 @@ class OfflineDatabaseService {
         dateTime.month,
         dateTime.day,
       );
-      final queryEndDate = queryStartDate.add(const Duration(days: 1));
+      // Query end date is 1 minute before the start of the next day
+      // This is to ensure that we get the last snapshot of the day instead of
+      // the first snapshot of the next day.
+      final queryEndDate = queryStartDate.add(
+        const Duration(days: 1, minutes: -1),
+      );
+
       final q = _db.inverterSnapshots.select()
         ..where(
           (e) => e.recordedAt.isBiggerOrEqualValue(
