@@ -4,6 +4,7 @@ import 'package:flutter/widgets.dart';
 import 'package:logging/logging.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../core/extensions/datetime_extensions.dart';
 import '../../core/utils/sync_errors.dart';
 import '../../models/database/inverter.dart';
 import '../connectivity/connection_manager.dart';
@@ -106,10 +107,6 @@ class SyncService {
     _retryAttempts = 0;
   }
 
-  DateTime _startOfDay(DateTime dateTime) {
-    return DateTime(dateTime.year, dateTime.month, dateTime.day);
-  }
-
   Future<void> _getInitialSyncState() async {
     try {
       final inverters = await _onlineService.inverters();
@@ -152,8 +149,8 @@ class SyncService {
     DateTime dateTime,
     String inverterId,
   ) async {
-    final syncDate = _startOfDay(dateTime);
-    final today = _startOfDay(DateTime.now());
+    final syncDate = dateTime.startOfDay;
+    final today = DateTime.now().startOfDay;
     if (!syncDate.isBefore(today)) {
       return;
     }
@@ -193,7 +190,7 @@ class SyncService {
     String inverterId,
     DateTime dateTime,
   ) async {
-    final startOfDay = _startOfDay(dateTime);
+    final startOfDay = dateTime.startOfDay;
     final endOfDay = startOfDay.add(const Duration(days: 1));
     final timestamp = await _offlineService.getInverterLastSnapshotTimeForDate(
       inverterId,
