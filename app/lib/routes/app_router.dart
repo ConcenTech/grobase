@@ -10,6 +10,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../core/components/scaffold/app_scaffold.dart';
 import '../models/database/inverter.drift.dart';
 import '../screens/auth/auth_screen.dart';
+import '../screens/history/history_screen.dart';
 import '../screens/home/home_screen.dart';
 import '../screens/invite/invite_screen.dart';
 import '../screens/settings/settings_screen.dart';
@@ -153,6 +154,12 @@ class AppRouter {
               path: '/system-details',
               builder: (context, state) =>
                   SystemDetailsScreen(inverter: state.extra as Inverter),
+              redirect: _authRequiredRedirect,
+            ),
+            GoRoute(
+              path: '/history',
+              builder: (context, state) =>
+                  HistoryScreen(inverter: state.extra as Inverter),
               redirect: _authRequiredRedirect,
             ),
           ],
