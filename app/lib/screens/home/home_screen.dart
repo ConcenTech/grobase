@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../../core/components/inverter_title_text.dart';
 import '../../core/components/loading_indicator.dart';
 import '../../core/components/solar/solar_energy_diagram_v2.dart';
 import '../../core/extensions/list_extensions.dart';
@@ -15,7 +16,6 @@ import '../../services/database/database_providers.dart';
 import '../../services/inverters_provider.dart';
 import '../../services/selected_date_time_notifier.dart';
 import '../../services/weather/weather_providers.dart';
-import 'date_card.dart';
 import 'dialogs/battery_chart_dialog.dart';
 import 'dialogs/grid_chart_dialog.dart';
 import 'dialogs/load_chart_dialog.dart';
@@ -194,32 +194,28 @@ class _HomeScreenContentState extends ConsumerState<HomeScreenContent> {
 
     final diagram = SolarEnergyDiagramV2(data: solarEnergyData);
 
-    final titleRow = Padding(
+    final historyInfoButtons = Row(
+      mainAxisAlignment: MainAxisAlignment.end,
+      children: [
+        SystemDetailsButton(inverter: widget.inverter),
+        ElevatedButton.icon(
+          onPressed: () =>
+              GoRouter.of(context).push('/history', extra: widget.inverter),
+          icon: const Icon(Icons.history),
+          label: const Text('History'),
+        ),
+      ],
+    );
+
+    final title = Padding(
       padding: const EdgeInsets.only(left: 12),
-      child: Row(
-        spacing: 8,
-        children: [
-          Flexible(
-            child: Text(
-              widget.inverter?.displayName ?? '',
-              style: titleTextTheme,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-          SystemDetailsButton(inverter: widget.inverter),
-        ],
-      ),
+      child: InverterTitleText(name: widget.inverter?.displayName ?? ''),
     );
 
     final lastUpdated = Padding(
       padding: const EdgeInsets.only(left: 12),
       child: Text(_lastUpdatedText(widget.inverter), style: subtitleTextTheme),
     );
-
-    final dateCard = widget.inverter != null
-        ? DateCard(minDate: widget.inverter!.createdAt)
-        : null;
 
     final statisticsCard = widget.snapshots.isNotEmpty
         ? StatisticsCard(snapshot: widget.snapshots.last, weather: weather)
@@ -271,20 +267,23 @@ class _HomeScreenContentState extends ConsumerState<HomeScreenContent> {
             child: SizedBox(
               height: constraints.maxHeight,
               child: Row(
+                spacing: 12,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  _DiagramWithFooter(
-                    aspectRatio: HouseDiagramV2Layout.contentAspect,
-                    sideInset: 20,
-                    diagram: diagram,
-                    footer: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 1000),
+                    child: _DiagramWithFooter(
+                      aspectRatio: HouseDiagramV2Layout.contentAspect,
+                      sideInset: 20,
                       children: [
-                        titleRow,
-                        lastUpdated,
-                        if (dateCard != null) dateCard,
-                        if (statisticsCard != null) statisticsCard,
+                        historyInfoButtons,
+
+                        diagram,
+                        Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [title, lastUpdated, ?statisticsCard],
+                        ),
                       ],
                     ),
                   ),
@@ -297,6 +296,7 @@ class _HomeScreenContentState extends ConsumerState<HomeScreenContent> {
 
         return ListView(
           children: [
+            historyInfoButtons,
             AspectRatio(
               aspectRatio: HouseDiagramV2Layout.contentAspect,
               child: Padding(
@@ -304,10 +304,9 @@ class _HomeScreenContentState extends ConsumerState<HomeScreenContent> {
                 child: diagram,
               ),
             ),
-            titleRow,
+            title,
             lastUpdated,
-            if (dateCard != null) dateCard,
-            if (statisticsCard != null) statisticsCard,
+            ?statisticsCard,
             energyCards,
           ],
         );
@@ -316,15 +315,17 @@ class _HomeScreenContentState extends ConsumerState<HomeScreenContent> {
   }
 }
 
-/// Lays out [diagram] to fill leftover height at [aspectRatio], and sizes
-/// [footer] to that width plus [sideInset] on each side.
+/// Stacks a header, a diagram, and a footer.
+///
+/// Children, in order: header, diagram, footer. The diagram fills the height
+/// left after the header and footer, at [aspectRatio]. The header and footer
+/// are as wide as the diagram plus [sideInset] on each side.
 class _DiagramWithFooter extends MultiChildRenderObjectWidget {
-  _DiagramWithFooter({
-    required Widget diagram,
-    required Widget footer,
+  const _DiagramWithFooter({
+    required super.children,
     required this.aspectRatio,
     this.sideInset = 20,
-  }) : super(children: [diagram, footer]);
+  });
 
   final double aspectRatio;
   final double sideInset;
@@ -355,10 +356,9 @@ class _RenderDiagramWithFooter extends RenderBox
         ContainerRenderObjectMixin<RenderBox, _DiagramFooterParentData>,
         RenderBoxContainerDefaultsMixin<RenderBox, _DiagramFooterParentData> {
   _RenderDiagramWithFooter({
-    required double aspectRatio,
-    required double sideInset,
-  }) : _aspectRatio = aspectRatio,
-       _sideInset = sideInset;
+    required this._aspectRatio,
+    required this._sideInset,
+  });
 
   double _aspectRatio;
   double get aspectRatio => _aspectRatio;
@@ -384,7 +384,8 @@ class _RenderDiagramWithFooter extends RenderBox
   }
 
   Size _layout(BoxConstraints constraints, {required bool dry}) {
-    final diagram = firstChild!;
+    final header = firstChild!;
+    final diagram = childAfter(header)!;
     final footer = lastChild!;
     final maxHeight = constraints.maxHeight;
 
@@ -392,18 +393,17 @@ class _RenderDiagramWithFooter extends RenderBox
         ? constraints.maxWidth
         : maxHeight * _aspectRatio + 2 * _sideInset;
 
-    final footerConstraints = BoxConstraints(
+    final loose = BoxConstraints(
       maxWidth: tentativeWidth,
       maxHeight: maxHeight,
     );
-    final footerSize = dry
-        ? footer.getDryLayout(footerConstraints)
-        : () {
-            footer.layout(footerConstraints, parentUsesSize: true);
-            return footer.size;
-          }();
+    final headerSize = _layoutChild(header, loose, dry: dry);
+    final footerSize = _layoutChild(footer, loose, dry: dry);
 
-    final remaining = max(0.0, maxHeight - footerSize.height);
+    final remaining = max(
+      0.0,
+      maxHeight - headerSize.height - footerSize.height,
+    );
     var diagramWidth = remaining * _aspectRatio;
     var diagramHeight = remaining;
 
@@ -416,31 +416,45 @@ class _RenderDiagramWithFooter extends RenderBox
     }
 
     final diagramSize = Size(diagramWidth, diagramHeight);
-    if (dry) {
-      diagram.getDryLayout(BoxConstraints.tight(diagramSize));
-    } else {
-      diagram.layout(BoxConstraints.tight(diagramSize), parentUsesSize: true);
-    }
+    _layoutChild(diagram, BoxConstraints.tight(diagramSize), dry: dry);
 
-    final footerWidth = diagramWidth + 2 * _sideInset;
-    final tightFooter = BoxConstraints.tight(
-      Size(footerWidth, footerSize.height),
+    final columnWidth = diagramWidth + 2 * _sideInset;
+    _layoutChild(
+      header,
+      BoxConstraints.tight(Size(columnWidth, headerSize.height)),
+      dry: dry,
     );
-    if (dry) {
-      footer.getDryLayout(tightFooter);
-    } else {
-      footer.layout(tightFooter, parentUsesSize: true);
-      (diagram.parentData as _DiagramFooterParentData).offset = Offset(
+    _layoutChild(
+      footer,
+      BoxConstraints.tight(Size(columnWidth, footerSize.height)),
+      dry: dry,
+    );
+
+    if (!dry) {
+      (header.parentData! as _DiagramFooterParentData).offset = Offset.zero;
+      (diagram.parentData! as _DiagramFooterParentData).offset = Offset(
         _sideInset,
-        0,
+        headerSize.height,
       );
-      (footer.parentData as _DiagramFooterParentData).offset = Offset(
+      (footer.parentData! as _DiagramFooterParentData).offset = Offset(
         0,
         maxHeight - footerSize.height,
       );
     }
 
-    return constraints.constrain(Size(footerWidth, maxHeight));
+    return constraints.constrain(Size(columnWidth, maxHeight));
+  }
+
+  Size _layoutChild(
+    RenderBox child,
+    BoxConstraints constraints, {
+    required bool dry,
+  }) {
+    if (dry) {
+      return child.getDryLayout(constraints);
+    }
+    child.layout(constraints, parentUsesSize: true);
+    return child.size;
   }
 
   @override
@@ -469,7 +483,7 @@ class _RenderDiagramWithFooter extends RenderBox
 /// Stays [AsyncLoading] until sync completes and inverters are available.
 /// Emits `null` when the user has no inverters.
 final homeProvider = Provider<AsyncValue<Inverter?>>((ref) {
-  final syncState = ref.watch(DatabaseProviders.syncState);
+  final syncState = ref.watch(DatabaseProviders.singleSyncState(null));
   final hasSynced = syncState.hasSynced || syncState.hasError;
 
   if (!hasSynced) {
