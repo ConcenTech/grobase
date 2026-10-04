@@ -97,6 +97,7 @@ class _HistoryScreenContentState extends State<HistoryScreenContent> {
     final theme = Theme.of(context);
 
     return AppScaffold(
+      padding: const EdgeInsets.all(0),
       body: Theme(
         data: theme.copyWith(
           cardTheme: theme.cardTheme.copyWith(
@@ -156,13 +157,15 @@ class _HistoryScreenContentState extends State<HistoryScreenContent> {
                 Expanded(
                   child: LayoutBuilder(
                     builder: (context, constraints) {
-                      final maxHeight = constraints.maxHeight;
+                      const bottomPadding = 8.0;
+                      final maxHeight = constraints.maxHeight - bottomPadding;
                       final powerCardConstraints = BoxConstraints(
                         maxHeight: maxHeight > 600 ? maxHeight / 2 : maxHeight,
                       );
 
                       return SingleChildScrollView(
                         scrollDirection: Axis.horizontal,
+                        padding: const EdgeInsets.only(bottom: bottomPadding),
                         child: Wrap(
                           direction: Axis.vertical,
                           children: [
@@ -216,6 +219,7 @@ class _HistoryScreenContentState extends State<HistoryScreenContent> {
                 dateButtons,
                 Expanded(
                   child: SingleChildScrollView(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
                     child: Column(
                       mainAxisSize: .min,
                       children: [
