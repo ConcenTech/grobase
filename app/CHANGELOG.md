@@ -6,24 +6,35 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.18] - 05/10/26
+
+### Added
+- Theme colours for solar, grid, battery and consumption
+- History screen with improved charts
+
+### Fixed
+- Daily snapshots end 24hrs after they start so can include 1 snapshot from the next day.
+- Snackbar doesn't close after pressing retry.
+
+
 ## [0.1.17] - 31/08/26
 
-## Fixed
+### Fixed
 - Sync fails due to missing database migration.
 
 ## [0.1.16] - 31/08/26
 
-## Added
+### Added
 - Ability to view inverter history.
 - Invites can be revoked.
 
-## Fixed
+### Fixed
 - Statistics cards using the incorrect units.
 
 
 ## [0.1.15] - 07/08/26
 
-## Added
+### Added
 - Daily statistics on ome screen.
 - Pause/resume sync service when app is paused/resumed.
 
@@ -168,3 +179,4 @@ Initial beta app release
 [0.1.15]: https://github.com/ConcenTech/grobase/compare/v0.1.14...v0.1.15
 [0.1.16]: https://github.com/ConcenTech/grobase/compare/v0.1.15...v0.1.16
 [0.1.17]: https://github.com/ConcenTech/grobase/compare/v0.1.16...v0.1.17
+[0.1.18]: https://github.com/ConcenTech/grobase/compare/v0.1.17...v0.1.18
