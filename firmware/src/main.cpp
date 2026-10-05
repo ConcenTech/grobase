@@ -244,7 +244,7 @@ void processRunning() {
   static uint16_t r1086[3];
   static uint16_t r1124[27];
   static uint16_t r2035[20];
-  static uint16_t r2097[7];
+  static uint16_t r2097[9]; // 2097–2105, through Eextra_today
   static uint16_t r2112[6];
 
   InverterSnapshot snapshot = {};

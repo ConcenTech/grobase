@@ -14,7 +14,7 @@ void modbusMockFillAppRegisters(uint16_t *r1009,
   for (int i = 0; i < 3; ++i) r1086[i] = 0;
   for (int i = 0; i < 27; ++i) r1124[i] = 0;
   for (int i = 0; i < 20; ++i) r2035[i] = 0;
-  for (int i = 0; i < 7; ++i) r2097[i] = 0;
+  for (int i = 0; i < 9; ++i) r2097[i] = 0;
   for (int i = 0; i < 6; ++i) r2112[i] = 0;
 
   r1009[1009 - 1009] = 0x0000;
@@ -58,6 +58,8 @@ void modbusMockFillAppRegisters(uint16_t *r1009,
   r2097[2097 - 2097] = 251; // 25.1 V
   r2097[2102 - 2097] = 0x0000;
   r2097[2103 - 2097] = 0x0BB8; // 300.0 W (ExtraACPower / PV)
+  r2097[2104 - 2097] = 0x0000;
+  r2097[2105 - 2097] = 0x007D; // 12.5 kWh Eextra_today (0.1 kWh). Not Eac 10.0.
 
   r2112[2112 - 2112] = 0x0000;
   r2112[2113 - 2112] = 0x004D;  // 7.7 kWh

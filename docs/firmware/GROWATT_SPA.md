@@ -10,7 +10,11 @@ Hardware & Modbus:
 - Modbus slave ID: 1
 - SN read: FC `0x03`, registers 23–27 (5 registers → 10 ASCII chars)
 - Telemetry: FC `0x04` input registers in blocks (see below)
-- Solar energy today: FC `0x04` registers **2053–2054** (`Eac today`, SPA "Today generate energy"), not 1149–1150
+- Solar energy today (`solar_energy_today_kwh`): FC `0x04` registers **2104–2105** (`Eextra_today`, 0.1 kWh). This is the daily total for the external PV inverter whose power is **2102–2103**. Do not switch it:
+  - **2053–2054** (`Eac today`, "Today generate energy") is the SPA's own AC output. It under-counts while solar charges the battery and keeps rising after dark with discharge. On Test Site, 4–5 Oct 2026, it ended at 3.9 kWh and 2.2 kWh while 2104–2105 matched ∫ solar power (7.1 kWh and 7.0 kWh).
+  - **1133–1134** is the same `Eextra_today` name and reads 0, the same dead alias as power registers **1131–1132**.
+  - **1149–1150** (`EPVAll_Today`) reads 0 on this SPA.
+  - **2108–2109** (`Esystem_today`) and **1141–1142** (`Eself_today`) are not PV yield.
 - Solar / PV power for upload: **2102–2103** (`ExtraACPower to grid`, SPA CT2 / connected PV inverter). Doc also lists **1131–1132** under the same name, but that alias stays 0 on live SPA
 - Grid import for upload (`grid_import_power_w`): **1021–1022** (`PactouserTotal`) — utility → house only
 - Grid export for upload (`grid_export_power_w`): **1029–1030** (`Pactogrid total`) — house → utility only
@@ -27,7 +31,7 @@ Register blocks used by firmware v1 (prototype ranges):
 - `r1086` (start=1086, count=3)
 - `r1124` (start=1124, count=27)
 - `r2035` (start=2035, count=20)
-- `r2097` (start=2097, count=7; includes ExtraACPower 2102–2103)
+- `r2097` (start=2097, count=9; ExtraACPower 2102–2103 and Eextra_today 2104–2105)
 - `r2112` (start=2112, count=6)
 
 Decoding rules:
