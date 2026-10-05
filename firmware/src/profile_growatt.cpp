@@ -17,9 +17,11 @@ static float i16_scaled(uint16_t v, float scale) {
 }
 
 static float u32_scaled(uint16_t hi, uint16_t lo, float scale) {
-  // All-ones (0xFFFF/0xFFFF) is an unavailable sentinel; do not decode as
-  // UINT32_MAX * scale (float32 → ~429496736).
-  if (hi == SENTINEL_VALUE && lo == SENTINEL_VALUE) return 0.0f;
+  // A high word of 0xFFFF is unavailable. Exact 0xFFFFFFFF is the documented
+  // sentinel; any other low word in that band is the same ~429497 kW once
+  // scaled by 0.1 and stored in float32. Legitimate SPA powers and daily
+  // energies fit in the low word.
+  if (hi == SENTINEL_VALUE) return 0.0f;
   uint32_t v = ((uint32_t)hi << 16) | lo;
   return (float)v * scale;
 }
@@ -72,6 +74,9 @@ void profileGrowattFill(InverterSnapshot *out,
   out->power_to_grid_w =
     u32_scaled(regAt(R1009_START, r1009, 1029), regAt(R1009_START, r1009, 1030), 0.1f);
 
+  // Etouser_today. Already inside the 1009–1059 poll. Not AC charge (1124–25).
+  out->energy_to_user_today_kwh =
+    u32_scaled(regAt(R1009_START, r1009, 1044), regAt(R1009_START, r1009, 1045), 0.1f);
   out->energy_to_grid_today_kwh =
     u32_scaled(regAt(R1009_START, r1009, 1048), regAt(R1009_START, r1009, 1049), 0.1f);
   // Doc unit is "kwh" without 0.1; live 70 vs EACharge 7 implies 0.1 kWh scale.

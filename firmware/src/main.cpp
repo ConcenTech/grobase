@@ -28,6 +28,7 @@ static String g_cachedSn;
 static bool g_snReadOk = false;
 static uint32_t g_lastModbusFailMs = 0;
 static bool readAndCacheSerialNumber();
+static void probeModbusInputRegister();
 
 
 static void logProvisioningFields(const char *context);
@@ -55,6 +56,7 @@ void setup() {
   if (!readAndCacheSerialNumber()) {
     DEBUG_PRINTLN("Warning: SN read failed at boot");
     bleProvisionSetInverterSn("");
+    probeModbusInputRegister();
   } else {
     DEBUG_PRINTF("Cached SN=%s\n", g_cachedSn.c_str());
   }
@@ -111,6 +113,18 @@ static bool readAndCacheSerialNumber() {
   g_snReadOk = false;
   g_cachedSn = "";
   return false;
+}
+
+// One FC04 read so a boot SN failure still shows whether the bus answers.
+// Register 1013 is Vbat on the SPA input map.
+static void probeModbusInputRegister() {
+  uint16_t reg = 0;
+  DEBUG_PRINTLN("Probing FC04 reg 1013");
+  if (readRegisters04(1, 1013, 1, &reg)) {
+    DEBUG_PRINTF("FC04 probe ok reg 1013=0x%04X\n", reg);
+  } else {
+    DEBUG_PRINTLN("FC04 probe failed");
+  }
 }
 
 static bool isProvisioned() {

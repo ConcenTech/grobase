@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 class ErrorText extends StatelessWidget {
   const ErrorText(this.error, {super.key, this.style});

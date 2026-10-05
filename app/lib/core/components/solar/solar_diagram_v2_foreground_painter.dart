@@ -1,6 +1,6 @@
 import 'dart:math' as math;
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import 'solar_diagram_v2_background_painter.dart';
 import 'solar_energy_data.dart';

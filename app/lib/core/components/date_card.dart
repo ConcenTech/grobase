@@ -1,9 +1,9 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
-import '../../core/components/date_picker_bottom_sheet.dart';
 import '../../services/selected_date_time_notifier.dart';
+import 'date_picker_bottom_sheet.dart';
 
 class DateCard extends ConsumerWidget {
   const DateCard({super.key, required this.minDate});
@@ -57,7 +57,7 @@ class DateCard extends ConsumerWidget {
           icon: const Icon(Icons.chevron_left_rounded),
         ),
         Expanded(
-          child: OutlinedButton(
+          child: _DateButton(
             onPressed: () => _openDatePicker(ref, context, selectedDate),
             child: Text(_formattedDate(selectedDate)),
           ),
@@ -87,6 +87,32 @@ class DateCard extends ConsumerWidget {
           icon: const Icon(Icons.chevron_right_rounded),
         ),
       ],
+    );
+  }
+}
+
+class _DateButton extends StatelessWidget {
+  const _DateButton({required this.onPressed, required this.child, super.key});
+
+  final VoidCallback onPressed;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final bool isDark = theme.brightness == .dark;
+
+    final buttonStyle = FilledButton.styleFrom(
+      foregroundColor: isDark ? null : Colors.black,
+      backgroundColor: isDark
+          ? theme.dividerColor
+          : theme.cardColor.withValues(alpha: 0.8),
+      side: const BorderSide(width: 0, color: Colors.transparent),
+    );
+    return OutlinedButton(
+      style: buttonStyle,
+      onPressed: onPressed,
+      child: child,
     );
   }
 }

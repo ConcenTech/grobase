@@ -1,6 +1,6 @@
 import 'dart:math';
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Style used for chart axis tick labels (measure and render must match).
 TextStyle chartAxisLabelStyle(BuildContext context) {

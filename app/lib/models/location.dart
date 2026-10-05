@@ -11,14 +11,9 @@ class Location with _$Location {
     String? searchName,
   }) : searchName = searchName ?? name;
 
-  @override
   final String name;
-  @override
   final double latitude;
-  @override
   final double longitude;
-
-  @override
   final String searchName;
 
   factory Location.fromJson(Map<String, dynamic> json) => Location(

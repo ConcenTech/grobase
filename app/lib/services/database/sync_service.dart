@@ -4,6 +4,7 @@ import 'package:flutter/widgets.dart';
 import 'package:logging/logging.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../core/extensions/datetime_extensions.dart';
 import '../../core/utils/sync_errors.dart';
 import '../../models/database/inverter.dart';
 import '../connectivity/connection_manager.dart';
@@ -56,7 +57,7 @@ class SyncService {
     _offlineService.getInverterCount().then((count) {
       if (count > 0) {
         _logger.info('Inverters found, sync complete');
-        _syncStateNotifier.setSynced();
+        _syncStateNotifier.setSynced(null);
       }
     });
     // If the user is already authenticated, start the sync service.
@@ -97,7 +98,7 @@ class SyncService {
   /// Retries sync after a failure by stopping and starting again.
   void restart() {
     _logger.info('Retrying sync');
-    _syncStateNotifier.setSyncing();
+    _syncStateNotifier.setSyncing(null);
     _restart();
   }
 
@@ -106,17 +107,14 @@ class SyncService {
     _retryAttempts = 0;
   }
 
-  DateTime _startOfDay(DateTime dateTime) {
-    return DateTime(dateTime.year, dateTime.month, dateTime.day);
-  }
-
   Future<void> _getInitialSyncState() async {
     try {
       final inverters = await _onlineService.inverters();
       await _offlineService.setInverters(inverters);
 
       // We only care abount inverters, snapshots can come later.
-      _syncStateNotifier.setSynced();
+      _syncStateNotifier.setSynced(null);
+
       _clearRetryState();
 
       unawaited(_syncUser());
@@ -133,13 +131,17 @@ class SyncService {
 
   Future<void> _syncUser() async {
     try {
-      final userId = _auth.currentUser!.id;
+      final userId = _auth.currentUser?.id;
+
+      if (userId == null) {
+        return;
+      }
 
       final memberships = await _onlineService.userMemberships(userId);
       await _offlineService.setInverterMembers(memberships, userId);
     } catch (e, s) {
       _logger.severe('Failed to sync user', e, s);
-      _syncStateNotifier.setError(SyncErrors.userFacingMessage(e));
+      _syncStateNotifier.setError(null, SyncErrors.userFacingMessage(e));
     }
   }
 
@@ -151,8 +153,8 @@ class SyncService {
     DateTime dateTime,
     String inverterId,
   ) async {
-    final syncDate = _startOfDay(dateTime);
-    final today = _startOfDay(DateTime.now());
+    final syncDate = dateTime.startOfDay;
+    final today = DateTime.now().startOfDay;
     if (!syncDate.isBefore(today)) {
       return;
     }
@@ -161,7 +163,7 @@ class SyncService {
       await _syncSnapshotsForInverter(inverterId, dateTime);
     } catch (e, s) {
       _logger.severe('Failed to sync selected date', e, s);
-      _syncStateNotifier.setError(SyncErrors.userFacingMessage(e));
+      _syncStateNotifier.setError(syncDate, SyncErrors.userFacingMessage(e));
     }
   }
 
@@ -185,14 +187,14 @@ class SyncService {
     }
 
     _clearRetryState();
-    _syncStateNotifier.setError(SyncErrors.userFacingMessage(e));
+    _syncStateNotifier.setError(null, SyncErrors.userFacingMessage(e));
   }
 
   Future<void> _syncSnapshotsForInverter(
     String inverterId,
     DateTime dateTime,
   ) async {
-    final startOfDay = _startOfDay(dateTime);
+    final startOfDay = dateTime.startOfDay;
     final endOfDay = startOfDay.add(const Duration(days: 1));
     final timestamp = await _offlineService.getInverterLastSnapshotTimeForDate(
       inverterId,
@@ -203,6 +205,10 @@ class SyncService {
         ? startOfDay
         : timestamp;
     _logger.info('Syncing snapshots for inverter $inverterId from $latest');
+    if (timestamp == null) {
+      // Only set syncing if no snapshots are found for the day.
+      _syncStateNotifier.setSyncing(startOfDay);
+    }
     final snapshots = await _onlineService.snapshots(
       inverterId: inverterId,
       start: latest,
@@ -212,6 +218,7 @@ class SyncService {
     if (snapshots.isNotEmpty) {
       await _offlineService.addSnapshots(snapshots);
     }
+    _syncStateNotifier.setSynced(startOfDay);
   }
 
   Future<void> _handleInverterCreated(Inverter inverter) async {
@@ -221,7 +228,7 @@ class SyncService {
       await _syncSnapshotsForInverter(inverter.id, DateTime.now());
     } catch (e, s) {
       _logger.severe('Failed to sync new inverter', e, s);
-      _syncStateNotifier.setError(SyncErrors.userFacingMessage(e));
+      _syncStateNotifier.setError(null, SyncErrors.userFacingMessage(e));
     }
   }
 
@@ -232,7 +239,7 @@ class SyncService {
       await _syncSnapshotsForInverter(inverter.id, DateTime.now());
     } catch (e, s) {
       _logger.severe('Failed to sync updated inverter', e, s);
-      _syncStateNotifier.setError(SyncErrors.userFacingMessage(e));
+      _syncStateNotifier.setError(null, SyncErrors.userFacingMessage(e));
     }
   }
 
@@ -243,7 +250,7 @@ class SyncService {
       await _offlineService.removeSnapshots(inverterId);
     } catch (e, s) {
       _logger.severe('Failed to sync deleted inverter', e, s);
-      _syncStateNotifier.setError(SyncErrors.userFacingMessage(e));
+      _syncStateNotifier.setError(null, SyncErrors.userFacingMessage(e));
     }
   }
 

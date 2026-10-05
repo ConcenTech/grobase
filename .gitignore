@@ -4,3 +4,4 @@ PLAN.md
 skills-lock.json
 **/.env
 _prototype/*
+app/lib/core/env/env_debug_secrets.dart

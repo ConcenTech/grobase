@@ -1,6 +1,6 @@
-import 'package:flutter/material.dart' hide BottomNavigationBar;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:material_ui/material_ui.dart' hide BottomNavigationBar;
 
 import '../../../screens/systems/systems_screen.dart';
 import '../../../services/database/database_providers.dart';
@@ -60,7 +60,10 @@ class AppScaffold extends ConsumerWidget {
 
   Widget _buildTitle(BuildContext context) {
     if (title != null) {
-      return Text(title!, style: Theme.of(context).textTheme.headlineLarge);
+      return Hero(
+        tag: 'app-bar-title-$title',
+        child: Text(title!, style: Theme.of(context).textTheme.headlineLarge),
+      );
     }
 
     if (showAppName) {
@@ -72,13 +75,13 @@ class AppScaffold extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    ref.listen(DatabaseProviders.syncState, (previous, next) {
+    ref.listen(DatabaseProviders.singleSyncState(null), (previous, next) {
       if (next.hasError) {
-        final messenger = ScaffoldMessenger.of(context);
-        messenger.showSnackBar(
+        ScaffoldMessenger.of(context).showSnackBar(
           SyncErrorSnackBar(
             message: next.error!,
             onRetry: () {
+              final messenger = ScaffoldMessenger.of(context);
               messenger.hideCurrentSnackBar();
               ref.read(DatabaseProviders.syncService).restart();
             },

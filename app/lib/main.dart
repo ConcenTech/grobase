@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:sentry_logging/sentry_logging.dart';
 
@@ -58,6 +58,7 @@ void main() async {
       options.addIntegration(LoggingIntegration());
       options.enableLogs = true;
       options.debug = true;
+      // ignore: riverpod_lint/missing_provider_scope
     }, appRunner: () => runApp(SentryWidget(child: app)));
   }
 }

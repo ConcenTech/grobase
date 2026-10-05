@@ -1,23 +1,35 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class SyncStateNotifier extends Notifier<SyncState> {
+/// Notifier for the sync state of the database.
+///
+/// The sync state is a map of date times to sync states.
+/// If null is the key, it means the sync state is for the entire database.
+///
+/// Otherwise, it means the sync state is for a specific day.
+class SyncStateNotifier extends Notifier<Map<DateTime?, SyncState>> {
   @override
-  SyncState build() => const SyncState.initial();
+  Map<DateTime?, SyncState> build() => {null: const SyncState.initial()};
 
   void setInitial() {
-    state = const SyncState.initial();
+    _updateState(null, const SyncState.initial());
   }
 
-  void setSyncing() {
-    state = const SyncState.syncing();
+  void setSyncing(DateTime? dateTime) {
+    _updateState(dateTime, const SyncState.syncing());
   }
 
-  void setSynced() {
-    state = const SyncState.synced();
+  void setSynced(DateTime? dateTime) {
+    _updateState(dateTime, const SyncState.synced());
   }
 
-  void setError(String message) {
-    state = SyncState.error(message);
+  void setError(DateTime? dateTime, String message) {
+    _updateState(dateTime, SyncState.error(message));
+  }
+
+  void _updateState(DateTime? dateTime, SyncState syncState) {
+    final oldState = state;
+    oldState[dateTime] = syncState;
+    state = {...oldState};
   }
 }
 

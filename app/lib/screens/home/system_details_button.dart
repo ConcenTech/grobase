@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -32,7 +32,7 @@ class SystemDetailsButton extends ConsumerWidget {
     return IconButton(
       onPressed: () =>
           GoRouter.of(context).push('/system-details', extra: inverter),
-      icon: const Icon(Icons.info),
+      icon: const Icon(Icons.info_outlined),
     );
   }
 }

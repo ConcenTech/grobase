@@ -1,6 +1,6 @@
 import 'dart:math' as math;
 
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Wraps a list of widgets in a padding that is appropriate for a bottom sheet.
 class BottomSheetContainer extends StatelessWidget {

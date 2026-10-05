@@ -10,4 +10,4 @@ void profileGrowattFill(InverterSnapshot *out, const uint16_t *r1009, const uint
                         const uint16_t *r1124, const uint16_t *r2035, const uint16_t *r2097,
                         const uint16_t *r2112);
 
-static const SENTINEL_VALUE = 0xFFFF;
+static const uint16_t SENTINEL_VALUE = 0xFFFF;

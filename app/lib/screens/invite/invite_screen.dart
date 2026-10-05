@@ -1,6 +1,6 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../../core/components/loading_indicator.dart';
 import '../../core/components/scaffold/app_scaffold.dart';
@@ -125,7 +125,6 @@ class _InviteValidWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final line1 = preview.invitedByEmail == null
         ? 'You have been invited as a viewer to'
         : '${preview.invitedByEmail} has invited you to be a viewer of';
