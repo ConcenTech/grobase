@@ -4,6 +4,7 @@
 #include <Arduino.h>
 #include "ble_provision.h"
 #include "debug_print.h"
+#include "firmware_version.h"
 #include "inverter_snapshot.h"
 #include "supabase_client.h"
 #include "wifi_manager.h"
@@ -44,6 +45,7 @@ void setup() {
 
   modbusInit();
 
+  DEBUG_PRINTLN("Firmware version " FIRMWARE_VERSION);
   DEBUG_PRINTLN("Growatt SPA3000TL gateway — Modbus + Supabase (state machine)");
 
   // NVS init early so modules can read provisioning state.
