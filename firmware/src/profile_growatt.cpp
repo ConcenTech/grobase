@@ -91,8 +91,17 @@ void profileGrowattFill(InverterSnapshot *out,
   out->ac_charge_power_spa_w =
     u32_scaled(regAt(R2112_START, r2112, 2116), regAt(R2112_START, r2112, 2117), 1.0f);
 
-  // SPA: "Today generate energy" (2053-2054), not EPVAll_Today (1149-1150).
-  out->pv_energy_today_kwh = out->eac_today_kwh;
+  // Daily PV yield for the external inverter, paired with ExtraACPower below.
+  // 0.1 kWh. Do not point solar_energy_today at a different register:
+  // - 2053–2054 Eac today is the SPA's own AC generation. It stays low while
+  //   solar is charging the battery and keeps rising after dark with discharge.
+  //   Test Site, 4–5 Oct 2026: Eac ended at 3.9 and 2.2 kWh; 2104–2105
+  //   matched the integral of 2102–2103 (7.1 and 7.0 kWh).
+  // - 1133–1134 is the same Eextra_today name and reads 0, as 1131–1132 does.
+  // - 1149–1150 EPVAll_Today reads 0 on this SPA.
+  // - 2108–2109 Esystem_today and 1141–1142 Eself_today are not PV yield.
+  out->pv_energy_today_kwh =
+    u32_scaled(regAt(R2097_START, r2097, 2104), regAt(R2097_START, r2097, 2105), 0.1f);
   // SPA CT2: ExtraACPower from the connected PV inverter.
   // Live dumps: 1131–1132 stay 0; 2102–2103 carry the real value (same doc name).
   out->pv_power_w =

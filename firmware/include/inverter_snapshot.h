@@ -35,10 +35,14 @@ struct InverterSnapshot {
   float energy_to_grid_today_kwh;
   float ac_charge_energy_today_kwh;
   float ac_charge_power_w;
+  /// SPA "Today generate energy" (2053–2054). Not site PV yield; do not upload
+  /// as solar_energy_today. See pv_energy_today_kwh.
   float eac_today_kwh;
   float ea_charge_today_kwh;
   float ac_charge_power_spa_w;
 
+  /// Eextra_today (2104–2105), 0.1 kWh. Daily energy of the PV inverter measured
+  /// on 2102–2103. Not Eac today (2053–2054), EPVAll (1149–1150), or 1133–1134.
   float pv_energy_today_kwh;
   /// ExtraACPower (2102–2103): AC power from the SPA-connected PV inverter.
   /// (1131–1132 is the same doc field but reads 0 on live SPA hardware.)

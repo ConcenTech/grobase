@@ -4,6 +4,7 @@
 #include <Arduino.h>
 #include "ble_provision.h"
 #include "debug_print.h"
+#include "firmware_version.h"
 #include "inverter_snapshot.h"
 #include "supabase_client.h"
 #include "wifi_manager.h"
@@ -44,6 +45,7 @@ void setup() {
 
   modbusInit();
 
+  DEBUG_PRINTLN("Firmware version " FIRMWARE_VERSION);
   DEBUG_PRINTLN("Growatt SPA3000TL gateway — Modbus + Supabase (state machine)");
 
   // NVS init early so modules can read provisioning state.
@@ -244,7 +246,7 @@ void processRunning() {
   static uint16_t r1086[3];
   static uint16_t r1124[27];
   static uint16_t r2035[20];
-  static uint16_t r2097[7];
+  static uint16_t r2097[9]; // 2097–2105, through Eextra_today
   static uint16_t r2112[6];
 
   InverterSnapshot snapshot = {};

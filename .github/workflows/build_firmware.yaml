@@ -1,0 +1,156 @@
+name: Build & Release Firmware
+
+on:
+  push:
+    branches:
+      - 'main'
+    paths:
+      - 'firmware/include/**'
+      - 'firmware/src/**'
+      - 'firmware/platformio.ini'
+
+permissions:
+  contents: write
+
+jobs:
+  create-release:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.firmware-version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Read firmware version
+        id: firmware-version
+        run: |
+          version=$(sed -n 's/^#define FIRMWARE_VERSION "\([^"]*\)"/\1/p' firmware/include/firmware_version.h)
+          if [ -z "$version" ]; then
+            echo "Could not read FIRMWARE_VERSION from firmware/include/firmware_version.h"
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          draft: true
+          tag_name: firmware-v${{ steps.firmware-version.outputs.version }}
+          name: Firmware v${{ steps.firmware-version.outputs.version }}
+
+  build_firmware:
+    name: Build firmware
+    needs: create-release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install PlatformIO
+        run: pip install --upgrade platformio
+
+      - name: Write Supabase root CA header
+        working-directory: firmware
+        env:
+          SUPABASE_ROOT_CA_PEM: ${{ secrets.SUPABASE_ROOT_CA_PEM }}
+        run: |
+          python - << 'PY'
+          import os
+          from pathlib import Path
+
+          pem = os.environ.get("SUPABASE_ROOT_CA_PEM", "").replace("\r\n", "\n").replace("\r", "\n").strip()
+          if "BEGIN CERTIFICATE" not in pem or "END CERTIFICATE" not in pem:
+              raise SystemExit(
+                  "GitHub secret SUPABASE_ROOT_CA_PEM must be the Supabase root CA PEM"
+              )
+
+          header = "\n".join([
+              "#pragma once",
+              "",
+              "#include <Arduino.h>",
+              "",
+              'static const char SUPABASE_ROOT_CA_PEM[] PROGMEM = R"PEM(',
+              pem,
+              ')PEM";',
+              "",
+          ])
+          Path("include/supabase_root_ca.h").write_text(header)
+          PY
+
+      - name: Build firmware
+        working-directory: firmware
+        run: pio run -e esp32dev
+
+      - name: Collect flash images
+        env:
+          VERSION: ${{ needs.create-release.outputs.version }}
+        run: |
+          set -euo pipefail
+          BUILD="firmware/.pio/build/esp32dev"
+          DIST="firmware/dist"
+          mkdir -p "$DIST"
+          cp "$BUILD/bootloader.bin" "$DIST/grobase-${VERSION}-bootloader.bin"
+          cp "$BUILD/partitions.bin" "$DIST/grobase-${VERSION}-partitions.bin"
+          cp "$BUILD/firmware.bin" "$DIST/grobase-${VERSION}-firmware.bin"
+          BOOT_APP0=$(find "$HOME/.platformio/packages" -name boot_app0.bin -print -quit)
+          if [ -z "$BOOT_APP0" ]; then
+            echo "boot_app0.bin was not found in the PlatformIO packages"
+            exit 1
+          fi
+          cp "$BOOT_APP0" "$DIST/grobase-${VERSION}-boot_app0.bin"
+
+      - name: Add files to release
+        uses: softprops/action-gh-release@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          draft: true
+          tag_name: firmware-v${{ needs.create-release.outputs.version }}
+          files: |
+            firmware/dist/grobase-${{ needs.create-release.outputs.version }}-bootloader.bin
+            firmware/dist/grobase-${{ needs.create-release.outputs.version }}-partitions.bin
+            firmware/dist/grobase-${{ needs.create-release.outputs.version }}-boot_app0.bin
+            firmware/dist/grobase-${{ needs.create-release.outputs.version }}-firmware.bin
+          body: |
+            Flash these images onto an ESP32. This is the `esp32dev` build from `firmware/platformio.ini`. WiFi and the Supabase URL are stored on the device during provisioning from the GroBase app.
+
+            Use [Espressif Flash Download Tool](https://docs.espressif.com/projects/esp-test-tools/en/latest/esp32/production_stage/tools/flash_download_tool.html) on Windows, or the browser flasher at https://espressif.github.io/esptool-js/ in Chrome or Edge.
+
+            Chip: **ESP32**. Flash mode: **DIO**. Frequency: **40 MHz**. Size: **4 MB**.
+
+            | File | Address |
+            | --- | --- |
+            | `grobase-${{ needs.create-release.outputs.version }}-bootloader.bin` | `0x1000` |
+            | `grobase-${{ needs.create-release.outputs.version }}-partitions.bin` | `0x8000` |
+            | `grobase-${{ needs.create-release.outputs.version }}-boot_app0.bin` | `0xe000` |
+            | `grobase-${{ needs.create-release.outputs.version }}-firmware.bin` | `0x10000` |
+
+            ## New board
+
+            1. Connect the ESP32 over USB and note its COM port.
+            2. Flash all four files at the addresses in the table.
+            3. If the download does not start, hold **BOOT**, tap **RESET**, then release **BOOT**.
+            4. Provision WiFi and the Supabase URL from the GroBase app.
+
+            ## Board that already runs GroBase
+
+            Flash only `grobase-${{ needs.create-release.outputs.version }}-firmware.bin` at `0x10000`. The bootloader, partition table, and stored WiFi settings stay on the device.
+
+            ## Flash Download Tool
+
+            1. Choose **ChipType** ESP32, **WorkMode** Develop, and **LoadMode** UART.
+            2. Add each file at the address above and enable its checkbox. For an existing GroBase board, add only the firmware file at `0x10000`.
+            3. Set **COM** to the ESP32 port and **BAUD** to `460800`.
+            4. Click **START** and wait until the download finishes.
+
+            ## Browser flasher
+
+            1. Open https://espressif.github.io/esptool-js/.
+            2. Set the baud rate to `460800`, click **Connect**, and choose the ESP32 serial port.
+            3. Add each file at the address in the table. Set flash mode **DIO**, frequency **40 MHz**, and size **4 MB**.
+            4. Click **Flash**.

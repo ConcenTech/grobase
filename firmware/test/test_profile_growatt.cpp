@@ -18,7 +18,7 @@ static void fill_sample_tables(uint16_t *r1009,
   for (int i = 0; i < 3; ++i) r1086[i] = 0;
   for (int i = 0; i < 27; ++i) r1124[i] = 0;
   for (int i = 0; i < 20; ++i) r2035[i] = 0;
-  for (int i = 0; i < 7; ++i) r2097[i] = 0;
+  for (int i = 0; i < 9; ++i) r2097[i] = 0;
   for (int i = 0; i < 6; ++i) r2112[i] = 0;
 
   r1009[1009 - 1009] = 0x0000;
@@ -64,6 +64,8 @@ static void fill_sample_tables(uint16_t *r1009,
   r2097[2097 - 2097] = 251; // 25.1 V
   r2097[2102 - 2097] = 0x0000;
   r2097[2103 - 2097] = 0x0BB8; // 300.0 W (ExtraACPower / PV)
+  r2097[2104 - 2097] = 0x0000;
+  r2097[2105 - 2097] = 0x007D; // 12.5 kWh Eextra_today (0.1 kWh). Not Eac 10.0.
 
   r2112[2112 - 2112] = 0x0000;
   r2112[2113 - 2112] = 0x004D;  // 7.7 kWh
@@ -76,7 +78,7 @@ void test_profile_growatt_fill_maps_expected_fields() {
   uint16_t r1086[3];
   uint16_t r1124[27];
   uint16_t r2035[20];
-  uint16_t r2097[7];
+  uint16_t r2097[9];
   uint16_t r2112[6];
   fill_sample_tables(r1009, r1086, r1124, r2035, r2097, r2112);
 
@@ -93,7 +95,7 @@ void test_profile_growatt_fill_maps_expected_fields() {
   TEST_ASSERT_EQUAL_FLOAT(-4.5f, snapshot.bms_battery_curr);
   TEST_ASSERT_EQUAL_FLOAT(25.1f, snapshot.vbat_dsp);
   TEST_ASSERT_EQUAL_FLOAT(10.0f, snapshot.eac_today_kwh);
-  TEST_ASSERT_EQUAL_FLOAT(10.0f, snapshot.pv_energy_today_kwh);
+  TEST_ASSERT_EQUAL_FLOAT(12.5f, snapshot.pv_energy_today_kwh);
   TEST_ASSERT_EQUAL_FLOAT(300.0f, snapshot.pv_power_w);
   TEST_ASSERT_EQUAL_FLOAT(12.5f, snapshot.energy_to_user_today_kwh);
   TEST_ASSERT_EQUAL_FLOAT(40.0f, snapshot.power_to_user_w);
@@ -112,7 +114,7 @@ void test_profile_growatt_pac_signed_negative() {
   uint16_t r1086[3];
   uint16_t r1124[27];
   uint16_t r2035[20];
-  uint16_t r2097[7];
+  uint16_t r2097[9];
   uint16_t r2112[6];
   fill_sample_tables(r1009, r1086, r1124, r2035, r2097, r2112);
 
@@ -131,7 +133,7 @@ void test_profile_growatt_ffff_sentinel_is_zero() {
   uint16_t r1086[3];
   uint16_t r1124[27];
   uint16_t r2035[20];
-  uint16_t r2097[7];
+  uint16_t r2097[9];
   uint16_t r2112[6];
   fill_sample_tables(r1009, r1086, r1124, r2035, r2097, r2112);
 
@@ -152,6 +154,13 @@ void test_profile_growatt_ffff_sentinel_is_zero() {
   r2097[2103 - 2097] = 0xFF00;
   profileGrowattFill(&snapshot, r1009, r1086, r1124, r2035, r2097, r2112);
   TEST_ASSERT_EQUAL_FLOAT(0.0f, snapshot.pv_power_w);
+
+  // Eextra_today unavailable must not fall back to Eac today (10.0 kWh here).
+  r2097[2104 - 2097] = SENTINEL_VALUE;
+  r2097[2105 - 2097] = SENTINEL_VALUE;
+  profileGrowattFill(&snapshot, r1009, r1086, r1124, r2035, r2097, r2112);
+  TEST_ASSERT_EQUAL_FLOAT(0.0f, snapshot.pv_energy_today_kwh);
+  TEST_ASSERT_EQUAL_FLOAT(10.0f, snapshot.eac_today_kwh);
 }
 
 int main(int argc, char **argv) {
